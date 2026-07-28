@@ -35,6 +35,10 @@ fun Analytics.setContext(userWallet: UserWallet) {
             removeParamsInterceptor(LinkedCardContextInterceptor.id())
             addParamsInterceptor(HotWalletContextInterceptor())
         }
+        is UserWallet.NfcEncrypted -> {
+            removeParamsInterceptor(LinkedCardContextInterceptor.id())
+            addParamsInterceptor(HotWalletContextInterceptor())
+        }
     }
 }
 
@@ -61,6 +65,7 @@ fun Analytics.addContext(userWallet: UserWallet) {
     val newContext = when (userWallet) {
         is UserWallet.Cold -> LinkedCardContextInterceptor(userWallet.scanResponse, parent = currentContext)
         is UserWallet.Hot -> HotWalletContextInterceptor(parent = currentContext)
+        is UserWallet.NfcEncrypted -> HotWalletContextInterceptor(parent = currentContext)
     }
 
     setUserId(userId = userWallet.walletId.stringValue)

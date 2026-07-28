@@ -6,7 +6,6 @@ import com.tangem.domain.card.common.util.getCardsCount
 import com.tangem.domain.demo.models.DemoConfig
 import com.tangem.domain.models.wallet.UserWallet
 import com.tangem.domain.models.wallet.UserWalletIcon
-import com.tangem.domain.models.wallet.isHotWallet
 import com.tangem.domain.models.wallet.requireColdWallet
 import com.tangem.domain.wallets.repository.WalletsRepository
 import kotlinx.coroutines.runBlocking
@@ -17,8 +16,12 @@ class GetWalletIconUseCase(
 
     @Suppress("CyclomaticComplexMethod", "UnsafeCallOnNullableType")
     operator fun invoke(userWallet: UserWallet): UserWalletIcon {
-        if (userWallet.isHotWallet) {
-            return UserWalletIcon.Hot
+        when (userWallet) {
+            is UserWallet.Hot -> return UserWalletIcon.Hot
+            is UserWallet.NfcEncrypted -> {
+                return UserWalletIcon.Stub(cardsCount = userWallet.cardsInWallet.size.coerceAtLeast(minimumValue = 1))
+            }
+            is UserWallet.Cold -> Unit
         }
 
         userWallet.requireColdWallet()

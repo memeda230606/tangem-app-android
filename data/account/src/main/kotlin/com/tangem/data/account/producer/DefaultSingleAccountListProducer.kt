@@ -70,6 +70,7 @@ internal class DefaultSingleAccountListProducer @AssistedInject constructor(
     private fun UserWallet.isPaymentAccountSupported(): Boolean = when (this) {
         is UserWallet.Cold -> scanResponse.card.firmwareVersion >= FirmwareVersion.HDWalletAvailable
         is UserWallet.Hot -> hotWalletId.authType != HotWalletId.AuthType.NoPassword
+        is UserWallet.NfcEncrypted -> false
     }
 
     @AssistedFactory

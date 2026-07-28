@@ -25,6 +25,20 @@ fun UserWallet.hasDerivation(blockchain: Blockchain, derivationPath: String): Bo
                 wallets.orEmpty().first { it.curve == primaryCurve }.derivedKeys.keys.any { it == dp }
             }
         }
+        is UserWallet.NfcEncrypted -> {
+            val primaryCurve = curvesConfig.primaryCurve(blockchain)
+            val list = if (blockchain == Blockchain.Cardano) {
+                listOf(
+                    CardanoUtils.extendedDerivationPath(DerivationPath(derivationPath)),
+                    DerivationPath(derivationPath),
+                )
+            } else {
+                listOf(DerivationPath(derivationPath))
+            }
+            list.all { dp ->
+                wallets.orEmpty().first { it.curve == primaryCurve }.derivedKeys.keys.any { it == dp }
+            }
+        }
     }
 }
 
@@ -33,7 +47,9 @@ fun UserWallet.hasDerivation(blockchain: Blockchain, derivationPath: String): Bo
  */
 val UserWallet.isAccountsSupported
     get() = when (this) {
-        is UserWallet.Hot -> true
+        is UserWallet.Hot,
+        is UserWallet.NfcEncrypted,
+        -> true
         is UserWallet.Cold -> {
             with(this.cardTypesResolver) {
                 isMultiwalletAllowed() && scanResponse.card.settings.isHDWalletAllowed

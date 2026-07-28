@@ -21,7 +21,9 @@ import com.tangem.domain.feedback.models.FeedbackEmailType
 import com.tangem.domain.models.scan.ScanResponse
 import com.tangem.domain.models.wallet.UserWallet
 import com.tangem.domain.wallets.builder.ColdUserWalletBuilder
+import com.tangem.domain.wallets.nfc.NfcEncryptedWalletOnboardingRepository
 import com.tangem.domain.wallets.usecase.SaveWalletUseCase
+import com.tangem.features.hotwallet.MnemonicRepository
 import com.tangem.features.onboarding.v2.impl.R
 import com.tangem.features.onboarding.v2.multiwallet.impl.child.MultiWalletChildParams
 import com.tangem.features.onboarding.v2.multiwallet.impl.child.createwallet.ui.state.MultiWalletCreateWalletUM
@@ -29,6 +31,7 @@ import com.tangem.features.onboarding.v2.multiwallet.impl.common.ui.resetCardDia
 import com.tangem.features.onboarding.v2.multiwallet.impl.model.OnboardingMultiWalletState.Step
 import com.tangem.sdk.api.TangemSdkManager
 import com.tangem.utils.coroutines.CoroutineDispatcherProvider
+import com.tangem.utils.logging.TangemLogger
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,6 +54,8 @@ internal class MultiWalletCreateWalletModel @Inject constructor(
     private val coldUserWalletBuilderFactory: ColdUserWalletBuilder.Factory,
     private val saveWalletUseCase: SaveWalletUseCase,
     private val appsFlyerStore: AppsFlyerStore,
+    private val mnemonicRepository: MnemonicRepository,
+    private val nfcEncryptedWalletOnboardingRepository: NfcEncryptedWalletOnboardingRepository,
 ) : Model() {
 
     private val params = paramsContainer.require<MultiWalletChildParams>()
@@ -93,6 +98,11 @@ internal class MultiWalletCreateWalletModel @Inject constructor(
     }
 
     private fun createWallet(shouldReset: Boolean) {
+        if (nfcEncryptedWalletOnboardingRepository.isNfcScanResponse(multiWalletState.value.currentScanResponse)) {
+            createNfcEncryptedWallet()
+            return
+        }
+
         modelScope.launch {
             val result = tangemSdkManager.createProductWallet(
                 scanResponse = multiWalletState.value.currentScanResponse,
@@ -134,6 +144,32 @@ internal class MultiWalletCreateWalletModel @Inject constructor(
                         handleActivationError()
                     }
                 }
+            }
+        }
+    }
+
+    private fun createNfcEncryptedWallet() {
+        modelScope.launch {
+            runCatching {
+                val mnemonic = mnemonicRepository.generateMnemonic(MnemonicRepository.MnemonicType.Words12)
+                nfcEncryptedWalletOnboardingRepository.createPrimaryWallet(mnemonic = mnemonic, passphrase = null)
+            }.onSuccess { updatedScanResponse ->
+                multiWalletState.update {
+                    it.copy(currentScanResponse = updatedScanResponse)
+                }
+
+                cardRepository.startCardActivation(cardId = updatedScanResponse.card.cardId)
+
+                analyticsHandler.send(
+                    event = OnboardingAnalyticsEvent.CreateWallet.WalletCreatedSuccessfully(
+                        passPhraseState = AnalyticsParam.EmptyFull.Empty,
+                        referralId = appsFlyerStore.get()?.refcode,
+                    ),
+                )
+
+                onDone.emit(Step.AddBackupDevice)
+            }.onFailure { error ->
+                TangemLogger.e("NFC encrypted wallet creation error occurred", error)
             }
         }
     }

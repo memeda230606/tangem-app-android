@@ -24,7 +24,7 @@ dependencies {
     implementation(projects.domain.wallets)
     implementation(projects.domain.legacy)
 
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
     /* Core */
     api(projects.core.pagination)

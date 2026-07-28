@@ -18,6 +18,7 @@ internal object SdkAddressToAddressConverter : Converter<SdkAddress, Address> {
             type = when (value.type) {
                 AddressType.Default -> Address.Type.Primary
                 AddressType.Legacy -> Address.Type.Secondary
+                AddressType.Segwit -> Address.Type.Secondary
             },
         )
     }

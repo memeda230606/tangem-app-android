@@ -33,7 +33,7 @@ dependencies {
     implementation(projects.domain.appCurrency.models)
 
     /** Tandem SDK */
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
     /** Other */
     implementation(deps.arrow.core)

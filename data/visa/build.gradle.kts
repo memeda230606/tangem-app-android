@@ -77,9 +77,9 @@ dependencies {
     kaptForObfuscatingVariants(deps.retrofit.response.type.keeper)
 
     /** Libs - Tangem */
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.hot.core)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.hotSdkCompat)
     implementation(projects.libs.tangemSdkApi)
 
     /** DI */

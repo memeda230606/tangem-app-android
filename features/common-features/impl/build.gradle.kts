@@ -51,7 +51,7 @@ dependencies {
     implementation(projects.domain.wallets.models)
 
     /** Tangem libraries */
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.cardSdkCompat)
 
     /** Common */
     implementation(projects.common.ui)

@@ -58,7 +58,7 @@ dependencies {
     implementation(deps.decompose)
     implementation(deps.decompose.ext.compose)
     implementation(deps.kotlin.immutable.collections)
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.hot.core)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.hotSdkCompat)
 }

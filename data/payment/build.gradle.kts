@@ -30,10 +30,10 @@ dependencies {
     implementation(projects.libs.blockchainSdk)
 
     /** Libs - Tangem */
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.card.android)
-    implementation(tangemDeps.hot.core)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.hotSdkCompat)
     implementation(projects.libs.tangemSdkApi)
 
     /** Libs - Other */

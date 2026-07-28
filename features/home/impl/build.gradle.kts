@@ -58,9 +58,9 @@ dependencies {
     implementation(deps.decompose.ext.compose)
     
     /** Tangem libraries */
-    implementation(tangemDeps.card.android)
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.blockchainCompat)
     
     /** Other libraries */
     implementation(deps.kotlin.immutable.collections)

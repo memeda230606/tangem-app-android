@@ -74,8 +74,8 @@ dependencies {
     implementation(deps.arrow.core)
     implementation(deps.decompose.ext.compose)
     implementation(deps.kotlin.immutable.collections)
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.blockchainCompat)
 
     /** Test libraries */
     implementation(deps.test.junit)

@@ -23,6 +23,7 @@ internal class DefaultTangemPayAuthDataSource @Inject constructor(
                 tangemSdkManager.tangemPayProduceInitialCredentials(preflightReadFilter = preflightReadFilter)
             }
             is UserWallet.Hot -> tangemPayHotSdkManager.produceInitialCredentials(userWallet)
+            is UserWallet.NfcEncrypted -> Either.Left(IllegalStateException("Tangem Pay is not supported"))
         }
     }
 
@@ -36,6 +37,7 @@ internal class DefaultTangemPayAuthDataSource @Inject constructor(
                 tangemSdkManager.getWithdrawalSignature(hash = hash, preflightReadFilter = preflightReadFilter)
             }
             is UserWallet.Hot -> tangemPayHotSdkManager.getWithdrawalSignature(hotWallet = userWallet, hash = hash)
+            is UserWallet.NfcEncrypted -> Either.Left(IllegalStateException("Tangem Pay is not supported"))
         }
     }
 }

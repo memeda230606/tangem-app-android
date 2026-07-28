@@ -88,6 +88,7 @@ internal class InitializeWalletsTransformer(
                     type = when (userWallet) {
                         is UserWallet.Cold -> WalletType.Cold
                         is UserWallet.Hot -> WalletType.Hot
+                        is UserWallet.NfcEncrypted -> WalletType.Hot
                     },
                 )
             },
@@ -135,6 +136,7 @@ internal class InitializeWalletsTransformer(
             type = when (this) {
                 is UserWallet.Cold -> WalletType.Cold
                 is UserWallet.Hot -> WalletType.Hot
+                is UserWallet.NfcEncrypted -> WalletType.Hot
             },
             notifications = persistentListOf(
                 WalletNotificationUM.UnlockWallets(

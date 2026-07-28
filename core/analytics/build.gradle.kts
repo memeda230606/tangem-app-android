@@ -28,7 +28,7 @@ dependencies {
     implementation(projects.core.utils)
 
     /** For calculating user id hash */
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.cardSdkCompat)
 
     /** Tests */
     testImplementation(projects.test.core)

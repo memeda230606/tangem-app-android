@@ -37,6 +37,19 @@ val unitTest by tasks.registering {
 }
 
 subprojects {
+    configurations.configureEach {
+        resolutionStrategy.dependencySubstitution {
+            substitute(module("com.tangem:blockchain")).using(project(":libs:blockchain-compat"))
+            substitute(module("com.tangem.tangem-sdk-kotlin:core")).using(project(":libs:card-sdk-compat"))
+            substitute(module("com.tangem.tangem-sdk-kotlin:android")).using(project(":libs:card-sdk-compat"))
+            substitute(module("com.tangem.tangem-hot-sdk-kotlin:core")).using(project(":libs:hot-sdk-compat"))
+            substitute(module("com.tangem.tangem-hot-sdk-kotlin:android")).using(project(":libs:hot-sdk-compat"))
+            substitute(module("com.tangem.vico:core")).using(module("com.patrykandpatrick.vico:core:2.0.0"))
+            substitute(module("com.tangem.vico:compose")).using(module("com.patrykandpatrick.vico:compose:2.0.0"))
+            substitute(module("com.tangem.vico:compose-m3")).using(module("com.patrykandpatrick.vico:compose-m3:2.0.0"))
+        }
+    }
+
     // App module
     plugins.withId("com.android.application") {
         afterEvaluate {

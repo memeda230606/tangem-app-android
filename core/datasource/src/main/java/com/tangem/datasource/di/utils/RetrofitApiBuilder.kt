@@ -22,6 +22,7 @@ import com.tangem.datasource.utils.NetworkLogsSaveInterceptor
 import com.tangem.datasource.utils.WireMockRedirectInterceptor
 import com.tangem.datasource.utils.addHeaders
 import dagger.hilt.android.qualifiers.ApplicationContext
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Invocation
@@ -71,6 +72,7 @@ internal class RetrofitApiBuilder @Inject constructor(
         logsSaving: Boolean = true,
     ): T {
         val environmentConfig = apiConfigsManager.getEnvironmentConfig(apiConfigId)
+            .withStandaloneBaseUrlFallback(apiConfigId)
 
         return Retrofit.Builder()
             .addConverterFactory(MoshiConverterFactory.create(moshi))
@@ -110,6 +112,20 @@ internal class RetrofitApiBuilder @Inject constructor(
             config.id to allBaseUrls
         }
     }
+
+    private fun ApiEnvironmentConfig.withStandaloneBaseUrlFallback(apiConfigId: ApiConfig.ID): ApiEnvironmentConfig {
+        if (baseUrl.isValidBaseUrl()) return this
+
+        val fallbackBaseUrl = apiConfigs
+            .firstOrNull { config -> config.id == apiConfigId }
+            ?.environmentConfigs
+            ?.firstNotNullOfOrNull { config -> config.baseUrl.takeIf { baseUrl -> baseUrl.isValidBaseUrl() } }
+            ?: STANDALONE_FALLBACK_BASE_URL
+
+        return copy(baseUrl = fallbackBaseUrl)
+    }
+
+    private fun String.isValidBaseUrl(): Boolean = toHttpUrlOrNull() != null
 
     private fun OkHttpClient.Builder.applyApiConfig(
         apiConfigId: ApiConfig.ID,
@@ -207,6 +223,8 @@ internal class RetrofitApiBuilder @Inject constructor(
 
     @Suppress("UseEmptyCounterpart")
     private companion object {
+
+        const val STANDALONE_FALLBACK_BASE_URL = "https://localhost/"
 
         val excludedApiForLogging: Set<ApiConfig.ID> = setOf(
             // ApiConfig.ID.StakeKit,

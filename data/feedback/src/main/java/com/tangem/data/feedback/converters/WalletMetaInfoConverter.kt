@@ -41,6 +41,12 @@ internal object WalletMetaInfoConverter : Converter<UserWallet, WalletMetaInfo> 
                     hotWalletIsBackedUp = value.backedUp,
                 )
             }
+            is UserWallet.NfcEncrypted -> {
+                WalletMetaInfo(
+                    userWalletId = value.walletId,
+                    hotWalletIsBackedUp = value.backedUp,
+                )
+            }
         }
     }
 

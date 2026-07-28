@@ -68,11 +68,11 @@ class DefaultHotWalletAccessor @Inject constructor(
 
     override fun clearContextualUnlock(userWalletId: UserWalletId) {
         scope.launch {
-            val userWallet = userWalletsListRepository.userWalletsSync()
-                .find { it is UserWallet.Hot && it.walletId == userWalletId }
-                as? UserWallet.Hot
+            val hotWalletId = userWalletsListRepository.userWalletsSync()
+                .firstOrNull { it.walletId == userWalletId }
+                ?.hotWalletIdOrNull()
                 ?: return@launch
-            clearContextualUnlock(userWallet.hotWalletId)
+            clearContextualUnlock(hotWalletId)
         }
     }
 
@@ -150,8 +150,7 @@ class DefaultHotWalletAccessor @Inject constructor(
 
         if (originalAuth is HotAuth.Password && isUseBiometricAuthenticationEnabled && isAccessCodeRequired.not()) {
             val userWallet = userWalletsListRepository.userWalletsSync()
-                .first { it is UserWallet.Hot && it.hotWalletId == hotWalletId }
-                as UserWallet.Hot
+                .first { it.hotWalletIdOrNull() == hotWalletId }
 
             val newHotWalletId = tangemHotSdk.changeAuth(
                 unlockHotWallet = UnlockHotWallet(
@@ -162,11 +161,25 @@ class DefaultHotWalletAccessor @Inject constructor(
             )
 
             userWalletsListRepository.saveWithoutLock(
-                userWallet = userWallet.copy(
-                    hotWalletId = newHotWalletId,
-                ),
+                userWallet = userWallet.withHotWalletId(newHotWalletId),
                 canOverride = true,
             )
+        }
+    }
+
+    private fun UserWallet.hotWalletIdOrNull(): HotWalletId? {
+        return when (this) {
+            is UserWallet.Hot -> hotWalletId
+            is UserWallet.NfcEncrypted -> hotWalletId
+            is UserWallet.Cold -> null
+        }
+    }
+
+    private fun UserWallet.withHotWalletId(hotWalletId: HotWalletId): UserWallet {
+        return when (this) {
+            is UserWallet.Hot -> copy(hotWalletId = hotWalletId)
+            is UserWallet.NfcEncrypted -> copy(hotWalletId = hotWalletId)
+            is UserWallet.Cold -> this
         }
     }
 

@@ -37,7 +37,7 @@ dependencies {
     implementation(deps.compose.foundation)
 
     /** Tangem */
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
     /** Other */
     implementation(deps.arrow.core)

@@ -106,5 +106,9 @@
     {
         "name": "TWI_1512_HIDE_STORIES_FOR_REFERRAL_ENABLED",
         "version": "5.39"
+    },
+    {
+        "name": "AND_99999_NFC_ENCRYPTED_WALLET_ENABLED",
+        "version": "undefined"
     }
 ]

@@ -17,11 +17,11 @@ dependencies {
     implementation(projects.core.datasource)
 
     /** Tangem SDKs */
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.card.android) {
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.cardSdkCompat) {
         exclude(module = "joda-time")
     }
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
     implementation(projects.libs.blockchainSdk)
     implementation(projects.libs.crypto)

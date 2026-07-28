@@ -28,11 +28,11 @@ dependencies {
     implementation(projects.domain.txhistory.models)
     implementation(projects.domain.wallets.models)
     /** Tangem libraries */
-    implementation(tangemDeps.blockchain) {
+    implementation(projects.libs.blockchainCompat) {
         exclude(module = "joda-time")
     }
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.card.android) {
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.cardSdkCompat) {
         exclude(module = "joda-time")
     }
 

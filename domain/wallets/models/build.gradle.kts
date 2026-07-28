@@ -7,8 +7,8 @@ plugins {
 
 dependencies {
     // region Tangem libraries
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.hot.core)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.hotSdkCompat)
     // endregion
 
     // region Domain modules

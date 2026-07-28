@@ -108,11 +108,11 @@ The app uses [Decompose](https://github.com/arkivanov/Decompose) for lifecycle-a
 ### Build System
 
 - **Gradle 8.14.1**, AGP 8.10.1, Kotlin 2.1.10
-- **Version catalogs:** `gradle/dependencies.toml` (external/third-party dependencies) and `gradle/tangem_dependencies.toml` (in-house Tangem SDK dependencies)
+- **Version catalogs:** `gradle/dependencies.toml` for public third-party dependencies. Former Tangem SDK artifacts are replaced by local compatibility modules under `libs/*-compat`
 - **Convention plugin:** `plugins/configuration/` — applies Detekt, configures test settings, generates environment configs and feature toggles
 - **Custom Detekt rules:** `plugins/detekt-rules/`. Detekt configuration is in the `tangem-android-tools` git submodule. Key rule: `UnsafeStringResourceUsage` — prevents direct `stringResource()` / `pluralStringResource()` calls; use the `Safe`-suffixed variants instead
 - **Localization:** Managed via [Lokalise](https://lokalise.com). Update strings by running `python3 lokalize.py`
-- **GitHub Packages auth:** Requires `gpr.user` and `gpr.key` in `local.properties` for Tangem SDK dependencies
+- **GitHub Packages auth:** Not required. Do not add package registry credentials; the Android project must build from public repositories and local modules only
 
 ### Testing
 

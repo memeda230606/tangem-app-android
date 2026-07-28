@@ -47,7 +47,7 @@ dependencies {
     // endregion
 
     // region Tangem SDKs
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
     // endregion
 
     // region Other libraries

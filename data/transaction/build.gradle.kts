@@ -17,8 +17,8 @@ tasks.withType<Test>().configureEach {
 dependencies {
 
     /** Tangem SDKs */
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.cardSdkCompat)
 
     /** Core */
     implementation(projects.core.datasource)

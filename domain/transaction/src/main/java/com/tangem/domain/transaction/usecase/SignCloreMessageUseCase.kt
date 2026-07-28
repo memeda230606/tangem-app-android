@@ -16,6 +16,7 @@ class SignCloreMessageUseCase(
     private val walletManagersFacade: WalletManagersFacade,
     private val cardSdkConfigRepository: CardSdkConfigRepository,
     private val getHotWalletSigner: (UserWallet.Hot) -> TransactionSigner,
+    private val getNfcEncryptedWalletSigner: (UserWallet.NfcEncrypted) -> TransactionSigner,
 ) {
 
     suspend operator fun invoke(
@@ -47,6 +48,7 @@ class SignCloreMessageUseCase(
                 )
             }
             is UserWallet.Hot -> getHotWalletSigner(userWallet)
+            is UserWallet.NfcEncrypted -> getNfcEncryptedWalletSigner(userWallet)
         }
 
         return when (val result = walletManager.signMessage(message, signer)) {

@@ -9,18 +9,6 @@ pluginManagement {
     includeBuild("plugins/configuration")
 }
 
-val properties = java.util.Properties()
-val propertiesFile = File(rootDir.absolutePath, "local.properties")
-if (propertiesFile.exists()) {
-    properties.load(propertiesFile.inputStream())
-    println("Authenticating user: " + properties.getProperty("gpr.user"))
-} else {
-    println(
-        "local.properties not found, please create it next to build.gradle and set gpr.user and gpr.key (Create a GitHub package read only + non expiration token at https://github.com/settings/tokens)\n" +
-            "Or set GITHUB_ACTOR and GITHUB_TOKEN environment variables"
-    )
-}
-
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 
@@ -37,98 +25,6 @@ dependencyResolutionManagement {
         }
         mavenCentral()
         maven { url = uri("https://developer.huawei.com/repo/") }
-        mavenLocal {
-            content {
-                includeGroupAndSubgroups("com.tangem.tangem-sdk-kotlin")
-                includeGroupAndSubgroups("com.tangem.tangem-hot-sdk-kotlin")
-                includeGroupAndSubgroups("com.tangem.vico")
-                includeModule("com.tangem", "blstlib")
-                includeModule("com.tangem", "blockchain")
-                includeModule("com.tangem", "wallet-core-proto")
-                includeModule("com.tangem", "wallet-core")
-            }
-        }
-        maven {
-            // setting any repository from tangem project allows maven search all packages in the project
-            url = uri("https://maven.pkg.github.com/tangem/tangem-sdk-android")
-            credentials {
-                username = properties.getProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = properties.getProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
-            }
-            content { includeGroupAndSubgroups("com.tangem.tangem-sdk-kotlin") }
-        }
-        maven {
-            // setting any repository from tangem project allows maven search all packages in the project
-            url = uri("https://maven.pkg.github.com/tangem/tangem-hot-sdk-kotlin")
-            credentials {
-                username = properties.getProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = properties.getProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
-            }
-            content { includeGroupAndSubgroups("com.tangem.tangem-hot-sdk-kotlin") }
-        }
-        maven {
-            // setting any repository from tangem project allows maven search all packages in the project
-            url = uri("https://maven.pkg.github.com/tangem/blst-android")
-            credentials {
-                username = properties.getProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = properties.getProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
-            }
-            content { includeModule("com.tangem", "blstlib") }
-        }
-        maven {
-            // setting any repository from tangem project allows maven search all packages in the project
-            url = uri("https://maven.pkg.github.com/tangem/blockchain-sdk-kotlin")
-            credentials {
-                username = properties.getProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = properties.getProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
-            }
-            content { includeModule("com.tangem", "blockchain") }
-        }
-        maven {
-            // setting any repository from tangem project allows maven search all packages in the project
-            url = uri("https://maven.pkg.github.com/tangem/wallet-core")
-            credentials {
-                username = properties.getProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = properties.getProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
-            }
-            content {
-                includeModule("com.tangem", "wallet-core-proto")
-                includeModule("com.tangem", "wallet-core")
-            }
-        }
-        maven {
-            // setting any repository from tangem project allows maven search all packages in the project
-            url = uri("https://maven.pkg.github.com/tangem/vico")
-            credentials {
-                username = properties.getProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = properties.getProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
-            }
-            content {
-                includeGroupAndSubgroups("com.tangem.vico")
-            }
-        }
-        maven {
-            // setting any repository from tangem project allows maven search all packages in the project
-            url = uri("https://maven.pkg.github.com/tangem/ic4j-agent")
-            credentials {
-                username = properties.getProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = properties.getProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
-            }
-            content {
-                includeGroupAndSubgroups("com.tangem.ic4j")
-            }
-        }
-        maven {
-            // setting any repository from tangem project allows maven search all packages in the project
-            url = uri("https://maven.pkg.github.com/tangem/web3j")
-            credentials {
-                username = properties.getProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = properties.getProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
-            }
-            content {
-                includeGroupAndSubgroups("org.web3j")
-            }
-        }
         maven("https://jitpack.io")
         maven("https://maven.sumsub.com/repository/maven-public/")
     }
@@ -136,9 +32,6 @@ dependencyResolutionManagement {
     versionCatalogs {
         create("deps") {
             from(files("gradle/dependencies.toml"))
-        }
-        create("tangemDeps") {
-            from(files("gradle/tangem_dependencies.toml"))
         }
     }
 
@@ -182,9 +75,13 @@ include(":common:ui-markets")
 // region Libs modules
 include(":libs:auth")
 include(":libs:blockchain-sdk")
+include(":libs:blockchain-compat")
+include(":libs:card-sdk-compat")
 include(":libs:crypto")
+include(":libs:hot-sdk-compat")
 include(":libs:visa")
 include(":libs:tangem-sdk-api")
+include(":libs:vico-compat")
 // endregion Libs modules
 
 // region Feature modules

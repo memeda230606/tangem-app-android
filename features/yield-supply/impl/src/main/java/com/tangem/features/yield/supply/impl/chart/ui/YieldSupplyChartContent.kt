@@ -41,7 +41,7 @@ import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
 import com.patrykandpatrick.vico.compose.common.shape.dashed
 import com.patrykandpatrick.vico.core.cartesian.HorizontalLayout
 import com.patrykandpatrick.vico.core.cartesian.Zoom
-import com.patrykandpatrick.vico.core.cartesian.axis.AxisPosition
+import com.patrykandpatrick.vico.core.cartesian.axis.Axis
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianValueFormatter
@@ -144,12 +144,12 @@ private fun YieldSupplyChartData(state: YieldSupplyChartUM.Data, modifier: Modif
 
     val columnsLayer = rememberColumnsLayer(accentColor = TangemTheme.colors.text.accent)
 
-    val startAxis: VerticalAxis<AxisPosition.Vertical.Start> = rememberStartAxis(
+    val startAxis: VerticalAxis<Axis.Position.Vertical.Start> = rememberStartAxis(
         labelColor = TangemTheme.colors.text.tertiary,
         percentFormat = state.chartData.percentFormat,
     )
 
-    val bottomAxis: HorizontalAxis<AxisPosition.Horizontal.Bottom> = rememberBottomAxis(
+    val bottomAxis: HorizontalAxis<Axis.Position.Horizontal.Bottom> = rememberBottomAxis(
         labelColor = TangemTheme.colors.text.tertiary,
     )
 
@@ -215,7 +215,7 @@ private fun rememberColumnsLayer(accentColor: Color): ColumnCartesianLayer {
 }
 
 @Composable
-private fun rememberStartAxis(labelColor: Color, percentFormat: String): VerticalAxis<AxisPosition.Vertical.Start> {
+private fun rememberStartAxis(labelColor: Color, percentFormat: String): VerticalAxis<Axis.Position.Vertical.Start> {
     return rememberCustomStartAxis(
         label = rememberAxisLabelComponent(color = labelColor),
         valueFormatter = CartesianValueFormatter { value, _, _ ->
@@ -229,7 +229,7 @@ private fun rememberStartAxis(labelColor: Color, percentFormat: String): Vertica
 }
 
 @Composable
-private fun rememberBottomAxis(labelColor: Color): HorizontalAxis<AxisPosition.Horizontal.Bottom> {
+private fun rememberBottomAxis(labelColor: Color): HorizontalAxis<Axis.Position.Horizontal.Bottom> {
     return rememberBottomAxis(
         label = rememberAxisLabelComponent(color = labelColor),
         guideline = null,

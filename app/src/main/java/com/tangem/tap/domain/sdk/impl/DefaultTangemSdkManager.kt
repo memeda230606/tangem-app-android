@@ -14,6 +14,7 @@ import com.tangem.common.core.*
 import com.tangem.common.extensions.ByteArrayKey
 import com.tangem.common.extensions.hexToBytes
 import com.tangem.common.services.secure.SecureStorage
+import com.tangem.common.usersCode.UserCode
 import com.tangem.common.usersCode.UserCodeRepository
 import com.tangem.core.analytics.Analytics
 import com.tangem.core.analytics.api.AnalyticsErrorHandler
@@ -532,7 +533,7 @@ internal class DefaultTangemSdkManager(
             )
 
             return@coroutineScope when (result) {
-                is CompletionResult.Failure<*> -> result.error.left()
+                is CompletionResult.Failure -> result.error.left()
                 is CompletionResult.Success<TangemPayInitialCredentials> -> result.data.right()
             }
         }
@@ -551,7 +552,7 @@ internal class DefaultTangemSdkManager(
             )
 
             return@coroutineScope when (result) {
-                is CompletionResult.Failure<*> -> {
+                is CompletionResult.Failure -> {
                     if (result.error is TangemSdkError.UserCancelled) {
                         WithdrawalSignatureResult.Cancelled.right()
                     } else {

@@ -16,19 +16,8 @@ To build the project, you will need to have **Android Studio** version 2024.1.1 
    - Apply changes, press **Ok** and restart the Android Studio.
 
 ## 2. Required Dependencies
-To be able to use key dependencies, you need to be able to pull them from **GitHub Package Registry**.
-
-### Steps:
-1. Go to [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens).
-2. Click *Generate new token* -> *Generate new token (classic)* -> type any name for the token -> don’t change anything, just check the box `read:packages` -> press “Generate token” -> copy the generated token
-3. Open the `local.properties` file in the root project directory (or you can press **Command+Shift+O** and type “local.
-   properties” to find the file) and add the following lines:
-  ```properties
-  gpr.user=YOUR_GITHUB_USERNAME
-  gpr.key=YOUR_GENERATED_TOKEN
-  ```
-   - `YOUR_GITHUB_USERNAME` — your GitHub username
-   - `YOUR_GENERATED_TOKEN` — the token you generated in the previous step.
+The project uses public Maven repositories and local compatibility modules for the former Tangem SDK dependencies.
+GitHub Packages credentials are not required for Gradle sync or local builds.
 
 ## 3. Sync Gradle and Build the Project
 Once all the previous steps are completed, you need to sync your Gradle files and run the build.

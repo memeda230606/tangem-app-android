@@ -66,6 +66,7 @@ internal class SingleWalletCardStateConverter(
             cardCount = when (selectedWallet) {
                 is UserWallet.Cold -> selectedWallet.getCardsCount()
                 is UserWallet.Hot -> null
+                is UserWallet.NfcEncrypted -> selectedWallet.cardsInWallet.size.takeIf { it > 0 }
             },
             isZeroBalance = status.fiatAmount?.isZero(),
             isBalanceFlickering = (status as? CryptoCurrencyStatus.Loaded)?.sources?.total == StatusSource.CACHE,

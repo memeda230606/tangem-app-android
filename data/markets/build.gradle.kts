@@ -45,7 +45,7 @@ dependencies {
     implementation(deps.jodatime)
     implementation(deps.moshi)
     implementation(deps.moshi.kotlin)
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
     ksp(deps.moshi.kotlin.codegen)
     kaptForObfuscatingVariants(deps.retrofit.response.type.keeper)
     // endregion

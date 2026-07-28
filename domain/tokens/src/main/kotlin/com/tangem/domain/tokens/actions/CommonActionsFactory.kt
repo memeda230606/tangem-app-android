@@ -129,7 +129,8 @@ internal class CommonActionsFactory(
     ): ActionState {
         val cryptoCurrency = cryptoCurrencyStatus.currency
         val isMultiCurrency = userWallet is UserWallet.Cold && userWallet.isMultiCurrency ||
-            userWallet is UserWallet.Hot
+            userWallet is UserWallet.Hot ||
+            userWallet is UserWallet.NfcEncrypted
 
         if (!isMultiCurrency) {
             return ActionState.Swap(

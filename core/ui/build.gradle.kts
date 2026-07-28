@@ -11,18 +11,22 @@ val strictDesignTokens = providers.gradleProperty("strictDesignTokens")
     .orElse(false)
 
 /**
- * Verifies that generated Kotlin token files match the current ds-tokens submodule.
- * If this fails, run: cd core/ui/token-gen && npm run build
+ * Verifies that generated Kotlin token files match local design token sources.
+ *
+ * Independent project builds do not require the original ds-tokens submodule to
+ * be present: generated Kotlin token files are checked in and used as source.
+ * Pass -PstrictDesignTokens=true to fail when token sources are missing.
  */
 abstract class VerifyDesignTokensTask : DefaultTask() {
 
-    @get:InputDirectory
-    @get:PathSensitive(PathSensitivity.RELATIVE)
+    @get:Internal
     abstract val tokensDir: DirectoryProperty
 
-    @get:InputDirectory
-    @get:PathSensitive(PathSensitivity.RELATIVE)
+    @get:Internal
     abstract val iconsDir: DirectoryProperty
+
+    @get:Input
+    abstract val strictMode: Property<Boolean>
 
     @get:InputFile
     @get:PathSensitive(PathSensitivity.NONE)
@@ -40,15 +44,23 @@ abstract class VerifyDesignTokensTask : DefaultTask() {
         }
 
         val tokensDirValue = tokensDir.get().asFile
-        require(tokensDirValue.exists() && tokensDirValue.isDirectory) {
-            "ds-tokens submodule not found: ${tokensDirValue.absolutePath}\n" +
-                "Run: git submodule update --init --recursive"
+        if (!tokensDirValue.exists() || !tokensDirValue.isDirectory) {
+            skipOrFail(
+                "Design tokens source folder not found: ${tokensDirValue.absolutePath}\n" +
+                    "Standalone builds use checked-in generated Kotlin token files.",
+                hashFileValue,
+            )
+            return
         }
 
         val iconsDirValue = iconsDir.get().asFile
-        require(iconsDirValue.exists() && iconsDirValue.isDirectory) {
-            "ds-tokens icons folder not found: ${iconsDirValue.absolutePath}\n" +
-                "Run: git submodule update --init --recursive"
+        if (!iconsDirValue.exists() || !iconsDirValue.isDirectory) {
+            skipOrFail(
+                "Design token icons source folder not found: ${iconsDirValue.absolutePath}\n" +
+                    "Standalone builds use checked-in generated Kotlin icon files.",
+                hashFileValue,
+            )
+            return
         }
 
         val tokensInputHash = hashTreeHex(tokensDirValue, "json")
@@ -70,7 +82,23 @@ abstract class VerifyDesignTokensTask : DefaultTask() {
                 "Run the token generator: cd core/ui/token-gen && npm run build"
         }
 
-        stampFile.get().asFile.writeText(actual)
+        val stampFileValue = stampFile.get().asFile
+        stampFileValue.parentFile.mkdirs()
+        stampFileValue.writeText(actual)
+    }
+
+    private fun skipOrFail(message: String, hashFileValue: java.io.File) {
+        if (strictMode.get()) {
+            error(
+                "$message\n" +
+                    "Provide local token sources or run without -PstrictDesignTokens=true.",
+            )
+        }
+
+        logger.lifecycle("Skipping design token source verification. $message")
+        val stampFileValue = stampFile.get().asFile
+        stampFileValue.parentFile.mkdirs()
+        stampFileValue.writeText("skipped:${hashFileValue.readText().trim()}")
     }
 
     private fun hashTreeHex(root: java.io.File, extension: String): String {
@@ -110,6 +138,7 @@ val verifyDesignTokens = tasks.register<VerifyDesignTokensTask>("verifyDesignTok
     onlyIf { strictDesignTokens.get() }
     tokensDir.set(file("ds-tokens/tokens"))
     iconsDir.set(file("ds-tokens/icons"))
+    strictMode.set(providers.gradleProperty("strictDesignTokens").map(String::toBoolean).orElse(false))
     hashFile.set(file("src/main/java/com/tangem/core/ui/res/generated/.tokens-hash"))
     stampFile.set(layout.buildDirectory.file("tokens-verified.stamp"))
 }

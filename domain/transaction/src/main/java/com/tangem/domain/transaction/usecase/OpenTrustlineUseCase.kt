@@ -17,6 +17,7 @@ class OpenTrustlineUseCase(
     private val cardSdkConfigRepository: CardSdkConfigRepository,
     private val walletManagersFacade: WalletManagersFacade,
     private val getHotTransactionSigner: (UserWallet.Hot) -> TransactionSigner,
+    private val getNfcEncryptedTransactionSigner: (UserWallet.NfcEncrypted) -> TransactionSigner,
 ) {
 
     suspend operator fun invoke(userWallet: UserWallet, currency: CryptoCurrency): Either<OpenTrustlineError, Unit> {
@@ -64,6 +65,7 @@ class OpenTrustlineUseCase(
     private fun createSigner(userWallet: UserWallet): TransactionSigner {
         return when (userWallet) {
             is UserWallet.Hot -> getHotTransactionSigner(userWallet)
+            is UserWallet.NfcEncrypted -> getNfcEncryptedTransactionSigner(userWallet)
             is UserWallet.Cold -> getColdSigner(userWallet)
         }
     }

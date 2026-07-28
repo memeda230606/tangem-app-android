@@ -62,7 +62,7 @@ dependencies {
     implementation(projects.features.pushNotifications.api)
 
     /* SDK */
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
     /** Other modules */
     implementation(projects.common.routing)

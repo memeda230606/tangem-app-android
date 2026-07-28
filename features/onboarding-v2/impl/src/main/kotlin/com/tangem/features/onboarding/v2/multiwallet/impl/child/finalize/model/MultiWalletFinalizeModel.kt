@@ -24,6 +24,7 @@ import com.tangem.domain.models.wallet.requireColdWallet
 import com.tangem.domain.models.wallet.requireHotWallet
 import com.tangem.domain.onboarding.repository.OnboardingRepository
 import com.tangem.domain.wallets.builder.ColdUserWalletBuilder
+import com.tangem.domain.wallets.nfc.NfcEncryptedWalletOnboardingRepository
 import com.tangem.domain.wallets.repository.WalletsRepository
 import com.tangem.domain.wallets.usecase.GetWalletsUseCase
 import com.tangem.domain.wallets.usecase.SaveWalletUseCase
@@ -74,10 +75,13 @@ internal class MultiWalletFinalizeModel @Inject constructor(
     private val uiMessageSender: UiMessageSender,
     private val backupValidator: BackupValidator,
     private val analyticsEventHandler: AnalyticsEventHandler,
+    private val nfcEncryptedWalletOnboardingRepository: NfcEncryptedWalletOnboardingRepository,
 ) : Model() {
 
     private val params = paramsContainer.require<MultiWalletChildParams>()
     private val multiWalletState get() = params.multiWalletState
+    private val isNfcEncryptedWallet
+        get() = nfcEncryptedWalletOnboardingRepository.isNfcScanResponse(multiWalletState.value.currentScanResponse)
     private val _uiState = MutableStateFlow(getInitialState())
 
     private val backupCardIds = backupServiceHolder.backupService.get()?.backupCardIds.orEmpty()
@@ -119,6 +123,15 @@ internal class MultiWalletFinalizeModel @Inject constructor(
     }
 
     private fun getInitialState(): MultiWalletFinalizeUM {
+        if (isNfcEncryptedWallet) {
+            return MultiWalletFinalizeUM(
+                onScanClick = ::onLinkClick,
+                scanPrimary = true,
+                step = MultiWalletFinalizeUM.Step.Primary,
+                cardNumber = multiWalletState.value.currentScanResponse.card.cardId.lastMasked(),
+            )
+        }
+
         val backupService = backupServiceHolder.backupService.get() ?: return MultiWalletFinalizeUM()
         val initialStep = getInitialStep()
 
@@ -144,6 +157,8 @@ internal class MultiWalletFinalizeModel @Inject constructor(
     }
 
     private fun getInitialStep(): MultiWalletFinalizeUM.Step {
+        if (isNfcEncryptedWallet) return MultiWalletFinalizeUM.Step.Primary
+
         val startFromFinalize =
             params.multiWalletState.value.startFromFinalize ?: return MultiWalletFinalizeUM.Step.Primary
 
@@ -169,6 +184,11 @@ internal class MultiWalletFinalizeModel @Inject constructor(
     }
 
     private fun writePrimaryCard() {
+        if (isNfcEncryptedWallet) {
+            writeNfcPrimaryCard()
+            return
+        }
+
         val backupService = backupServiceHolder.backupService.get() ?: return
         val primaryCardBatchId = backupService.primaryCardBatchId ?: return
         val isRing = isRing(primaryCardBatchId)
@@ -203,6 +223,11 @@ internal class MultiWalletFinalizeModel @Inject constructor(
     }
 
     private fun writeBackupCard(cardIndex: Int) {
+        if (isNfcEncryptedWallet) {
+            writeNfcBackupCard(cardIndex = cardIndex)
+            return
+        }
+
         val backupService = backupServiceHolder.backupService.get() ?: return
         val backupCardBatchId = backupService.backupCardsBatchIds.getOrNull(cardIndex) ?: return
         val isRing = isRing(backupCardBatchId)
@@ -247,6 +272,11 @@ internal class MultiWalletFinalizeModel @Inject constructor(
 
     @Suppress("LongMethod")
     private fun finishBackup() {
+        if (isNfcEncryptedWallet) {
+            finishNfcBackup()
+            return
+        }
+
         modelScope.launch {
             setLoading(true)
             val scanResponse = params.multiWalletState.value.currentScanResponse
@@ -337,6 +367,81 @@ internal class MultiWalletFinalizeModel @Inject constructor(
 
             cardRepository.finishCardActivation(scanResponse.card.cardId)
             backupServiceHolder.backupService.get()?.discardSavedBackup()
+            onEvent.emit(MultiWalletFinalizeComponent.Event.ThreeBackupCardsAdded)
+        }
+    }
+
+    private fun writeNfcPrimaryCard() {
+        modelScope.launch {
+            setLoading(true)
+
+            runCatching {
+                nfcEncryptedWalletOnboardingRepository.verifyPrimaryCard()
+            }.onSuccess {
+                onEvent.emit(MultiWalletFinalizeComponent.Event.OneBackupCardAdded)
+                _uiState.update { st ->
+                    st.copy(
+                        step = MultiWalletFinalizeUM.Step.BackupDevice1,
+                        scanPrimary = false,
+                        cardNumber = params.backups.value.card2?.cardId?.lastMasked().orEmpty(),
+                    )
+                }
+            }
+
+            setLoading(false)
+        }
+    }
+
+    private fun writeNfcBackupCard(cardIndex: Int) {
+        modelScope.launch {
+            setLoading(true)
+
+            runCatching {
+                nfcEncryptedWalletOnboardingRepository.verifyBackupCard(cardIndex = cardIndex)
+            }.onSuccess {
+                if (cardIndex == 0 && multiWalletState.value.isThreeCards) {
+                    onEvent.emit(MultiWalletFinalizeComponent.Event.TwoBackupCardsAdded)
+                    _uiState.update { st ->
+                        st.copy(
+                            step = MultiWalletFinalizeUM.Step.BackupDevice2,
+                            cardNumber = params.backups.value.card3?.cardId?.lastMasked().orEmpty(),
+                        )
+                    }
+                } else {
+                    finishNfcBackup()
+                }
+            }
+
+            setLoading(false)
+        }
+    }
+
+    private fun finishNfcBackup() {
+        modelScope.launch {
+            setLoading(true)
+
+            val accessCode = multiWalletState.value.accessCode?.accessCode?.toCharArray()
+            val userWallet = nfcEncryptedWalletOnboardingRepository.finalize(accessCode)
+
+            saveWalletUseCase.invoke(
+                userWallet = userWallet,
+                canOverride = true,
+                analyticsSource = AnalyticsParam.ScreensSources.Onboarding,
+            )
+
+            params.multiWalletState.update {
+                it.copy(resultUserWallet = userWallet)
+            }
+
+            launch(NonCancellable) {
+                syncWalletWithRemoteUseCase(userWalletId = userWallet.walletId)
+            }
+
+            onboardingRepository.clearUnfinishedFinalizeOnboarding()
+            cardRepository.finishCardActivation(multiWalletState.value.currentScanResponse.card.cardId)
+            nfcEncryptedWalletOnboardingRepository.clear()
+
+            setLoading(false)
             onEvent.emit(MultiWalletFinalizeComponent.Event.ThreeBackupCardsAdded)
         }
     }

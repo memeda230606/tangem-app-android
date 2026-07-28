@@ -61,10 +61,10 @@ dependencies {
     implementation(projects.domain.staking)
 
     /** Tangem libraries */
-    implementation(tangemDeps.hot.core)
+    implementation(projects.libs.hotSdkCompat)
     implementation(projects.libs.tangemSdkApi)
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.card.android) {
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.cardSdkCompat) {
         exclude(module = "joda-time")
     }
 
@@ -89,7 +89,7 @@ dependencies {
     implementation(deps.kotlin.immutable.collections)
     implementation(deps.kotlin.serialization)
     implementation(deps.firebase.crashlytics)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.cardSdkCompat)
 
     /** DI */
     implementation(deps.hilt.android)

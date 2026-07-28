@@ -19,6 +19,7 @@ import com.tangem.domain.transaction.*
 import com.tangem.domain.transaction.usecase.*
 import com.tangem.domain.transaction.usecase.gasless.*
 import com.tangem.domain.walletmanager.WalletManagersFacade
+import com.tangem.tap.domain.nfc.NfcEncryptedWalletSigner
 import com.tangem.utils.coroutines.AppCoroutineScope
 import dagger.Module
 import dagger.Provides
@@ -54,6 +55,7 @@ internal object TransactionDomainModule {
         walletManagersFacade: WalletManagersFacade,
         singleNetworkStatusFetcher: SingleNetworkStatusFetcher,
         tangemHotWalletSignerFactory: TangemHotWalletSigner.Factory,
+        nfcEncryptedWalletSignerFactory: NfcEncryptedWalletSigner.Factory,
         pushNotificationsRepository: PushNotificationsRepository,
         appScope: AppCoroutineScope,
     ): SendTransactionUseCase {
@@ -65,6 +67,7 @@ internal object TransactionDomainModule {
             singleNetworkStatusFetcher = singleNetworkStatusFetcher,
             parallelUpdatingScope = appScope,
             getHotWalletSigner = tangemHotWalletSignerFactory::create,
+            getNfcEncryptedWalletSigner = nfcEncryptedWalletSignerFactory::create,
             pushNotificationsRepository = pushNotificationsRepository,
         )
     }
@@ -77,6 +80,7 @@ internal object TransactionDomainModule {
         singleNetworkStatusSupplier: SingleNetworkStatusSupplier,
         multiWalletCryptoCurrenciesSupplier: MultiWalletCryptoCurrenciesSupplier,
         tangemHotWalletSignerFactory: TangemHotWalletSigner.Factory,
+        nfcEncryptedWalletSignerFactory: NfcEncryptedWalletSigner.Factory,
     ): AssociateAssetUseCase {
         return AssociateAssetUseCase(
             cardSdkConfigRepository = cardSdkConfigRepository,
@@ -84,6 +88,7 @@ internal object TransactionDomainModule {
             singleNetworkStatusSupplier = singleNetworkStatusSupplier,
             multiWalletCryptoCurrenciesSupplier = multiWalletCryptoCurrenciesSupplier,
             getHotTransactionSigner = tangemHotWalletSignerFactory::create,
+            getNfcEncryptedTransactionSigner = nfcEncryptedWalletSignerFactory::create,
         )
     }
 
@@ -93,11 +98,13 @@ internal object TransactionDomainModule {
         cardSdkConfigRepository: CardSdkConfigRepository,
         walletManagersFacade: WalletManagersFacade,
         tangemHotWalletSignerFactory: TangemHotWalletSigner.Factory,
+        nfcEncryptedWalletSignerFactory: NfcEncryptedWalletSigner.Factory,
     ): RetryIncompleteTransactionUseCase {
         return RetryIncompleteTransactionUseCase(
             cardSdkConfigRepository = cardSdkConfigRepository,
             walletManagersFacade = walletManagersFacade,
             getHotTransactionSigner = tangemHotWalletSignerFactory::create,
+            getNfcEncryptedTransactionSigner = nfcEncryptedWalletSignerFactory::create,
         )
     }
 
@@ -107,11 +114,13 @@ internal object TransactionDomainModule {
         cardSdkConfigRepository: CardSdkConfigRepository,
         walletManagersFacade: WalletManagersFacade,
         tangemHotWalletSignerFactory: TangemHotWalletSigner.Factory,
+        nfcEncryptedWalletSignerFactory: NfcEncryptedWalletSigner.Factory,
     ): OpenTrustlineUseCase {
         return OpenTrustlineUseCase(
             cardSdkConfigRepository = cardSdkConfigRepository,
             walletManagersFacade = walletManagersFacade,
             getHotTransactionSigner = tangemHotWalletSignerFactory::create,
+            getNfcEncryptedTransactionSigner = nfcEncryptedWalletSignerFactory::create,
         )
     }
 
@@ -200,11 +209,13 @@ internal object TransactionDomainModule {
         transactionRepository: TransactionRepository,
         cardSdkConfigRepository: CardSdkConfigRepository,
         tangemHotWalletSignerFactory: TangemHotWalletSigner.Factory,
+        nfcEncryptedWalletSignerFactory: NfcEncryptedWalletSigner.Factory,
     ): PrepareForSendUseCase {
         return PrepareForSendUseCase(
             transactionRepository = transactionRepository,
             cardSdkConfigRepository = cardSdkConfigRepository,
             getHotTransactionSigner = { tangemHotWalletSignerFactory.create(it) },
+            getNfcEncryptedTransactionSigner = { nfcEncryptedWalletSignerFactory.create(it) },
         )
     }
 
@@ -214,11 +225,13 @@ internal object TransactionDomainModule {
         transactionRepository: TransactionRepository,
         cardSdkConfigRepository: CardSdkConfigRepository,
         tangemHotWalletSignerFactory: TangemHotWalletSigner.Factory,
+        nfcEncryptedWalletSignerFactory: NfcEncryptedWalletSigner.Factory,
     ): PrepareAndSignUseCase {
         return PrepareAndSignUseCase(
             transactionRepository = transactionRepository,
             cardSdkConfigRepository = cardSdkConfigRepository,
             getHotTransactionSigner = { tangemHotWalletSignerFactory.create(it) },
+            getNfcEncryptedTransactionSigner = { nfcEncryptedWalletSignerFactory.create(it) },
         )
     }
 
@@ -228,11 +241,13 @@ internal object TransactionDomainModule {
         walletManagersFacade: WalletManagersFacade,
         cardSdkConfigRepository: CardSdkConfigRepository,
         tangemHotWalletSignerFactory: TangemHotWalletSigner.Factory,
+        nfcEncryptedWalletSignerFactory: NfcEncryptedWalletSigner.Factory,
     ): SignUseCase {
         return SignUseCase(
             cardSdkConfigRepository = cardSdkConfigRepository,
             walletManagersFacade = walletManagersFacade,
             getHotTransactionSigner = { tangemHotWalletSignerFactory.create(it) },
+            getNfcEncryptedTransactionSigner = { nfcEncryptedWalletSignerFactory.create(it) },
         )
     }
 
@@ -359,6 +374,7 @@ internal object TransactionDomainModule {
         singleAccountListSupplier: SingleAccountListSupplier,
         cardSdkConfigRepository: CardSdkConfigRepository,
         tangemHotWalletSignerFactory: TangemHotWalletSigner.Factory,
+        nfcEncryptedWalletSignerFactory: NfcEncryptedWalletSigner.Factory,
     ): CreateAndSendGaslessTransactionUseCase {
         return CreateAndSendGaslessTransactionUseCase(
             walletManagersFacade = walletManagersFacade,
@@ -366,6 +382,7 @@ internal object TransactionDomainModule {
             gaslessTransactionRepository = gaslessTransactionRepository,
             cardSdkConfigRepository = cardSdkConfigRepository,
             getHotWalletSigner = tangemHotWalletSignerFactory::create,
+            getNfcEncryptedWalletSigner = nfcEncryptedWalletSignerFactory::create,
         )
     }
 
@@ -411,11 +428,13 @@ internal object TransactionDomainModule {
         walletManagersFacade: WalletManagersFacade,
         cardSdkConfigRepository: CardSdkConfigRepository,
         tangemHotWalletSignerFactory: TangemHotWalletSigner.Factory,
+        nfcEncryptedWalletSignerFactory: NfcEncryptedWalletSigner.Factory,
     ): SignCloreMessageUseCase {
         return SignCloreMessageUseCase(
             walletManagersFacade = walletManagersFacade,
             cardSdkConfigRepository = cardSdkConfigRepository,
             getHotWalletSigner = tangemHotWalletSignerFactory::create,
+            getNfcEncryptedWalletSigner = nfcEncryptedWalletSignerFactory::create,
         )
     }
 }

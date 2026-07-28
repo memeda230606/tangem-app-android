@@ -48,6 +48,9 @@ internal class WalletLoadingStateFactory(
             is UserWallet.Hot -> {
                 createLoadingHotWalletContent(userWallet)
             }
+            is UserWallet.NfcEncrypted -> {
+                createLoadingNfcWalletContent(userWallet)
+            }
         }
     }
 
@@ -68,12 +71,27 @@ internal class WalletLoadingStateFactory(
             type = when (userWallet) {
                 is UserWallet.Cold -> WalletType.Cold
                 is UserWallet.Hot -> WalletType.Hot
+                is UserWallet.NfcEncrypted -> WalletType.Hot
             },
             tangemPayMainUM = TangemPayMainUM.Empty,
         )
     }
 
     private fun createLoadingHotWalletContent(userWallet: UserWallet.Hot): WalletState.MultiCurrency.Content {
+        return WalletState.MultiCurrency.Content(
+            pullToRefreshConfig = createPullToRefreshConfig(),
+            walletCardState = createLoadingWalletCardState(userWallet),
+            buttons = createMultiWalletActions(userWallet),
+            warnings = persistentListOf(),
+            bottomSheetConfig = null,
+            tokensListState = WalletTokensListState.ContentState.Loading,
+            nftState = WalletNFTItemUM.Hidden,
+            type = WalletType.Hot,
+            tangemPayMainUM = TangemPayMainUM.Empty,
+        )
+    }
+
+    private fun createLoadingNfcWalletContent(userWallet: UserWallet.NfcEncrypted): WalletState.MultiCurrency.Content {
         return WalletState.MultiCurrency.Content(
             pullToRefreshConfig = createPullToRefreshConfig(),
             walletCardState = createLoadingWalletCardState(userWallet),

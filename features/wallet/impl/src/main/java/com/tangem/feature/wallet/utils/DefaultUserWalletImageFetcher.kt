@@ -35,6 +35,7 @@ class DefaultUserWalletImageFetcher @Inject constructor(
     override fun walletImage(wallet: UserWallet, size: ArtworkSize): Flow<UserWalletItemUM.ImageState> = when (wallet) {
         is UserWallet.Cold -> walletImage(wallet.scanResponse.card, size)
         is UserWallet.Hot -> flowOf(UserWalletItemUM.ImageState.MobileWallet)
+        is UserWallet.NfcEncrypted -> flowOf(UserWalletItemUM.ImageState.MobileWallet)
     }
 
     override fun walletsImage(

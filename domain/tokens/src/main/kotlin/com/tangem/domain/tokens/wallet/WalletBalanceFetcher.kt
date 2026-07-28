@@ -130,6 +130,7 @@ class WalletBalanceFetcher internal constructor(
 
         val fetcher = when (userWallet) {
             is UserWallet.Hot -> multiWalletBalanceFetcher
+            is UserWallet.NfcEncrypted -> multiWalletBalanceFetcher
             is UserWallet.Cold -> {
                 val cardTypesResolver = userWallet.cardTypesResolver
                 when {

@@ -17,6 +17,7 @@ class SignUseCase(
     private val cardSdkConfigRepository: CardSdkConfigRepository,
     private val walletManagersFacade: WalletManagersFacade,
     private val getHotTransactionSigner: (UserWallet.Hot) -> TransactionSigner,
+    private val getNfcEncryptedTransactionSigner: (UserWallet.NfcEncrypted) -> TransactionSigner,
 ) {
     suspend operator fun invoke(
         hash: ByteArray,
@@ -25,6 +26,7 @@ class SignUseCase(
     ): Either<TangemError, ByteArray> {
         val signer = when (userWallet) {
             is UserWallet.Hot -> getHotTransactionSigner(userWallet)
+            is UserWallet.NfcEncrypted -> getNfcEncryptedTransactionSigner(userWallet)
             is UserWallet.Cold -> getColdSigner(userWallet)
         }
 

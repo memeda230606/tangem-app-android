@@ -19,6 +19,10 @@ internal val UserWallet.sensitiveInformation: UserWalletSensitiveInformation
             wallets = null,
             mobileWallets = this.wallets,
         )
+        is UserWallet.NfcEncrypted -> UserWalletSensitiveInformation(
+            wallets = null,
+            mobileWallets = this.wallets,
+        )
     }
 
 internal val UserWallet.publicInformation: UserWalletPublicInformation
@@ -35,8 +39,11 @@ internal val UserWallet.publicInformation: UserWalletPublicInformation
                 // visaCardActivationStatus = null,
             ),
             hasBackupError = hasBackupError,
+            walletType = null,
             hotWalletId = null,
             backedUp = null,
+            localKeyId = null,
+            backupSetId = null,
         )
         is UserWallet.Hot -> UserWalletPublicInformation(
             name = name,
@@ -44,22 +51,46 @@ internal val UserWallet.publicInformation: UserWalletPublicInformation
             isMultiCurrency = isMultiCurrency,
             cardsInWallet = emptySet(),
             scanResponse = null,
+            walletType = WALLET_TYPE_HOT,
             hotWalletId = hotWalletId,
             backedUp = backedUp,
+            localKeyId = null,
+            backupSetId = null,
+        )
+        is UserWallet.NfcEncrypted -> UserWalletPublicInformation(
+            name = name,
+            walletId = walletId,
+            isMultiCurrency = isMultiCurrency,
+            cardsInWallet = cardsInWallet,
+            scanResponse = null,
+            walletType = WALLET_TYPE_NFC_ENCRYPTED,
+            hotWalletId = hotWalletId,
+            backedUp = backedUp,
+            localKeyId = localKeyId,
+            backupSetId = backupSetId,
         )
     }
 
 internal fun UserWalletPublicInformation.toUserWallet(): UserWallet {
-    return if (hotWalletId != null) {
-        UserWallet.Hot(
+    return when {
+        walletType == WALLET_TYPE_NFC_ENCRYPTED -> UserWallet.NfcEncrypted(
+            name = name,
+            walletId = walletId,
+            cardsInWallet = cardsInWallet,
+            hotWalletId = requireNotNull(hotWalletId),
+            wallets = null,
+            localKeyId = requireNotNull(localKeyId),
+            backupSetId = requireNotNull(backupSetId),
+            backedUp = requireNotNull(backedUp),
+        )
+        hotWalletId != null -> UserWallet.Hot(
             name = name,
             walletId = walletId,
             hotWalletId = hotWalletId,
             wallets = null,
             backedUp = requireNotNull(backedUp),
         )
-    } else {
-        UserWallet.Cold(
+        else -> UserWallet.Cold(
             name = name,
             walletId = walletId,
             cardsInWallet = cardsInWallet,
@@ -91,6 +122,9 @@ internal fun UserWallet.updateWith(
             )
         }
         is UserWallet.Hot -> copy(
+            wallets = sensitiveInformation.mobileWallets,
+        )
+        is UserWallet.NfcEncrypted -> copy(
             wallets = sensitiveInformation.mobileWallets,
         )
     }
@@ -128,4 +162,8 @@ internal fun UserWallet.lock(): UserWallet = when (this) {
         )
     }
     is UserWallet.Hot -> copy(wallets = null)
+    is UserWallet.NfcEncrypted -> copy(wallets = null)
 }
+
+private const val WALLET_TYPE_HOT = "hot"
+private const val WALLET_TYPE_NFC_ENCRYPTED = "nfc_encrypted"

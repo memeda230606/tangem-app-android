@@ -17,7 +17,7 @@ dependencies {
     implementation(projects.domain.visa.models)
 
     /** Tangem libraries */
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.cardSdkCompat)
 
     /** Core */
     implementation(projects.core.ui)

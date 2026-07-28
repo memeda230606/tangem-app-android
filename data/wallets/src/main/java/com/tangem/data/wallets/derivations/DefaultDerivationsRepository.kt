@@ -48,6 +48,13 @@ internal class DefaultDerivationsRepository @Inject constructor(
             is UserWallet.Hot -> {
                 hotDerivationsRepository.derivePublicKeysByNetworkIds(userWallet, networkIds, accountIndex)
             }
+            is UserWallet.NfcEncrypted -> {
+                hotDerivationsRepository.derivePublicKeysByNetworkIds(
+                    userWallet.toHotWallet(),
+                    networkIds,
+                    accountIndex,
+                ).let { hotWallet -> userWallet.copyFromHotWallet(hotWallet) }
+            }
         }.also {
             userWallet.update(it)
         }
@@ -58,6 +65,9 @@ internal class DefaultDerivationsRepository @Inject constructor(
         when (userWallet) {
             is UserWallet.Cold -> coldDerivationsRepository.derivePublicKeysByNetworks(userWallet, networks)
             is UserWallet.Hot -> hotDerivationsRepository.derivePublicKeysByNetworks(userWallet, networks)
+            is UserWallet.NfcEncrypted -> hotDerivationsRepository
+                .derivePublicKeysByNetworks(userWallet.toHotWallet(), networks)
+                .let { hotWallet -> userWallet.copyFromHotWallet(hotWallet) }
         }.also {
             userWallet.update(it)
         }
@@ -71,6 +81,9 @@ internal class DefaultDerivationsRepository @Inject constructor(
         return when (userWallet) {
             is UserWallet.Cold -> coldDerivationsRepository.derivePublicKeys(userWallet, derivations)
             is UserWallet.Hot -> hotDerivationsRepository.derivePublicKeys(userWallet, derivations)
+            is UserWallet.NfcEncrypted -> hotDerivationsRepository
+                .derivePublicKeys(userWallet.toHotWallet(), derivations)
+                .let { userWallet.copyFromHotWallet(it.first) to it.second }
         }.let { publicKeysMapByUserWallet ->
             userWallet.update(publicKeysMapByUserWallet.first)
             publicKeysMapByUserWallet.second
@@ -88,10 +101,12 @@ internal class DefaultDerivationsRepository @Inject constructor(
     private fun UserWallet.getExistingDerivedKeys(): Map<ByteArrayKey, ExtendedPublicKeysMap> {
         return when (this) {
             is UserWallet.Cold -> scanResponse.derivedKeys
-            is UserWallet.Hot ->
-                wallets
-                    ?.associate { it.publicKey.toMapKey() to ExtendedPublicKeysMap(it.derivedKeys) }
-                    .orEmpty()
+            is UserWallet.Hot -> wallets
+                ?.associate { it.publicKey.toMapKey() to ExtendedPublicKeysMap(it.derivedKeys) }
+                .orEmpty()
+            is UserWallet.NfcEncrypted -> wallets
+                ?.associate { it.publicKey.toMapKey() to ExtendedPublicKeysMap(it.derivedKeys) }
+                .orEmpty()
         }
     }
 
@@ -102,7 +117,33 @@ internal class DefaultDerivationsRepository @Inject constructor(
         return when (val userWallet = userWalletsListRepository.getSyncStrict(userWalletId)) {
             is UserWallet.Cold -> coldDerivationsRepository.hasMissedDerivations(userWallet, networksWithDerivationPath)
             is UserWallet.Hot -> hotDerivationsRepository.hasMissedDerivations(userWallet, networksWithDerivationPath)
+            is UserWallet.NfcEncrypted -> hotDerivationsRepository.hasMissedDerivations(
+                userWallet.toHotWallet(),
+                networksWithDerivationPath,
+            )
         }
+    }
+
+    private fun UserWallet.NfcEncrypted.toHotWallet(): UserWallet.Hot {
+        return UserWallet.Hot(
+            name = name,
+            walletId = walletId,
+            hotWalletId = hotWalletId,
+            wallets = wallets,
+            backedUp = backedUp,
+        )
+    }
+
+    private fun UserWallet.NfcEncrypted.copyFromHotWallet(hotWallet: UserWallet): UserWallet.NfcEncrypted {
+        val hot = hotWallet as UserWallet.Hot
+
+        return copy(
+            name = hot.name,
+            walletId = hot.walletId,
+            hotWalletId = hot.hotWalletId,
+            wallets = hot.wallets,
+            backedUp = hot.backedUp,
+        )
     }
 
     private suspend fun UserWallet.update(newUserWallet: UserWallet) = withContext(dispatchers.io) {

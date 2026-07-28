@@ -33,7 +33,7 @@ dependencies {
     implementation(projects.common.ui)
 
     /** SDK */
-    implementation(tangemDeps.blockchain) {
+    implementation(projects.libs.blockchainCompat) {
         exclude(module = "joda-time")
     }
 

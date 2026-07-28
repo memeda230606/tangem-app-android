@@ -43,6 +43,9 @@ internal class DefaultTrackingContextProxy(private val abTestsManager: ABTestsMa
             is UserWallet.Hot -> {
                 setHotWalletUserProperties(userWallet)
             }
+            is UserWallet.NfcEncrypted -> {
+                setHotWalletUserProperties(userWallet.toHotWallet())
+            }
         }
     }
 
@@ -83,6 +86,16 @@ internal class DefaultTrackingContextProxy(private val abTestsManager: ABTestsMa
             batch = userWallet.scanResponse.card.batchId,
             productType = userWallet.scanResponse.productType.name,
             firmware = userWallet.scanResponse.card.firmwareVersion.stringValue,
+        )
+    }
+
+    private fun UserWallet.NfcEncrypted.toHotWallet(): UserWallet.Hot {
+        return UserWallet.Hot(
+            name = name,
+            walletId = walletId,
+            hotWalletId = hotWalletId,
+            wallets = wallets,
+            backedUp = backedUp,
         )
     }
 

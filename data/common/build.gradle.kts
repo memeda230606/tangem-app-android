@@ -31,8 +31,8 @@ dependencies {
     implementation(projects.domain.wallets)
 
     /* Libs - SDK */
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.cardSdkCompat)
     implementation(projects.libs.crypto)
     implementation(projects.libs.blockchainSdk)
 

@@ -21,6 +21,7 @@ import com.tangem.domain.card.repository.CardSdkConfigRepository
 import com.tangem.domain.feedback.SendFeedbackEmailUseCase
 import com.tangem.domain.feedback.models.FeedbackEmailType
 import com.tangem.domain.models.scan.ProductType
+import com.tangem.domain.wallets.nfc.NfcEncryptedWalletOnboardingRepository
 import com.tangem.features.onboarding.v2.common.analytics.OnboardingEvent
 import com.tangem.features.onboarding.v2.impl.R
 import com.tangem.features.onboarding.v2.multiwallet.impl.child.MultiWalletChildParams
@@ -33,6 +34,7 @@ import com.tangem.sdk.api.BackupServiceHolder
 import com.tangem.sdk.api.TangemSdkManager
 import com.tangem.sdk.extensions.localizedDescriptionRes
 import com.tangem.utils.coroutines.CoroutineDispatcherProvider
+import com.tangem.utils.logging.TangemLogger
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +56,7 @@ class MultiWalletBackupModel @Inject constructor(
     private val uiMessageSender: UiMessageSender,
     private val sendFeedbackEmailUseCase: SendFeedbackEmailUseCase,
     private val cardRepository: CardRepository,
+    private val nfcEncryptedWalletOnboardingRepository: NfcEncryptedWalletOnboardingRepository,
 ) : Model() {
 
     @Suppress("UnusedPrivateMember")
@@ -62,6 +65,8 @@ class MultiWalletBackupModel @Inject constructor(
         get() = params.multiWalletState.value.currentScanResponse
     private val backupService
         get() = backupServiceHolder.backupService.get()!!
+    private val isNfcEncryptedWallet
+        get() = nfcEncryptedWalletOnboardingRepository.isNfcScanResponse(scanResponse)
 
     private val state = MutableStateFlow(BackupState())
 
@@ -86,14 +91,15 @@ class MultiWalletBackupModel @Inject constructor(
 
         analyticsEventHandler.send(OnboardingEvent.Backup.Started())
 
-        // Clear any saved backup before starting the backup process
-        // also clears the primary card if it was set
-        backupService.discardSavedBackup()
+        if (!isNfcEncryptedWallet) {
+            // Clear any saved backup before starting the backup process. Also clears the primary card if it was set.
+            backupService.discardSavedBackup()
 
-        // Primary card from ScanTask or from the ScanPrimaryModel or from MultiWalletCreateWalletModel
-        // always not null for this step
-        val primaryCard = requireNotNull(scanResponse.primaryCard)
-        backupService.setPrimaryCard(primaryCard)
+            // Primary card from ScanTask or from the ScanPrimaryModel or from MultiWalletCreateWalletModel.
+            // Always not null for this step.
+            val primaryCard = requireNotNull(scanResponse.primaryCard)
+            backupService.setPrimaryCard(primaryCard)
+        }
     }
 
     private fun getInitState(): MultiWalletBackupUM {
@@ -180,6 +186,11 @@ class MultiWalletBackupModel @Inject constructor(
     }
 
     private fun addBackupCardWithService() {
+        if (isNfcEncryptedWallet) {
+            addNfcBackupCard()
+            return
+        }
+
         _uiState.update { st ->
             st.copy(addBackupButtonLoading = true)
         }
@@ -245,6 +256,47 @@ class MultiWalletBackupModel @Inject constructor(
                         else -> analyticsExceptionHandler.sendException(ExceptionAnalyticsEvent(result.error))
                     }
                 }
+            }
+        }
+    }
+
+    private fun addNfcBackupCard() {
+        _uiState.update { st ->
+            st.copy(addBackupButtonLoading = true)
+        }
+
+        modelScope.launch {
+            runCatching {
+                nfcEncryptedWalletOnboardingRepository.addBackupCard()
+            }.onSuccess { card ->
+                state.update {
+                    it.copy(numberOfBackupCards = it.numberOfBackupCards + 1)
+                }
+
+                val backupCardInfo = MultiWalletChildParams.Backup.BackupCardInfo(
+                    cardId = card.cardId,
+                    cardPublicKey = card.cardPublicKey,
+                    manufacturer = com.tangem.common.card.Card.Manufacturer(
+                        name = card.manufacturer.name,
+                        manufactureDate = card.manufacturer.manufactureDate,
+                        signature = card.manufacturer.signature,
+                    ),
+                    firmwareVersion = card.firmwareVersion.toSdkFirmwareVersion(),
+                )
+                params.backups.update {
+                    it.copy(
+                        card2 = if (state.value.numberOfBackupCards == 1) backupCardInfo else it.card2,
+                        card3 = if (state.value.numberOfBackupCards == 2) backupCardInfo else it.card3,
+                    )
+                }
+
+                setNumberOfBackupCards(state.value.numberOfBackupCards)
+            }.onFailure { error ->
+                TangemLogger.e("NFC encrypted wallet backup error occurred", error)
+            }
+
+            _uiState.update { st ->
+                st.copy(addBackupButtonLoading = false)
             }
         }
     }

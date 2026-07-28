@@ -12,6 +12,7 @@ import com.tangem.domain.models.scan.CardDTO
 import com.tangem.domain.models.scan.ScanResponse
 import com.tangem.domain.onboarding.repository.OnboardingRepository
 import com.tangem.domain.wallets.builder.ColdUserWalletBuilder
+import com.tangem.domain.wallets.nfc.NfcEncryptedWalletOnboardingRepository
 import com.tangem.domain.wallets.repository.WalletsRepository
 import com.tangem.domain.wallets.usecase.GetWalletsUseCase
 import com.tangem.domain.wallets.usecase.SaveWalletUseCase
@@ -62,6 +63,7 @@ internal class MultiWalletFinalizeModelTest {
     private val uiMessageSender: UiMessageSender = mockk(relaxUnitFun = true)
     private val backupValidator: BackupValidator = mockk()
     private val analyticsEventHandler: AnalyticsEventHandler = mockk(relaxUnitFun = true)
+    private val nfcEncryptedWalletOnboardingRepository: NfcEncryptedWalletOnboardingRepository = mockk()
     private val paramsContainer: ParamsContainer = mockk()
 
     private val scanResponse: ScanResponse = mockk()
@@ -96,6 +98,7 @@ internal class MultiWalletFinalizeModelTest {
         every { backupService.backupCardIds } returns listOf("backup-1-bbbb", "backup-2-cccc")
         every { backupService.backupCardsBatchIds } returns listOf(NON_RING_BATCH_ID, NON_RING_BATCH_ID)
         every { backupService.currentState } returns CardBackupService.State.FinalizingPrimaryCard
+        every { nfcEncryptedWalletOnboardingRepository.isNfcScanResponse(any()) } returns false
         coEvery { onboardingRepository.saveUnfinishedFinalizeOnboarding(any()) } just Runs
     }
 
@@ -482,6 +485,7 @@ internal class MultiWalletFinalizeModelTest {
             uiMessageSender = uiMessageSender,
             backupValidator = backupValidator,
             analyticsEventHandler = analyticsEventHandler,
+            nfcEncryptedWalletOnboardingRepository = nfcEncryptedWalletOnboardingRepository,
         )
     }
 

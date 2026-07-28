@@ -232,6 +232,19 @@ internal class DefaultCustomTokensRepository(
                     )
                 }
             }
+            is UserWallet.NfcEncrypted -> {
+                Blockchain.entries.mapNotNull { blockchain ->
+                    // TODO: refactor [REDACTED_JIRA]
+                    val isExcluded = blockchain in excludedBlockchains || blockchain in hotWalletExcludedBlockchains
+                    if (blockchain.isTestnet() || isExcluded) return@mapNotNull null
+
+                    networkFactory.create(
+                        blockchain = blockchain,
+                        extraDerivationPath = null,
+                        userWallet = userWallet,
+                    )
+                }
+            }
             is UserWallet.Cold -> {
                 val scanResponse = userWallet.scanResponse
 

@@ -13,6 +13,7 @@ internal inline fun UserWallet.createStateByWalletType(
         else -> singleCurrencyCreator()
     }
     is UserWallet.Hot -> multiCurrencyCreator()
+    is UserWallet.NfcEncrypted -> multiCurrencyCreator()
 }
 
 private fun UserWallet.Cold.isWalletWithTokens(): Boolean {

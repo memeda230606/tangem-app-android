@@ -83,6 +83,25 @@ class UserWalletItemUMConverter(
             is UserWallet.Hot -> {
                 TextReference.Res(R.string.hw_mobile_wallet)
             }
+            is UserWallet.NfcEncrypted -> {
+                when (mode) {
+                    is InfoField.Devices -> {
+                        val cardCount = userWallet.cardsInWallet.size.takeIf { it > 0 } ?: 1
+                        TextReference.PluralRes(
+                            id = R.plurals.card_label_card_count,
+                            count = cardCount,
+                            formatArgs = wrappedList(cardCount),
+                        )
+                    }
+                    is InfoField.Tokens -> {
+                        TextReference.PluralRes(
+                            id = R.plurals.common_tokens_count,
+                            count = mode.tokensCount,
+                            formatArgs = wrappedList(mode.tokensCount),
+                        )
+                    }
+                }
+            }
         }
 
         return UserWalletItemUM.Information.Loaded(text)

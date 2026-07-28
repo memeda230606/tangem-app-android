@@ -76,7 +76,7 @@ dependencies {
     implementation(deps.compose.coil)
 
     /** Tangem libraries */
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
     implementation(projects.libs.blockchainSdk)
 
     /** Other */

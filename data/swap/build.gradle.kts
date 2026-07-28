@@ -42,7 +42,7 @@ dependencies {
     implementation(projects.domain.account)
 
     /** Tangem SDK */
-    implementation(tangemDeps.blockchain) {
+    implementation(projects.libs.blockchainCompat) {
         exclude(module = "joda-time")
     }
 
@@ -63,7 +63,7 @@ dependencies {
 
     /** Test */
     testRuntimeOnly(deps.test.junit5.engine)
-    testImplementation(tangemDeps.card.core)
+    testImplementation(projects.libs.cardSdkCompat)
     testImplementation(projects.common.test)
     testImplementation(projects.test.core)
 }

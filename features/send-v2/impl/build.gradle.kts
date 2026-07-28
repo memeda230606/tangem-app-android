@@ -37,7 +37,7 @@ dependencies {
     api(projects.core.pagination)
 
     /** Tangem SDK */
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
     /** Common */
     implementation(projects.common.ui)

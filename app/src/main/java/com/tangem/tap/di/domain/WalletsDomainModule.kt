@@ -14,6 +14,8 @@ import com.tangem.domain.wallets.delegate.DefaultUserWalletsSyncDelegate
 import com.tangem.domain.wallets.delegate.UserWalletsSyncDelegate
 import com.tangem.domain.wallets.derivations.DerivationsRepository
 import com.tangem.domain.wallets.hot.HotWalletAccessor
+import com.tangem.domain.wallets.nfc.NfcCardGateway
+import com.tangem.domain.wallets.nfc.NfcEncryptedWalletOnboardingRepository
 import com.tangem.domain.wallets.repository.WalletNamesMigrationRepository
 import com.tangem.domain.wallets.repository.WalletsPromoRepository
 import com.tangem.domain.wallets.repository.WalletsRepository
@@ -25,6 +27,8 @@ import com.tangem.feature.wallet.presentation.wallet.domain.IsWalletNFTEnabledSy
 import com.tangem.feature.wallet.presentation.wallet.domain.WalletNameMigrationUseCase
 import com.tangem.operations.attestation.CardArtworksProvider
 import com.tangem.tap.domain.DefaultUserWalletSelectedHandler
+import com.tangem.tap.domain.nfc.AndroidNdefNfcCardGateway
+import com.tangem.tap.domain.nfc.DefaultNfcEncryptedWalletOnboardingRepository
 import com.tangem.utils.coroutines.CoroutineDispatcherProvider
 import dagger.Module
 import dagger.Provides
@@ -42,6 +46,20 @@ internal object WalletsDomainModule {
         userWalletsListRepository: UserWalletsListRepository,
     ): UserWalletsSyncDelegate {
         return DefaultUserWalletsSyncDelegate(userWalletsListRepository = userWalletsListRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun providesNfcCardGateway(gateway: AndroidNdefNfcCardGateway): NfcCardGateway {
+        return gateway
+    }
+
+    @Provides
+    @Singleton
+    fun providesNfcEncryptedWalletOnboardingRepository(
+        repository: DefaultNfcEncryptedWalletOnboardingRepository,
+    ): NfcEncryptedWalletOnboardingRepository {
+        return repository
     }
 
     @Provides

@@ -13,7 +13,7 @@ dependencies {
     implementation(projects.domain.models)
 
     /** Libs - Tangem */
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.cardSdkCompat)
 
     /** Libs - Other */
     implementation(deps.moshi.adapters)

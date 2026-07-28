@@ -35,6 +35,7 @@ class UpdateRemoteWalletsInfoUseCase(
         val userWallet = userWalletsMap[userWalletId] ?: return ""
         return when (userWallet) {
             is UserWallet.Hot -> generateWalletNameUseCase.invokeForHot()
+            is UserWallet.NfcEncrypted -> generateWalletNameUseCase.invokeForHot()
             is UserWallet.Cold -> generateWalletNameUseCase(
                 userWallet.scanResponse.productType,
                 card = userWallet.scanResponse.card,

@@ -44,9 +44,9 @@ dependencies {
     implementation(projects.common)
 
     // region Tangem libraries
-    implementation(tangemDeps.blockchain) // android-library
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.hot.core)
+    implementation(projects.libs.blockchainCompat) // android-library
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.hotSdkCompat)
     // endregion
 
     /** Other libraries */

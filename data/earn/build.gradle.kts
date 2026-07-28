@@ -37,7 +37,7 @@ dependencies {
     // region Other libraries
     implementation(deps.androidx.datastore)
     implementation(deps.moshi.kotlin)
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
     // endregion
 
 }

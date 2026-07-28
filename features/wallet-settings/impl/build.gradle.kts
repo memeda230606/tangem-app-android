@@ -75,6 +75,6 @@ dependencies {
     implementation(deps.kotlin.immutable.collections)
 
     /** Tangem libraries */
-    implementation(tangemDeps.hot.core)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.hotSdkCompat)
+    implementation(projects.libs.cardSdkCompat)
 }

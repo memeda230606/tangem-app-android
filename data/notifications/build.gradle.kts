@@ -11,7 +11,7 @@ android {
 
 dependencies {
     // region sdk
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
     // endregion
 
     // region AndroidX libraries

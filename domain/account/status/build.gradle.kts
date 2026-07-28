@@ -39,9 +39,9 @@ dependencies {
     implementation(deps.kotlin.datetime)
     implementation(deps.kotlin.serialization)
 
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.hot.core)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.hotSdkCompat)
 
     // region DI
     implementation(deps.hilt.android)

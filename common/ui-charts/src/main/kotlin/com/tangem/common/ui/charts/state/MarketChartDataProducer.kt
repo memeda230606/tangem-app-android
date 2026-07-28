@@ -92,7 +92,7 @@ class MarketChartDataProducer private constructor(
     internal val dataState = MutableStateFlow(initialData)
     internal val lookState = MutableStateFlow(initialLook)
     internal val entries = MutableStateFlow<List<LineCartesianLayerModel.Entry>>(emptyList())
-    internal val modelProducer = CartesianChartModelProducer(dispatcher = dispatcher)
+    internal val modelProducer = CartesianChartModelProducer()
     internal val rawData = MutableStateFlow<MarketChartRawData?>(null)
     private val mutex = Mutex()
 

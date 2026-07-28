@@ -52,6 +52,12 @@ class SaveWalletUseCase(
                             UserWalletsListRepository.LockMethod.NoLock,
                         )
                     }
+                    is UserWallet.NfcEncrypted -> {
+                        userWalletsListRepository.setLock(
+                            userWallet.walletId,
+                            UserWalletsListRepository.LockMethod.NoLock,
+                        )
+                    }
                 }.mapLeft {
                     SaveWalletError.DataError(null)
                 }.map {
@@ -62,7 +68,8 @@ class SaveWalletUseCase(
     }
 
     private suspend fun trackColdWalletAddedIfNeeded(source: AnalyticsParam.ScreensSources?, userWallet: UserWallet) {
-        val hasHotWallet = userWalletsListRepository.userWalletsSync().any { it is UserWallet.Hot }
+        val hasHotWallet = userWalletsListRepository.userWalletsSync()
+            .any { it is UserWallet.Hot || it is UserWallet.NfcEncrypted }
         if (hasHotWallet && userWallet is UserWallet.Cold) {
             analyticsEventHandler.send(event = Settings.ColdWalletAdded(source))
         }

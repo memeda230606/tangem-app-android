@@ -69,8 +69,8 @@ dependencies {
     /** Other Libraries **/
     implementation(deps.kotlin.coroutines)
     implementation(deps.arrow.core)
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.cardSdkCompat)
     implementation(deps.moshi)
     ksp(deps.moshi.kotlin.codegen)
 

@@ -13,7 +13,7 @@ android {
 
 dependencies {
     /* Tangem libraries */
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.cardSdkCompat)
 
     /* Project - API */
     implementation(projects.features.manageTokens.api)
@@ -48,7 +48,7 @@ dependencies {
     // endregion
 
     // region Tangem SDKs
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
     // endregion
 
     /* AndroidX */

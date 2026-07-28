@@ -30,12 +30,14 @@ internal sealed interface DerivationsSource {
             get() = when (userWallet) {
                 is UserWallet.Cold -> userWallet.scanResponse.card.settings.isHDWalletAllowed
                 is UserWallet.Hot -> true
+                is UserWallet.NfcEncrypted -> true
             }
 
         override val hasOldStyleDerivation: Boolean
             get() = when (userWallet) {
                 is UserWallet.Cold -> userWallet.scanResponse.card.hasOldStyleDerivation
                 is UserWallet.Hot -> false
+                is UserWallet.NfcEncrypted -> false
             }
 
         override val curvesConfig: CurvesConfig
@@ -47,10 +49,12 @@ internal sealed interface DerivationsSource {
         override fun getWalletPublicKey(curve: EllipticCurve): ByteArray? {
             return when (userWallet) {
                 is UserWallet.Cold -> userWallet.scanResponse.getWalletPublicKey(curve)
-                is UserWallet.Hot ->
-                    userWallet.wallets
-                        ?.firstOrNull { it.curve == curve && it.chainCode != null }
-                        ?.publicKey
+                is UserWallet.Hot -> userWallet.wallets
+                    ?.firstOrNull { it.curve == curve && it.chainCode != null }
+                    ?.publicKey
+                is UserWallet.NfcEncrypted -> userWallet.wallets
+                    ?.firstOrNull { it.curve == curve && it.chainCode != null }
+                    ?.publicKey
             }
         }
 
@@ -58,6 +62,14 @@ internal sealed interface DerivationsSource {
             return when (userWallet) {
                 is UserWallet.Cold -> userWallet.scanResponse.getDerivedKeys(publicKey)
                 is UserWallet.Hot -> {
+                    val derivedKeys = userWallet.wallets
+                        ?.firstOrNull { it.publicKey.contentEquals(publicKey.bytes) }
+                        ?.derivedKeys
+                        .orEmpty()
+
+                    ExtendedPublicKeysMap(derivedKeys)
+                }
+                is UserWallet.NfcEncrypted -> {
                     val derivedKeys = userWallet.wallets
                         ?.firstOrNull { it.publicKey.contentEquals(publicKey.bytes) }
                         ?.derivedKeys

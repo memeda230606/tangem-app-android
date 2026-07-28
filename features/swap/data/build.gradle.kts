@@ -56,7 +56,7 @@ dependencies {
     implementation(projects.data.common)
 
     /** Tangem SDKs */
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
     /** Others */
     implementation(deps.jodatime)

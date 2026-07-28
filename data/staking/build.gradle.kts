@@ -62,15 +62,15 @@ dependencies {
     implementation(projects.libs.blockchainSdk)
     implementation(projects.libs.crypto)
 
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.blockchain) {
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.blockchainCompat) {
         exclude(module = "joda-time")
     }
 
     // endregion
 
     testRuntimeOnly(deps.test.junit5.engine)
-    testImplementation(tangemDeps.card.core)
+    testImplementation(projects.libs.cardSdkCompat)
     testImplementation(projects.common.test)
     testImplementation(projects.test.core)
 }

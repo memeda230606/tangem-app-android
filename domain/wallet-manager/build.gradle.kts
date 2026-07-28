@@ -26,11 +26,11 @@ dependencies {
     implementation(projects.domain.txhistory.models)
 
     /** Tangem libs */
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.cardSdkCompat)
 
     /** Libs - Other */
     implementation(projects.libs.blockchainSdk)
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
     implementation(deps.moshi)
     implementation(deps.moshi.kotlin)
     ksp(deps.moshi.kotlin.codegen)

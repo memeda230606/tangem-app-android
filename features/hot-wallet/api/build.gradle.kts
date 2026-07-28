@@ -22,11 +22,11 @@ dependencies {
     implementation(projects.core.ui)
 
     /* Tangem libraries */
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.cardSdkCompat)
 
     /* Compose */
     implementation(deps.compose.runtime)
 
     /* Tangem libs */
-    implementation(tangemDeps.hot.core)
+    implementation(projects.libs.hotSdkCompat)
 }

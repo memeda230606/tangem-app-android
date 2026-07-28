@@ -43,6 +43,7 @@ internal object WalletAdditionalInfoFactory {
                 }
             }
             is UserWallet.Hot -> wallet.resolveAdditionalInfo(syncProgress)
+            is UserWallet.NfcEncrypted -> wallet.resolveNfcAdditionalInfo()
         }
     }
 
@@ -64,6 +65,21 @@ internal object WalletAdditionalInfoFactory {
             content = content,
             isHotBackedUp = backedUp,
         )
+    }
+
+    private fun UserWallet.NfcEncrypted.resolveNfcAdditionalInfo(): WalletAdditionalInfo {
+        val cardsCount = cardsInWallet.size.takeIf { it > 0 }
+
+        return if (isLocked) {
+            WalletAdditionalInfo(
+                hideable = false,
+                content = WalletAdditionalInfo.Content.Text(
+                    getBackupInfoWithDivider(backupCardsCount = cardsCount) + TextReference.Res(R.string.common_locked),
+                ),
+            )
+        } else {
+            getBackupInfo(backupCardsCount = cardsCount)
+        }
     }
 
     private fun UserWallet.Cold.resolveMultiCurrencyInfo(): WalletAdditionalInfo {

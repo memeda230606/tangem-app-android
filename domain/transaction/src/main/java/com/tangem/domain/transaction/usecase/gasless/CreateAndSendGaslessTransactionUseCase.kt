@@ -38,6 +38,7 @@ class CreateAndSendGaslessTransactionUseCase(
     private val gaslessTransactionRepository: GaslessTransactionRepository,
     private val cardSdkConfigRepository: CardSdkConfigRepository,
     private val getHotWalletSigner: (UserWallet.Hot) -> TransactionSigner,
+    private val getNfcEncryptedWalletSigner: (UserWallet.NfcEncrypted) -> TransactionSigner,
 ) {
 
     suspend operator fun invoke(
@@ -239,6 +240,7 @@ class CreateAndSendGaslessTransactionUseCase(
                 )
             }
             is UserWallet.Hot -> getHotWalletSigner(userWallet)
+            is UserWallet.NfcEncrypted -> getNfcEncryptedWalletSigner(userWallet)
         }
     }
 

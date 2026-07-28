@@ -34,8 +34,8 @@ dependencies {
     // endregion
 
     // region Project - Libs
-    implementation(tangemDeps.blockchain) { exclude(module = "joda-time") }
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.blockchainCompat) { exclude(module = "joda-time") }
+    implementation(projects.libs.cardSdkCompat)
     // endregion
 
     // region DI

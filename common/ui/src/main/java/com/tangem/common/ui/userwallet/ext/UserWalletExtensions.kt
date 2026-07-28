@@ -7,5 +7,6 @@ fun walletInterationIcon(userWallet: UserWallet): Int? {
     return when (userWallet) {
         is UserWallet.Cold -> R.drawable.ic_tangem_24
         is UserWallet.Hot -> null
+        is UserWallet.NfcEncrypted -> R.drawable.ic_tangem_24
     }
 }

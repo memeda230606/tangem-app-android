@@ -43,7 +43,7 @@ dependencies {
     implementation(projects.domain.hotWallet)
 
     /** Libs */
-    implementation(tangemDeps.hot.core)
+    implementation(projects.libs.hotSdkCompat)
 
     /** Data **/
     implementation(projects.data.visa)

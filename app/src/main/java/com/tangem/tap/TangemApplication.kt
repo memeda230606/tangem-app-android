@@ -169,7 +169,11 @@ open class TangemApplication : Application(), ImageLoaderFactory, Configuration.
     }
 
     private fun loadNativeLibraries() {
-        System.loadLibrary("TrustWalletCore")
+        runCatching {
+            System.loadLibrary("TrustWalletCore")
+        }.onFailure { error ->
+            TangemLogger.w("TrustWalletCore native library is unavailable in standalone build", error)
+        }
     }
 
     private fun initAnalytics(application: Application, environmentConfig: EnvironmentConfig) {

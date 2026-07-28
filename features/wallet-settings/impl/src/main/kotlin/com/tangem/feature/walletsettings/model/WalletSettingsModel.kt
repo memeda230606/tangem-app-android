@@ -148,6 +148,7 @@ internal class WalletSettingsModel @Inject constructor(
             val isWalletBackedUp = when (wallet) {
                 is UserWallet.Hot -> wallet.backedUp
                 is UserWallet.Cold -> true
+                is UserWallet.NfcEncrypted -> true
             }
             state.update { value ->
                 value.copy(
@@ -202,6 +203,7 @@ internal class WalletSettingsModel @Inject constructor(
         val isMultiCurrency = when (userWallet) {
             is UserWallet.Cold -> userWallet.isMultiCurrency
             is UserWallet.Hot -> true
+            is UserWallet.NfcEncrypted -> true
         }
         return itemsBuilder.buildItems(
             userWallet = userWallet,
@@ -209,10 +211,12 @@ internal class WalletSettingsModel @Inject constructor(
             isReferralAvailable = when (userWallet) {
                 is UserWallet.Cold -> userWallet.cardTypesResolver.isTangemWallet()
                 is UserWallet.Hot -> true
+                is UserWallet.NfcEncrypted -> false
             },
             isLinkMoreCardsAvailable = when (userWallet) {
                 is UserWallet.Cold -> userWallet.scanResponse.card.backupStatus == CardDTO.BackupStatus.NoBackup
                 is UserWallet.Hot -> false
+                is UserWallet.NfcEncrypted -> false
             },
             isManageTokensAvailable = if (isAccountsFeatureEnabled) {
                 isMultiCurrency && accountList.count { it is WalletSettingsAccountsUM.Account } == 0
@@ -229,6 +233,7 @@ internal class WalletSettingsModel @Inject constructor(
                 when (userWallet) {
                     is UserWallet.Cold -> onLinkMoreCardsClick(scanResponse = userWallet.scanResponse)
                     is UserWallet.Hot -> Unit
+                    is UserWallet.NfcEncrypted -> Unit
                 }
             },
             onReferralClick = { onReferralClick(userWallet) },
@@ -496,6 +501,21 @@ internal class WalletSettingsModel @Inject constructor(
     private fun onForgetWalletClick(userWallet: UserWallet) {
         val message = when (userWallet) {
             is UserWallet.Cold -> {
+                DialogMessage(
+                    message = resourceReference(
+                        id = R.string.user_wallet_list_delete_prompt,
+                    ),
+                    firstActionBuilder = {
+                        EventMessageAction(
+                            title = resourceReference(R.string.common_forget),
+                            isWarning = true,
+                            onClick = ::forgetWallet,
+                        )
+                    },
+                    secondActionBuilder = { cancelAction() },
+                )
+            }
+            is UserWallet.NfcEncrypted -> {
                 DialogMessage(
                     message = resourceReference(
                         id = R.string.user_wallet_list_delete_prompt,

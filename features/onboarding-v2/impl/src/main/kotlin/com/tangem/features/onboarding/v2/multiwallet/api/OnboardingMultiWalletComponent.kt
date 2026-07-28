@@ -15,7 +15,7 @@ interface OnboardingMultiWalletComponent : ComposableContentComponent, InnerNavi
         val scanResponse: ScanResponse,
         val withSeedPhraseFlow: Boolean,
         val mode: Mode,
-        val onDone: (UserWallet.Cold) -> Unit,
+        val onDone: (UserWallet) -> Unit,
         val onForceExit: () -> Unit,
     )
 

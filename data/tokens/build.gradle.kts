@@ -63,8 +63,8 @@ dependencies {
     // endregion
 
     // region Tangem SDKs
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.cardSdkCompat)
     // endregion
 
     // region AndroidX

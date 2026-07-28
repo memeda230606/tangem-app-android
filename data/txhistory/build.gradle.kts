@@ -30,7 +30,7 @@ dependencies {
     implementation(deps.kotlin.coroutines)
     implementation(deps.androidx.paging.runtime)
     implementation(deps.jodatime)
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
     implementation(deps.hilt.core)
     kapt(deps.hilt.kapt)

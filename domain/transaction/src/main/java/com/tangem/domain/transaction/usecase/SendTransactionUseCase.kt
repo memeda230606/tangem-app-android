@@ -46,6 +46,7 @@ class SendTransactionUseCase(
     private val singleNetworkStatusFetcher: SingleNetworkStatusFetcher,
     private val parallelUpdatingScope: AppCoroutineScope,
     private val getHotWalletSigner: (UserWallet.Hot) -> TransactionSigner,
+    private val getNfcEncryptedWalletSigner: (UserWallet.NfcEncrypted) -> TransactionSigner,
     private val pushNotificationsRepository: PushNotificationsRepository,
 ) {
     suspend operator fun invoke(
@@ -69,6 +70,9 @@ class SendTransactionUseCase(
             }
             is UserWallet.Hot -> {
                 getHotWalletSigner(userWallet)
+            }
+            is UserWallet.NfcEncrypted -> {
+                getNfcEncryptedWalletSigner(userWallet)
             }
         }
 

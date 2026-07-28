@@ -14,5 +14,7 @@ interface CurvesConfig {
 val UserWallet.curvesConfig: CurvesConfig
     get() = when (this) {
         is UserWallet.Cold -> ColdCurvesConfig(this.scanResponse.card)
-        is UserWallet.Hot -> HotCurvesConfig
+        is UserWallet.Hot,
+        is UserWallet.NfcEncrypted,
+        -> HotCurvesConfig
     }

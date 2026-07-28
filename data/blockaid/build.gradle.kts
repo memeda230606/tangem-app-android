@@ -28,8 +28,8 @@ dependencies {
     kapt(deps.hilt.kapt)
 
     /* Tangem libraries */
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.cardSdkCompat)
 
     /* Other */
     implementation(deps.kotlin.coroutines)

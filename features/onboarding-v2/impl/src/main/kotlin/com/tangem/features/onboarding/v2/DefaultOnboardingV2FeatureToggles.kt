@@ -11,4 +11,6 @@ internal class DefaultOnboardingV2FeatureToggles @Inject constructor(
         get() = featureTogglesManager.isFeatureEnabled(FeatureToggles.VISA_ONBOARDING_ENABLED)
     override val isAddressSyncEnabled: Boolean
         get() = featureTogglesManager.isFeatureEnabled(FeatureToggles.ADDRESS_SYNC_ENABLED)
+    override val isNfcEncryptedWalletEnabled: Boolean
+        get() = featureTogglesManager.isFeatureEnabled(FeatureToggles.AND_99999_NFC_ENCRYPTED_WALLET_ENABLED)
 }

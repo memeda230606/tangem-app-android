@@ -15,7 +15,7 @@ dependencies {
     implementation(projects.core.utils)
 
     implementation(projects.libs.blockchainSdk)
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
     implementation(deps.kotlin.coroutines)
     implementation(deps.arrow.core)

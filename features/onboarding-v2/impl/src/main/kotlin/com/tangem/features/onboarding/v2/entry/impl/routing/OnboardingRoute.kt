@@ -24,7 +24,7 @@ sealed class OnboardingRoute : Route {
         val scanResponse: ScanResponse,
         val withSeedPhraseFlow: Boolean,
         val mode: OnboardingMultiWalletComponent.Mode,
-        val onDone: (UserWallet.Cold) -> Unit,
+        val onDone: (UserWallet) -> Unit,
         val onForceExit: () -> Unit,
     ) : OnboardingRoute()
 

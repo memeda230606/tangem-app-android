@@ -29,7 +29,7 @@ internal class DefaultAssetsDiscoveryFacade @Inject constructor(
         network: Network,
     ): AssetsDiscoveryFacade.AssetsDiscoveryServiceInfo? = withContext(dispatchers.io) {
         val userWallet = userWalletsListRepository.getSyncStrict(userWalletId)
-        if (userWallet !is UserWallet.Hot) return@withContext null
+        if (userWallet !is UserWallet.Hot && userWallet !is UserWallet.NfcEncrypted) return@withContext null
 
         val assetsDiscoveryServiceFactory = blockchainSDKFactory.getAssetsDiscoveryServiceFactorySync()
             ?: return@withContext null
@@ -44,9 +44,13 @@ internal class DefaultAssetsDiscoveryFacade @Inject constructor(
         )
     }
 
-    private fun makeAddress(hotWallet: UserWallet.Hot, blockchain: Blockchain, derivationPath: String?): String? {
+    private fun makeAddress(hotWallet: UserWallet, blockchain: Blockchain, derivationPath: String?): String? {
         val curve = hotWallet.curvesConfig.primaryCurve(blockchain)
-        val selectedWallet = hotWallet.wallets.orEmpty().firstOrNull { it.curve == curve }
+        val selectedWallet = when (hotWallet) {
+            is UserWallet.Hot -> hotWallet.wallets
+            is UserWallet.NfcEncrypted -> hotWallet.wallets
+            is UserWallet.Cold -> null
+        }.orEmpty().firstOrNull { it.curve == curve }
             ?: return null
 
         val path = derivationPath?.let { DerivationPath(rawPath = it) }

@@ -41,8 +41,8 @@ dependencies {
     kapt(deps.hilt.kapt)
 
     /* Tangem libraries */
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.cardSdkCompat)
 
     /* Reown - WalletConnect */
     implementation(deps.reownCore) {

@@ -22,7 +22,7 @@ dependencies {
     implementation(projects.libs.blockchainSdk)
 
     /** SdK */
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
     /** DI */
     implementation(deps.hilt.android)

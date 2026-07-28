@@ -44,6 +44,7 @@ internal class TransactionDataToTxHistoryItemConverter(
             status = when (value.status) {
                 TransactionStatus.Confirmed -> TxInfo.TransactionStatus.Confirmed
                 TransactionStatus.Unconfirmed -> TxInfo.TransactionStatus.Unconfirmed
+                TransactionStatus.Failed -> TxInfo.TransactionStatus.Failed
             },
             type = getTransactionType(value),
             amount = amount,

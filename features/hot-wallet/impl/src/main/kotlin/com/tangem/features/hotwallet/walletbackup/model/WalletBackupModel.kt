@@ -142,6 +142,10 @@ internal class WalletBackupModel @Inject constructor(
                                 TangemLogger.e("Unexpected cold wallet when request seed phrase: $userWalletId")
                             }
                             is UserWallet.Hot -> showSeedPhrase(userWallet)
+                            is UserWallet.NfcEncrypted -> {
+                                val userWalletId = userWallet.walletId
+                                TangemLogger.e("Unexpected NFC wallet when request seed phrase: $userWalletId")
+                            }
                         }
                     },
                 )

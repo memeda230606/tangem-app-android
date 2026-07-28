@@ -60,6 +60,7 @@ internal class MultiWalletCardStateConverter(
             cardCount = when (selectedWallet) {
                 is UserWallet.Cold -> selectedWallet.getCardsCount()
                 is UserWallet.Hot -> null
+                is UserWallet.NfcEncrypted -> selectedWallet.cardsInWallet.size.takeIf { it > 0 }
             },
             isBalanceFlickering = fiatBalance.source == StatusSource.CACHE,
         )

@@ -90,6 +90,6 @@ dependencies {
     implementation(projects.libs.blockchainSdk)
 
     /** Tangem libraries */
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.blockchainCompat)
 }

@@ -25,6 +25,7 @@ class AssociateAssetUseCase(
     private val singleNetworkStatusSupplier: SingleNetworkStatusSupplier,
     private val multiWalletCryptoCurrenciesSupplier: MultiWalletCryptoCurrenciesSupplier,
     private val getHotTransactionSigner: (UserWallet.Hot) -> TransactionSigner,
+    private val getNfcEncryptedTransactionSigner: (UserWallet.NfcEncrypted) -> TransactionSigner,
 ) {
 
     suspend operator fun invoke(userWallet: UserWallet, currency: CryptoCurrency): Either<AssociateAssetError, Unit> {
@@ -67,6 +68,7 @@ class AssociateAssetUseCase(
     private fun createSigner(userWallet: UserWallet): TransactionSigner {
         return when (userWallet) {
             is UserWallet.Hot -> getHotTransactionSigner(userWallet)
+            is UserWallet.NfcEncrypted -> getNfcEncryptedTransactionSigner(userWallet)
             is UserWallet.Cold -> getColdSigner(userWallet)
         }
     }

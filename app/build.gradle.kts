@@ -364,20 +364,17 @@ dependencies {
     implementation(deps.firebase.analytics)
     implementation(deps.firebase.crashlytics)
     implementation(deps.firebase.messaging)
-    implementation(deps.firebase.perf) {
-        exclude(group = "com.google.firebase", module = "protolite-well-known-types")
-        exclude(group = "com.google.protobuf", module = "protobuf-javalite")
-    }
+    implementation(deps.firebase.perf)
     /** Tangem libraries */
-    implementation(tangemDeps.blockchain) {
+    implementation(projects.libs.blockchainCompat) {
         exclude(module = "joda-time")
     }
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.card.android) {
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.cardSdkCompat) {
         exclude(module = "joda-time")
     }
-    implementation(tangemDeps.hot.core)
-    implementation(tangemDeps.hot.android)
+    implementation(projects.libs.hotSdkCompat)
+    implementation(projects.libs.hotSdkCompat)
 
     /** DI */
     implementation(deps.hilt.android)

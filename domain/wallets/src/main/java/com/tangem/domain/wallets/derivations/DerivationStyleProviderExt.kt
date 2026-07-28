@@ -7,7 +7,9 @@ import com.tangem.domain.models.wallet.UserWallet
 val UserWallet.derivationStyleProvider: DerivationStyleProvider
     get() = when (this) {
         is UserWallet.Cold -> scanResponse.derivationStyleProvider
-        is UserWallet.Hot -> TangemHotDerivationStyleProvider()
+        is UserWallet.Hot,
+        is UserWallet.NfcEncrypted,
+        -> TangemHotDerivationStyleProvider()
     }
 
 val ScanResponse.derivationStyleProvider: DerivationStyleProvider

@@ -29,14 +29,14 @@ dependencies {
     implementation(projects.domain.tokens.models)
     implementation(projects.domain.wallets.models)
 
-    implementation(tangemDeps.blockchain) {
+    implementation(projects.libs.blockchainCompat) {
         exclude(module = "joda-time")
     }
     implementation(projects.libs.crypto)
     implementation(projects.libs.blockchainSdk)
 
     testRuntimeOnly(deps.test.junit5.engine)
-    testImplementation(tangemDeps.card.core)
+    testImplementation(projects.libs.cardSdkCompat)
     testImplementation(projects.common.test)
     testImplementation(projects.test.core)
 }

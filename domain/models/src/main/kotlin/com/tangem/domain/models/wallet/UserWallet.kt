@@ -64,6 +64,21 @@ sealed interface UserWallet {
 
         val isLocked: Boolean get() = wallets == null
     }
+
+    @Serializable
+    data class NfcEncrypted(
+        override val name: String,
+        override val walletId: UserWalletId,
+        val cardsInWallet: Set<String>,
+        val hotWalletId: HotWalletId,
+        val wallets: List<MobileWallet>?,
+        val localKeyId: String,
+        val backupSetId: String,
+        val backedUp: Boolean,
+    ) : UserWallet {
+
+        val isLocked: Boolean get() = wallets == null
+    }
 }
 
 @OptIn(ExperimentalContracts::class)
@@ -86,10 +101,21 @@ fun UserWallet.requireHotWallet(): UserWallet.Hot {
         ?: error("This user wallet is not a hot wallet")
 }
 
+@OptIn(ExperimentalContracts::class)
+fun UserWallet.requireNfcEncryptedWallet(): UserWallet.NfcEncrypted {
+    contract {
+        returns() implies (this@requireNfcEncryptedWallet is UserWallet.NfcEncrypted)
+    }
+
+    return this as? UserWallet.NfcEncrypted
+        ?: error("This user wallet is not an NFC encrypted wallet")
+}
+
 fun UserWallet.isImported(): Boolean {
     return when (this) {
         is UserWallet.Cold -> isImported
         is UserWallet.Hot -> true
+        is UserWallet.NfcEncrypted -> true
     }
 }
 
@@ -97,25 +123,30 @@ fun UserWallet.isBackedUpForAnalytics(): Boolean {
     return when (this) {
         is UserWallet.Cold -> scanResponse.card.backupStatus?.isActive == true
         is UserWallet.Hot -> backedUp
+        is UserWallet.NfcEncrypted -> backedUp
     }
 }
 
 fun UserWallet.copy(name: String = this.name, walletId: UserWalletId = this.walletId): UserWallet = when (this) {
     is UserWallet.Cold -> this.copy(name = name, walletId = walletId)
     is UserWallet.Hot -> this.copy(name = name, walletId = walletId)
+    is UserWallet.NfcEncrypted -> this.copy(name = name, walletId = walletId)
 }
 
 val UserWallet.isMultiCurrency
     get() = when (this) {
         is UserWallet.Cold -> isMultiCurrency
         is UserWallet.Hot -> true
+        is UserWallet.NfcEncrypted -> true
     }
 
 val UserWallet.isLocked
     get() = when (this) {
         is UserWallet.Cold -> isLocked
         is UserWallet.Hot -> isLocked
+        is UserWallet.NfcEncrypted -> isLocked
     }
 
 inline val UserWallet.isHotWallet get() = this is UserWallet.Hot
 inline val UserWallet.isColdWallet get() = this is UserWallet.Cold
+inline val UserWallet.isNfcEncryptedWallet get() = this is UserWallet.NfcEncrypted

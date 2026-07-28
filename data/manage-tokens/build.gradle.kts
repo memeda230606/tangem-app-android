@@ -39,8 +39,8 @@ dependencies {
     implementation(projects.libs.blockchainSdk)
 
     /** Tangem SDKs */
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.cardSdkCompat)
 
     /** AndroidX */
     implementation(deps.androidx.datastore)

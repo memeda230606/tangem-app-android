@@ -35,7 +35,7 @@ dependencies {
     /** Dependencies */
     implementation(deps.arrow.core)
     implementation(deps.jodatime)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.cardSdkCompat)
 
     /** DI */
     implementation(deps.hilt.android)

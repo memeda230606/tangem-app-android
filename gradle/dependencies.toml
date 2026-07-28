@@ -90,7 +90,8 @@ mlKit-barcodeScanning = "17.3.0"
 androidXCamera = "1.4.2"
 listenableFuture = "1.0"
 swipeRefreshLayout = "1.1.0"
-web3j = "4.12.3-SNAPSHOT"
+web3j = "4.12.3"
+vico = "2.0.0-alpha.27"
 leakcanary = "2.13"
 decompose = "3.3.0"
 room = "2.6.1"
@@ -297,6 +298,9 @@ camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "and
 camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "androidXCamera" }
 camera-view = { module = "androidx.camera:camera-view", version.ref = "androidXCamera" }
 web3j-core = { module = "org.web3j:core", version.ref = "web3j" }
+vico-compose = { module = "com.patrykandpatrick.vico:compose", version.ref = "vico" }
+vico-compose-m3 = { module = "com.patrykandpatrick.vico:compose-m3", version.ref = "vico" }
+vico-core = { module = "com.patrykandpatrick.vico:core", version.ref = "vico" }
 leakcanary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
 decompose-ext-compose = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }

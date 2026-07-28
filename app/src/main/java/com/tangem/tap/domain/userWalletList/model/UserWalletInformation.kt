@@ -39,8 +39,14 @@ internal data class UserWalletPublicInformation(
     @Json(name = "hasBackupError")
     val hasBackupError: Boolean = false,
     // Hot
+    @Json(name = "walletType")
+    val walletType: String? = null,
     @Json(name = "hotWalletId")
     val hotWalletId: HotWalletId? = null,
     @Json(name = "backedUp")
     val backedUp: Boolean? = null,
+    @Json(name = "localKeyId")
+    val localKeyId: String? = null,
+    @Json(name = "backupSetId")
+    val backupSetId: String? = null,
 )

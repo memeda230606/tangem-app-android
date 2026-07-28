@@ -32,6 +32,7 @@ import com.tangem.domain.models.wallet.UserWalletId
 import com.tangem.domain.settings.repositories.SettingsRepository
 import com.tangem.domain.wallets.builder.ColdUserWalletBuilder
 import com.tangem.domain.wallets.models.AppsFlyerConversionData
+import com.tangem.domain.wallets.nfc.NfcEncryptedWalletOnboardingRepository
 import com.tangem.domain.wallets.usecase.GenerateBuyTangemCardLinkUseCase
 import com.tangem.domain.wallets.usecase.SaveWalletUseCase
 import com.tangem.features.createwalletstart.entity.CreateWalletStartUM
@@ -67,6 +68,7 @@ internal class CreateWalletStartModelTest {
     private val analyticsEventHandler: AnalyticsEventHandler = mockk(relaxed = true)
     private val appsFlyerStore: AppsFlyerStore = mockk()
     private val onboardingV2FeatureToggles: OnboardingV2FeatureToggles = mockk()
+    private val nfcEncryptedWalletOnboardingRepository: NfcEncryptedWalletOnboardingRepository = mockk()
 
     private val testUserWalletId = UserWalletId("1234567890ABCDEF")
     private val testScanResponse: ScanResponse = mockk(relaxed = true)
@@ -81,6 +83,7 @@ internal class CreateWalletStartModelTest {
         every { coldUserWalletBuilderFactory.create(any()) } returns coldUserWalletBuilder
         every { coldUserWalletBuilder.build() } returns testColdWallet
         every { onboardingV2FeatureToggles.isAddressSyncEnabled } returns false
+        every { onboardingV2FeatureToggles.isNfcEncryptedWalletEnabled } returns false
         coEvery {
             scanCardProcessor.scan(
                 analyticsSource = any(),
@@ -639,6 +642,7 @@ internal class CreateWalletStartModelTest {
             analyticsEventHandler = analyticsEventHandler,
             appsFlyerStore = appsFlyerStore,
             onboardingV2FeatureToggles = onboardingV2FeatureToggles,
+            nfcEncryptedWalletOnboardingRepository = nfcEncryptedWalletOnboardingRepository,
         )
     }
 

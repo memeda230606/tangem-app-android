@@ -49,8 +49,8 @@ dependencies {
     implementation(projects.domain.onramp.models)
     implementation(projects.domain.common)
 
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.blockchain) {
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.blockchainCompat) {
         exclude(module = "joda-time")
     }
 

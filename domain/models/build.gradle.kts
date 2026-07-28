@@ -13,8 +13,8 @@ dependencies {
     api(projects.domain.core)
     api(projects.core.utils)
 
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.hot.core)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.hotSdkCompat)
     implementation(deps.moshi.kotlin)
     implementation(deps.moshi.adapters)
     implementation(deps.kotlin.datetime)

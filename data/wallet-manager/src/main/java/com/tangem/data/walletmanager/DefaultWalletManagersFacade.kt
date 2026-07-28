@@ -449,6 +449,13 @@ internal class DefaultWalletManagersFacade @Inject constructor(
                             derivationPath = path,
                         )
                     }
+                    is UserWallet.NfcEncrypted -> {
+                        walletManager = walletManagerFactory.createWalletManagerForHot(
+                            hotWallet = userWallet.toHotWallet(),
+                            blockchain = blockchain,
+                            derivationPath = path,
+                        )
+                    }
                     is UserWallet.Cold -> {
                         walletManager = walletManagerFactory.createWalletManager(
                             scanResponse = userWallet.scanResponse,
@@ -462,6 +469,16 @@ internal class DefaultWalletManagersFacade @Inject constructor(
             }
             return walletManager
         }
+    }
+
+    private fun UserWallet.NfcEncrypted.toHotWallet(): UserWallet.Hot {
+        return UserWallet.Hot(
+            name = name,
+            walletId = walletId,
+            hotWalletId = hotWalletId,
+            wallets = wallets,
+            backedUp = backedUp,
+        )
     }
 
     // region Dynamic Addresses

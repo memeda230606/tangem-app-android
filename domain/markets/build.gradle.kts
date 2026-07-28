@@ -36,7 +36,7 @@ dependencies {
     api(projects.libs.blockchainSdk)
 
     /* SDK */
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
     /* Utils */
     implementation(deps.kotlin.serialization)

@@ -17,7 +17,7 @@ tasks.withType<Test>().configureEach {
 dependencies {
 
     /** Tangem SDKs */
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
     // region AndroidX libraries
     implementation(deps.androidx.datastore)

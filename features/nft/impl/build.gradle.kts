@@ -48,8 +48,8 @@ dependencies {
     /** Tangem libraries */
     implementation(projects.libs.tangemSdkApi)
     implementation(projects.libs.crypto)
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.card.android) {
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.cardSdkCompat) {
         exclude(module = "joda-time")
     }
 

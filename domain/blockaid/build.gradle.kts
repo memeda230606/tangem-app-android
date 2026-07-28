@@ -16,7 +16,7 @@ dependencies {
     implementation(projects.domain.blockaid.models)
 
     /** Tangem SDK */
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.blockchainCompat)
 
 
     /** Other */

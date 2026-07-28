@@ -6,6 +6,7 @@ import com.tangem.utils.ProviderSuspend
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
@@ -43,12 +44,17 @@ internal class SwitchEnvironmentInterceptor(
 
     private fun HttpUrl.adjustBaseUrl(newBaseUrl: String): HttpUrl {
         val currentUrl = this.toString()
-        val currentBaseUrl = baseUrls.first { currentUrl.contains(it) }
+        if (!newBaseUrl.isValidBaseUrl()) return this
+
+        val currentBaseUrl = baseUrls.firstOrNull { currentUrl.contains(it) }
+            ?: return this
 
         return currentUrl
             .replace(oldValue = currentBaseUrl, newValue = newBaseUrl)
             .toHttpUrl()
     }
+
+    private fun String.isValidBaseUrl(): Boolean = toHttpUrlOrNull() != null
 
     private fun Request.Builder.addHeaders(headers: Map<String, ProviderSuspend<String>>): Request.Builder {
         runBlocking {

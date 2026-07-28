@@ -26,6 +26,7 @@ internal class SetTxHistoryCountErrorTransformer(
         val blockchain = when (userWallet) {
             is UserWallet.Cold -> userWallet.scanResponse.cardTypesResolver.getBlockchain()
             is UserWallet.Hot -> Blockchain.Unknown
+            is UserWallet.NfcEncrypted -> Blockchain.Unknown
         }
 
         TxHistoryItemStateConverter(

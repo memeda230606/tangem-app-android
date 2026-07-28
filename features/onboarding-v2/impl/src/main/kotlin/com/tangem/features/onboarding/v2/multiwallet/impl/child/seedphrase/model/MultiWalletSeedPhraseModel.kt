@@ -27,6 +27,7 @@ import com.tangem.domain.feedback.models.FeedbackEmailType
 import com.tangem.domain.models.scan.ScanResponse
 import com.tangem.domain.models.wallet.UserWallet
 import com.tangem.domain.wallets.builder.ColdUserWalletBuilder
+import com.tangem.domain.wallets.nfc.NfcEncryptedWalletOnboardingRepository
 import com.tangem.domain.wallets.usecase.IsWalletAlreadySavedUseCase
 import com.tangem.features.hotwallet.MnemonicRepository
 import com.tangem.features.onboarding.v2.common.ui.OnboardingDialogUM
@@ -38,6 +39,7 @@ import com.tangem.features.onboarding.v2.multiwallet.impl.child.seedphrase.ui.st
 import com.tangem.features.onboarding.v2.multiwallet.impl.common.ui.resetCardDialog
 import com.tangem.sdk.api.TangemSdkManager
 import com.tangem.utils.coroutines.CoroutineDispatcherProvider
+import com.tangem.utils.logging.TangemLogger
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -66,6 +68,7 @@ internal class MultiWalletSeedPhraseModel @Inject constructor(
     @GlobalUiMessageSender private val uiMessageSender: UiMessageSender,
     private val analyticsEventHandler: AnalyticsEventHandler,
     private val appsFlyerStore: AppsFlyerStore,
+    private val nfcEncryptedWalletOnboardingRepository: NfcEncryptedWalletOnboardingRepository,
 ) : Model() {
 
     private val params = paramsContainer.require<MultiWalletChildParams>()
@@ -215,6 +218,15 @@ internal class MultiWalletSeedPhraseModel @Inject constructor(
         val scanResponse = params.parentParams.scanResponse
 
         modelScope.launch {
+            if (nfcEncryptedWalletOnboardingRepository.isNfcScanResponse(multiWalletState.value.currentScanResponse)) {
+                importNfcEncryptedWallet(
+                    mnemonic = mnemonic,
+                    passphrase = passphrase,
+                    generatedSeedPhrase = generatedSeedPhrase,
+                )
+                return@launch
+            }
+
             val result = tangemSdkManager.importWallet(
                 scanResponse = scanResponse,
                 mnemonic = mnemonic.mnemonicComponents.joinToString(" "),
@@ -274,6 +286,46 @@ internal class MultiWalletSeedPhraseModel @Inject constructor(
                     }
                 }
             }
+        }
+    }
+
+    private suspend fun importNfcEncryptedWallet(
+        mnemonic: Mnemonic,
+        passphrase: String?,
+        generatedSeedPhrase: Boolean,
+    ) {
+        runCatching {
+            nfcEncryptedWalletOnboardingRepository.createPrimaryWallet(
+                mnemonic = mnemonic,
+                passphrase = passphrase,
+            )
+        }.onSuccess { updatedScanResponse ->
+            analyticsHandler.send(
+                OnboardingAnalyticsEvent.CreateWallet.WalletCreatedSuccessfully(
+                    creationType = if (generatedSeedPhrase) {
+                        AnalyticsParam.WalletCreationType.NewSeed
+                    } else {
+                        AnalyticsParam.WalletCreationType.SeedImport
+                    },
+                    seedPhraseLength = mnemonic.mnemonicComponents.size,
+                    passPhraseState = if (passphrase.isNullOrBlank()) {
+                        AnalyticsParam.EmptyFull.Empty
+                    } else {
+                        AnalyticsParam.EmptyFull.Full
+                    },
+                    referralId = appsFlyerStore.get()?.refcode,
+                ),
+            )
+
+            multiWalletState.update {
+                it.copy(currentScanResponse = updatedScanResponse)
+            }
+
+            cardRepository.startCardActivation(cardId = updatedScanResponse.card.cardId)
+
+            onDone.emit(Unit)
+        }.onFailure { error ->
+            TangemLogger.e("NFC encrypted wallet seed import error occurred", error)
         }
     }
     // =============================================

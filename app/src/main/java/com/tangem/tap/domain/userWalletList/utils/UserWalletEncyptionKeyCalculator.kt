@@ -11,6 +11,7 @@ internal val UserWallet.encryptionKey: ByteArray?
     get() = when (this) {
         is UserWallet.Cold -> findPublicKey(this.scanResponse.card.wallets)
         is UserWallet.Hot -> findPublicKey(this.wallets.orEmpty())
+        is UserWallet.NfcEncrypted -> findPublicKey(this.wallets.orEmpty())
     }?.let { calculateEncryptionKey(it) }
 
 private fun calculateEncryptionKey(publicKey: ByteArray): ByteArray {

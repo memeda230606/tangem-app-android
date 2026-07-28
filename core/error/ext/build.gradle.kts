@@ -11,6 +11,6 @@ android {
 dependencies {
     api(projects.core.error)
 
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.blockchain)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.blockchainCompat)
 }

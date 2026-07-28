@@ -18,6 +18,7 @@ class PrepareForSendUseCase(
     private val transactionRepository: TransactionRepository,
     private val cardSdkConfigRepository: CardSdkConfigRepository,
     private val getHotTransactionSigner: (UserWallet.Hot) -> TransactionSigner,
+    private val getNfcEncryptedTransactionSigner: (UserWallet.NfcEncrypted) -> TransactionSigner,
 ) {
     suspend operator fun invoke(
         transactionData: TransactionData,
@@ -58,6 +59,7 @@ class PrepareForSendUseCase(
     private fun createSigner(userWallet: UserWallet): TransactionSigner {
         return when (userWallet) {
             is UserWallet.Hot -> getHotTransactionSigner(userWallet)
+            is UserWallet.NfcEncrypted -> getNfcEncryptedTransactionSigner(userWallet)
             is UserWallet.Cold -> getColdSigner(userWallet)
         }
     }

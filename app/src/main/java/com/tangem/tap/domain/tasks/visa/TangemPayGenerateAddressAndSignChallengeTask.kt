@@ -45,7 +45,7 @@ class TangemPayGenerateAddressAndSignChallengeTask @AssistedInject constructor(
             ?: return CompletionResult.Failure(VisaActivationError.MissingWallet.tangemError)
 
         val address = when (val derivationResult = runDerivationTask(session, wallet)) {
-            is CompletionResult.Failure<*> -> return CompletionResult.Failure(derivationResult.error)
+            is CompletionResult.Failure -> return CompletionResult.Failure(derivationResult.error)
             is CompletionResult.Success<ExtendedPublicKey> -> VisaUtilities.generateAddressFromExtendedKey(
                 extendedPublicKey = derivationResult.data,
             )
@@ -66,7 +66,7 @@ class TangemPayGenerateAddressAndSignChallengeTask @AssistedInject constructor(
             dataToSign = dataToSign,
         )
         val signedData = when (approveResult) {
-            is CompletionResult.Failure<*> -> return CompletionResult.Failure(approveResult.error)
+            is CompletionResult.Failure -> return CompletionResult.Failure(approveResult.error)
             is CompletionResult.Success<VisaSignedDataByCustomerWallet> -> approveResult.data
         }
 

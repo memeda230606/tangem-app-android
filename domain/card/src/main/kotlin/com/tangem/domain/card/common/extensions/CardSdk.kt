@@ -37,6 +37,11 @@ fun UserWallet.supportedBlockchains(excludedBlockchains: ExcludedBlockchains): L
                 it.isTestnet().not() && it !in excludedBlockchains && it !in hotWalletExcludedBlockchains
             }
         }
+        is UserWallet.NfcEncrypted -> {
+            Blockchain.entries.filter {
+                it.isTestnet().not() && it !in excludedBlockchains && it !in hotWalletExcludedBlockchains
+            }
+        }
     }
 }
 
@@ -104,7 +109,9 @@ fun UserWallet.canHandleToken(supportedTokens: List<Blockchain>, blockchain: Blo
                 cardTypesResolver = scanResponse.cardTypesResolver,
             )
         }
-        is UserWallet.Hot -> blockchain in supportedTokens && blockchain !in hotWalletExcludedBlockchains
+        is UserWallet.Hot,
+        is UserWallet.NfcEncrypted,
+        -> blockchain in supportedTokens && blockchain !in hotWalletExcludedBlockchains
     }
 }
 
@@ -118,7 +125,9 @@ fun UserWallet.canHandleToken(blockchain: Blockchain, excludedBlockchains: Exclu
             )
         }
 
-        is UserWallet.Hot -> blockchain.isTestnet().not() &&
+        is UserWallet.Hot,
+        is UserWallet.NfcEncrypted,
+        -> blockchain.isTestnet().not() &&
             blockchain !in excludedBlockchains &&
             blockchain !in hotWalletExcludedBlockchains &&
             blockchain.canHandleTokens()
@@ -134,7 +143,9 @@ fun UserWallet.canHandleBlockchain(blockchain: Blockchain, excludedBlockchains: 
                 cardTypesResolver = scanResponse.cardTypesResolver,
             )
         }
-        is UserWallet.Hot -> blockchain.isTestnet().not() &&
+        is UserWallet.Hot,
+        is UserWallet.NfcEncrypted,
+        -> blockchain.isTestnet().not() &&
             blockchain !in excludedBlockchains &&
             blockchain !in hotWalletExcludedBlockchains
     }

@@ -11,6 +11,7 @@ import com.tangem.domain.walletconnect.WcTransactionSignerProvider
 import com.tangem.domain.walletconnect.repository.WalletConnectRepository
 import com.tangem.domain.walletconnect.repository.WcSessionsManager
 import com.tangem.domain.walletconnect.usecase.WcSessionsUseCase
+import com.tangem.tap.domain.nfc.NfcEncryptedWalletSigner
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -40,11 +41,13 @@ internal object WalletConnectDomainModule {
     fun providesWcTransactionSignerProvider(
         cardSdkConfigRepository: CardSdkConfigRepository,
         tangemHotWalletSignerFactory: TangemHotWalletSigner.Factory,
+        nfcEncryptedWalletSignerFactory: NfcEncryptedWalletSigner.Factory,
     ): WcTransactionSignerProvider {
         return object : WcTransactionSignerProvider {
             override fun createSigner(wallet: UserWallet): TransactionSigner {
                 return when (wallet) {
                     is UserWallet.Hot -> tangemHotWalletSignerFactory.create(wallet)
+                    is UserWallet.NfcEncrypted -> nfcEncryptedWalletSignerFactory.create(wallet)
                     is UserWallet.Cold -> {
                         val card = wallet.scanResponse.card
                         val isCardNotBackedUp = card.backupStatus?.isActive != true && !card.isTangemTwins

@@ -41,13 +41,10 @@ dependencies {
     implementation(deps.googlePlay.review)
     implementation(deps.jodatime)
     implementation(deps.kotlin.immutable.collections)
-    implementation(tangemDeps.hot.core)
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.blockchain)
-    implementation(deps.firebase.perf) {
-        exclude(group = "com.google.firebase", module = "protolite-well-known-types")
-        exclude(group = "com.google.protobuf", module = "protobuf-javalite")
-    }
+    implementation(projects.libs.hotSdkCompat)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.blockchainCompat)
+    implementation(deps.firebase.perf)
     implementation(deps.haze) {
         exclude(module = "activity-compose")
         exclude(module = "activity")

@@ -31,6 +31,7 @@ import com.tangem.domain.hotwallet.IsHotWalletCreationSupported
 import com.tangem.domain.models.scan.ScanResponse
 import com.tangem.domain.settings.repositories.SettingsRepository
 import com.tangem.domain.wallets.builder.ColdUserWalletBuilder
+import com.tangem.domain.wallets.nfc.NfcEncryptedWalletOnboardingRepository
 import com.tangem.domain.wallets.usecase.GenerateBuyTangemCardLinkUseCase
 import com.tangem.domain.wallets.usecase.SaveWalletUseCase
 import com.tangem.features.createwalletstart.entity.CreateWalletStartUM
@@ -68,6 +69,7 @@ internal class CreateWalletStartModel @Inject constructor(
     private val analyticsEventHandler: AnalyticsEventHandler,
     private val appsFlyerStore: AppsFlyerStore,
     private val onboardingV2FeatureToggles: OnboardingV2FeatureToggles,
+    private val nfcEncryptedWalletOnboardingRepository: NfcEncryptedWalletOnboardingRepository,
 ) : Model() {
 
     private val params = paramsContainer.require<CreateWalletStartComponent.Params>()
@@ -181,6 +183,13 @@ internal class CreateWalletStartModel @Inject constructor(
     }
 
     private fun scanCard() {
+        if (params.mode == CreateWalletStartComponent.Mode.ColdWallet &&
+            onboardingV2FeatureToggles.isNfcEncryptedWalletEnabled
+        ) {
+            scanNfcEncryptedWalletCard()
+            return
+        }
+
         modelScope.launch {
             setLoading(true)
 
@@ -211,6 +220,29 @@ internal class CreateWalletStartModel @Inject constructor(
                     proceedWithScanResponse(scanResponse)
                 },
             )
+        }
+    }
+
+    private fun scanNfcEncryptedWalletCard() {
+        modelScope.launch {
+            setLoading(true)
+
+            runCatching {
+                nfcEncryptedWalletOnboardingRepository.preparePrimaryCard()
+            }.onSuccess { scanResponse ->
+                trackingContextProxy.addContext(scanResponse)
+                appRouter.push(
+                    AppRoute.Onboarding(
+                        scanResponse = scanResponse,
+                        mode = AppRoute.Onboarding.Mode.Onboarding,
+                    ),
+                )
+            }.onFailure { error ->
+                TangemLogger.e("NFC encrypted wallet scan error occurred", error)
+            }
+
+            delay(HIDE_PROGRESS_DELAY)
+            setLoading(false)
         }
     }
 

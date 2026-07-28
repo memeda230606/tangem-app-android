@@ -131,7 +131,7 @@ internal class OnboardingEntryModel @Inject constructor(
         }
     }
 
-    private fun onMultiWalletOnboardingDone(userWallet: UserWallet.Cold) {
+    private fun onMultiWalletOnboardingDone(userWallet: UserWallet) {
         val mode = params.mode
         when {
             mode == Mode.AddBackupWallet1 -> {
@@ -142,7 +142,9 @@ internal class OnboardingEntryModel @Inject constructor(
                     ),
                 )
             }
-            userWallet.scanResponse.cardTypesResolver.isMultiwalletAllowed() && mode !is Mode.UpgradeHotWallet -> {
+            userWallet is UserWallet.Cold &&
+                userWallet.scanResponse.cardTypesResolver.isMultiwalletAllowed() &&
+                mode !is Mode.UpgradeHotWallet -> {
                 stackNavigation.replaceAll(OnboardingRoute.ManageTokens(userWallet))
             }
             else -> {

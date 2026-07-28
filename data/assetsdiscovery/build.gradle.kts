@@ -24,8 +24,8 @@ dependencies {
     implementation(projects.core.datasource)
     implementation(projects.core.utils)
 
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.cardSdkCompat)
 
     implementation(deps.androidx.datastore)
 

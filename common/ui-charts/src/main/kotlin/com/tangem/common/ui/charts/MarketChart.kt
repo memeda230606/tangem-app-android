@@ -188,7 +188,7 @@ private fun rememberMarketVisibilityListener(
 }
 
 @Composable
-private fun rememberMarketChartEndAxis(): VerticalAxis<AxisPosition.Vertical.End> {
+private fun rememberMarketChartEndAxis(): VerticalAxis<Axis.Position.Vertical.End> {
     return rememberEndAxis(
         line = null,
         tick = null,
@@ -207,7 +207,7 @@ private fun rememberMarketChartEndAxis(): VerticalAxis<AxisPosition.Vertical.End
 @Composable
 private fun rememberMarketChartStartMinMaxAxis(
     yValueFormatter: CartesianValueFormatter,
-): VerticalAxis<AxisPosition.Vertical.Start> {
+): VerticalAxis<Axis.Position.Vertical.Start> {
     val textStyle = TangemTheme.typography.caption2
     val resolver = LocalFontFamilyResolver.current
     val typeface by remember(resolver, textStyle) {
@@ -246,7 +246,7 @@ private fun rememberMarketChartStartMinMaxAxis(
 @Composable
 private fun rememberMarketChartStartAxis(
     yValueFormatter: CartesianValueFormatter,
-): VerticalAxis<AxisPosition.Vertical.Start> {
+): VerticalAxis<Axis.Position.Vertical.Start> {
     val textStyle = TangemTheme.typography.caption2
     val resolver = LocalFontFamilyResolver.current
     val typeface by remember(resolver, textStyle) {
@@ -285,7 +285,7 @@ private fun rememberMarketChartStartAxis(
 @Composable
 private fun rememberMarketChartBottomAxis(
     xValueFormatter: CartesianValueFormatter,
-): HorizontalAxis<AxisPosition.Horizontal.Bottom> {
+): HorizontalAxis<Axis.Position.Horizontal.Bottom> {
     val textStyle = TangemTheme.typography.caption2
 
     val resolver = LocalFontFamilyResolver.current

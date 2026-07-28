@@ -87,6 +87,7 @@ internal class SetTokenListErrorTransformer(
             cardCount = when (selectedWallet) {
                 is UserWallet.Cold -> selectedWallet.getCardsCount()
                 is UserWallet.Hot -> null
+                is UserWallet.NfcEncrypted -> selectedWallet.cardsInWallet.size.takeIf { it > 0 }
             },
             isZeroBalance = true,
             isBalanceFlickering = false,

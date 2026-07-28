@@ -38,6 +38,7 @@ class NonBiometricUnlockWalletUseCase(
         val method = when (userWallet) {
             is UserWallet.Cold -> UserWalletsListRepository.UnlockMethod.Scan(scanResponse = null, source = source)
             is UserWallet.Hot -> UserWalletsListRepository.UnlockMethod.AccessCode
+            is UserWallet.NfcEncrypted -> UserWalletsListRepository.UnlockMethod.AccessCode
         }
 
         userWalletsListRepository.unlock(userWalletId, method)

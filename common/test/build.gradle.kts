@@ -30,8 +30,8 @@ dependencies {
     implementation(deps.jodatime)
     implementation(deps.test.coroutine)
 
-    implementation(tangemDeps.blockchain)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.blockchainCompat)
+    implementation(projects.libs.cardSdkCompat)
 
     implementation(deps.test.junit5)
     implementation(deps.test.truth)

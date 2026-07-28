@@ -35,5 +35,6 @@ fun getDefaultWalletBlockchains(
             blockchainsInternal
         }
         is UserWallet.Hot -> listOf(Blockchain.Bitcoin, Blockchain.Ethereum)
+        is UserWallet.NfcEncrypted -> listOf(Blockchain.Bitcoin, Blockchain.Ethereum)
     }
 }

@@ -19,6 +19,7 @@ enum class WalletType {
             return when (userWallet) {
                 is UserWallet.Cold -> COLD
                 is UserWallet.Hot -> HOT
+                is UserWallet.NfcEncrypted -> HOT
                 null -> null
             }
         }

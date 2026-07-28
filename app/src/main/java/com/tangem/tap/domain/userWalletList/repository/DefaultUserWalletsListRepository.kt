@@ -26,6 +26,7 @@ import com.tangem.domain.wallets.analytics.WalletSettingsAnalyticEvents
 import com.tangem.domain.wallets.builder.UserWalletIdBuilder
 import com.tangem.domain.wallets.hot.HotWalletAccessCodeAttemptsRepository
 import com.tangem.domain.wallets.hot.HotWalletPasswordRequester
+import com.tangem.domain.wallets.nfc.NfcWalletKeyRepository
 import com.tangem.feature.referral.domain.MobileWalletPromoRepository
 import com.tangem.hot.sdk.TangemHotSdk
 import com.tangem.hot.sdk.model.HotWalletId
@@ -61,6 +62,7 @@ internal class DefaultUserWalletsListRepository(
     private val analyticsEventHandler: AnalyticsEventHandler,
     private val hotWalletRepository: HotWalletRepository,
     private val mobileWalletPromoRepository: MobileWalletPromoRepository,
+    private val nfcWalletKeyRepository: NfcWalletKeyRepository,
     private val userWalletSelectedHandler: Lazy<UserWalletSelectedHandler>,
 ) : UserWalletsListRepository {
 
@@ -220,6 +222,7 @@ internal class DefaultUserWalletsListRepository(
             }
 
         userWalletEncryptionKeysRepository.delete(userWalletIds)
+        userWalletIds.forEach { nfcWalletKeyRepository.delete(it) }
 
         removeHotWalletsFromSDKAndRepos(userWalletIds)
 
@@ -263,12 +266,13 @@ internal class DefaultUserWalletsListRepository(
                 select(userWalletId)
             }
             UserWalletsListRepository.UnlockMethod.AccessCode -> {
-                if (userWallet !is UserWallet.Hot) {
+                val hotWalletId = userWallet.hotWalletIdOrNull()
+                if (hotWalletId == null) {
                     raise(UnlockWalletError.UnableToUnlock.Empty)
                 }
 
                 val encryptionKey = requestPasswordRecursive(
-                    hotWalletId = userWallet.hotWalletId,
+                    hotWalletId = hotWalletId,
                     block = { password ->
                         runSuspendCatching {
                             userWalletEncryptionKeysRepository.getEncryptedWithPassword(userWalletId, password)
@@ -468,13 +472,11 @@ internal class DefaultUserWalletsListRepository(
     }
 
     private suspend fun removeHotWalletsFromSDKAndRepos(walletIds: List<UserWalletId>) {
-        val hotWalletsToDelete = userWalletsSync()
-            .filterIsInstance<UserWallet.Hot>()
-            .filter { walletIds.contains(it.walletId) }
+        val hotWalletsToDelete = userWalletsSync().filter { walletIds.contains(it.walletId) }
 
         hotWalletsToDelete.forEach { wallet ->
             hotWalletRepository.setAccessCodeSkipped(wallet.walletId, false) // In case the wallet is added again
-            tangemHotSdk.delete(wallet.hotWalletId)
+            wallet.hotWalletIdOrNull()?.let { tangemHotSdk.delete(it) }
         }
     }
 
@@ -516,8 +518,15 @@ internal class DefaultUserWalletsListRepository(
     }
 
     private suspend fun removePasswordAttempts(userWallet: UserWallet) {
-        if (userWallet is UserWallet.Hot) {
-            hotWalletAccessCodeAttemptsRepository.resetAttempts(userWallet.hotWalletId)
+        userWallet.hotWalletIdOrNull()
+            ?.let { hotWalletAccessCodeAttemptsRepository.resetAttempts(it) }
+    }
+
+    private fun UserWallet.hotWalletIdOrNull(): HotWalletId? {
+        return when (this) {
+            is UserWallet.Hot -> hotWalletId
+            is UserWallet.NfcEncrypted -> hotWalletId
+            is UserWallet.Cold -> null
         }
     }
 

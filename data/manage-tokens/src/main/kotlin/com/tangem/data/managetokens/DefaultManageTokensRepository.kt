@@ -325,7 +325,7 @@ internal class DefaultManageTokensRepository(
         userWallet: UserWallet,
         blockchain: Blockchain,
     ): CurrencyUnsupportedState.Token? {
-        if (userWallet is UserWallet.Hot) {
+        if (userWallet is UserWallet.Hot || userWallet is UserWallet.NfcEncrypted) {
             return if (blockchain in hotWalletExcludedBlockchains) {
                 CurrencyUnsupportedState.Token.NetworkTokensUnsupported(networkName = blockchain.fullName)
             } else {

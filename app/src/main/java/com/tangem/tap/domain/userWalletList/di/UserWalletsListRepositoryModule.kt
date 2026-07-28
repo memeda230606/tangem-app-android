@@ -17,6 +17,7 @@ import com.tangem.domain.visa.model.VisaActivationRemoteState
 import com.tangem.domain.visa.model.VisaCardActivationStatus
 import com.tangem.domain.wallets.hot.HotWalletAccessCodeAttemptsRepository
 import com.tangem.domain.wallets.hot.HotWalletPasswordRequester
+import com.tangem.domain.wallets.nfc.NfcWalletKeyRepository
 import com.tangem.feature.referral.domain.MobileWalletPromoRepository
 import com.tangem.hot.sdk.TangemHotSdk
 import com.tangem.sdk.storage.AndroidSecureStorage
@@ -24,6 +25,7 @@ import com.tangem.sdk.storage.AndroidSecureStorageV2
 import com.tangem.sdk.storage.createEncryptedSharedPreferences
 import com.tangem.tap.domain.userWalletList.repository.DefaultUserWalletsListRepository
 import com.tangem.tap.domain.userWalletList.repository.DelegatedKeystoreManager
+import com.tangem.tap.domain.nfc.DefaultNfcWalletKeyRepository
 import com.tangem.tap.domain.userWalletList.repository.UserWalletEncryptionKeysRepository
 import com.tangem.tap.domain.userWalletList.repository.UserWalletsKeysStoreDecorator
 import com.tangem.tap.domain.userWalletList.repository.implementation.DefaultSelectedUserWalletRepository
@@ -47,6 +49,20 @@ internal object UserWalletsListRepositoryModule {
 
     @Provides
     @Singleton
+    fun provideNfcWalletKeyRepository(
+        @ApplicationContext applicationContext: Context,
+        dispatchers: CoroutineDispatcherProvider,
+    ): NfcWalletKeyRepository {
+        val secureStorage = buildSecureStorage(applicationContext = applicationContext)
+        return DefaultNfcWalletKeyRepository(
+            authenticatedStorage = buildAuthenticatedStorage(secureStorage),
+            secureStorage = secureStorage,
+            dispatchers = dispatchers,
+        )
+    }
+
+    @Provides
+    @Singleton
     fun provideUserWalletsListRepository(
         @ApplicationContext applicationContext: Context,
         dispatchers: CoroutineDispatcherProvider,
@@ -58,20 +74,12 @@ internal object UserWalletsListRepositoryModule {
         analyticsEventHandler: AnalyticsEventHandler,
         hotWalletRepository: HotWalletRepository,
         mobileWalletPromoRepository: MobileWalletPromoRepository,
+        nfcWalletKeyRepository: NfcWalletKeyRepository,
         userWalletSelectedHandler: Lazy<UserWalletSelectedHandler>,
     ): UserWalletsListRepository {
         val moshi = buildMoshi()
         val secureStorage = buildSecureStorage(applicationContext = applicationContext)
-
-        val authenticatedStorage = AuthenticatedStorage(
-            secureStorage = UserWalletsKeysStoreDecorator(
-                featureStorage = secureStorage,
-                cardSdkStorageProvider = Provider { tangemSdkManager.secureStorage },
-            ),
-            keystoreManager = DelegatedKeystoreManager(
-                keystoreManagerProvider = Provider { tangemSdkManager.keystoreManager },
-            ),
-        )
+        val authenticatedStorage = buildAuthenticatedStorage(secureStorage)
 
         val publicInformationRepository = DefaultUserWalletsPublicInformationRepository(
             moshi = moshi,
@@ -110,6 +118,7 @@ internal object UserWalletsListRepositoryModule {
             analyticsEventHandler = analyticsEventHandler,
             hotWalletRepository = hotWalletRepository,
             mobileWalletPromoRepository = mobileWalletPromoRepository,
+            nfcWalletKeyRepository = nfcWalletKeyRepository,
             userWalletSelectedHandler = userWalletSelectedHandler,
         )
     }
@@ -146,6 +155,18 @@ internal object UserWalletsListRepositoryModule {
                 appContext = applicationContext,
                 useStrongBox = false,
                 name = "user_wallets_storage3",
+            ),
+        )
+    }
+
+    private fun buildAuthenticatedStorage(secureStorage: SecureStorage): AuthenticatedStorage {
+        return AuthenticatedStorage(
+            secureStorage = UserWalletsKeysStoreDecorator(
+                featureStorage = secureStorage,
+                cardSdkStorageProvider = Provider { tangemSdkManager.secureStorage },
+            ),
+            keystoreManager = DelegatedKeystoreManager(
+                keystoreManagerProvider = Provider { tangemSdkManager.keystoreManager },
             ),
         )
     }

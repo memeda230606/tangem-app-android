@@ -22,7 +22,9 @@ To strictly verify the committed files against a local `ds-tokens` checkout, run
    ```bash
    cd core/ui/token-gen && npm run build
    ```
-3. Commit both the submodule pointer and generated files.
+3. Commit the local token sources and generated files.
+4. To require source verification during Gradle builds, pass
+   `-PstrictDesignTokens=true`.
 
 ## How it works
 

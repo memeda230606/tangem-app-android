@@ -30,18 +30,19 @@ dependencies {
     implementation(projects.core.analytics)
     implementation(projects.core.analytics.models)
     implementation(projects.core.utils)
+    implementation(projects.libs.vicoCompat)
 
     /** Compose */
-    implementation(tangemDeps.vico.core)
-    implementation(tangemDeps.vico.compose)
-    implementation(tangemDeps.vico.compose.m3)
+    implementation(deps.vico.core)
+    implementation(deps.vico.compose)
+    implementation(deps.vico.compose.m3)
 
     /** Common */
     implementation(projects.common.ui)
     implementation(projects.common.routing)
 
     /** SDK */
-    implementation(tangemDeps.blockchain) {
+    implementation(projects.libs.blockchainCompat) {
         exclude(module = "joda-time")
     }
 

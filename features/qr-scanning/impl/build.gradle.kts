@@ -60,5 +60,5 @@ dependencies {
 
     /** Other dependencies */
     implementation(deps.arrow.core)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.cardSdkCompat)
 }

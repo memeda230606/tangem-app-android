@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="common_custom_string" translatable="false">%s</string>
+    <string name="common_retry">Retry</string>
+    <string name="error_wrong_card_type">This card is not designed to work with this app</string>
+    <string name="issuer_signature_loading_failed">Issuer signature loading failed</string>
 </resources>

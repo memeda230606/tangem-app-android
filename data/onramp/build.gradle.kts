@@ -55,8 +55,8 @@ dependencies {
     implementation(projects.libs.blockchainSdk)
     implementation(projects.libs.crypto)
 
-    implementation(tangemDeps.card.core)
-    implementation(tangemDeps.blockchain) {
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.blockchainCompat) {
         exclude(module = "joda-time")
     }
 

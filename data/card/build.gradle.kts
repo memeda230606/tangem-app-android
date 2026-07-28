@@ -13,15 +13,15 @@ android {
 dependencies {
     implementation(deps.androidx.datastore)
 
-    implementation(tangemDeps.blockchain) {
+    implementation(projects.libs.blockchainCompat) {
         exclude(module = "joda-time")
     }
 
     implementation(deps.hilt.android)
     kapt(deps.hilt.kapt)
 
-    implementation(tangemDeps.card.android)
-    implementation(tangemDeps.card.core)
+    implementation(projects.libs.cardSdkCompat)
+    implementation(projects.libs.cardSdkCompat)
 
     implementation(projects.core.datasource)
     implementation(projects.core.utils)

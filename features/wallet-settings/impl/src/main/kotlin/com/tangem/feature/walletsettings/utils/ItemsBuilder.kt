@@ -227,6 +227,7 @@ internal class ItemsBuilder @Inject constructor() {
         return when (userWallet) {
             is UserWallet.Cold -> emptyList()
             is UserWallet.Hot -> buildHotWalletAccessCodeItem(userWallet, onItemClick)
+            is UserWallet.NfcEncrypted -> emptyList()
         }
     }
 
