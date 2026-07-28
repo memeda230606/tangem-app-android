@@ -117,10 +117,14 @@ class TokenItemStateConverter(
             subtitle2State = requireNotNull(subtitle2StateProvider(this)),
             promoBannerState = promoBannerProvider(this),
             onItemClick = onItemClick?.let { onItemClick ->
-                { onItemClick(it, this) }
+                {
+                    onItemClick(it, this)
+                }
             },
             onItemLongClick = onItemLongClick?.let { onItemLongClick ->
-                { onItemLongClick(it, this) }
+                {
+                    onItemLongClick(it, this)
+                }
             },
         )
     }
@@ -132,10 +136,14 @@ class TokenItemStateConverter(
             titleState = titleStateProvider(this),
             subtitleState = subtitleStateProvider(this),
             onItemClick = onItemClick?.let { onItemClick ->
-                { onItemClick(it, this) }
+                {
+                    onItemClick(it, this)
+                }
             },
             onItemLongClick = onItemLongClick?.let { onItemLongClick ->
-                { onItemLongClick(it, this) }
+                {
+                    onItemLongClick(it, this)
+                }
             },
         )
     }
@@ -147,7 +155,9 @@ class TokenItemStateConverter(
             titleState = titleStateProvider(this),
             subtitleState = subtitleStateProvider(this),
             onItemLongClick = onItemLongClick?.let { onItemLongClick ->
-                { onItemLongClick(it, this) }
+                {
+                    onItemLongClick(it, this)
+                }
             },
         )
     }

@@ -38,9 +38,9 @@ import com.tangem.features.onboarding.v2.multiwallet.impl.child.finalize.ui.stat
 import com.tangem.features.onboarding.v2.multiwallet.impl.common.ui.resetCardDialog
 import com.tangem.features.onboarding.v2.multiwallet.impl.model.OnboardingMultiWalletState.FinalizeStage.*
 import com.tangem.features.onboarding.v2.util.ResetCardsComponent
-import com.tangem.operations.backup.BackupService
 import com.tangem.operations.derivation.ExtendedPublicKeysMap
 import com.tangem.sdk.api.BackupServiceHolder
+import com.tangem.sdk.api.CardBackupService
 import com.tangem.sdk.api.TangemSdkManager
 import com.tangem.utils.StringsSigns
 import com.tangem.utils.coroutines.CoroutineDispatcherProvider
@@ -96,7 +96,8 @@ internal class MultiWalletFinalizeModel @Inject constructor(
             // sets proper artwork state for initial step
             // (if we start from backup cards, we need to show proper artwork) ([REDACTED_TASK_KEY])
             when (getInitialStep()) {
-                MultiWalletFinalizeUM.Step.Primary -> { /* state is already set */
+                MultiWalletFinalizeUM.Step.Primary -> {
+                    /* state is already set */
                 }
                 MultiWalletFinalizeUM.Step.BackupDevice1 -> {
                     onEvent.emit(MultiWalletFinalizeComponent.Event.OneBackupCardAdded)
@@ -213,11 +214,11 @@ internal class MultiWalletFinalizeModel @Inject constructor(
             when (result) {
                 is CompletionResult.Success -> {
                     val backupValidator = BackupValidator()
-                    if (backupValidator.isValidBackupStatus(CardDTO(result.data)).not()) {
+                    if (backupValidator.isValidBackupStatus(result.data).not()) {
                         hasWalletBackupError = true
                     }
 
-                    if (backupService.currentState == BackupService.State.Finished) {
+                    if (backupService.currentState == CardBackupService.State.Finished) {
                         finishBackup()
                     } else {
                         modelScope.launch { onEvent.emit(MultiWalletFinalizeComponent.Event.TwoBackupCardsAdded) }

@@ -234,20 +234,22 @@ inline fun <reified T : TangemBottomSheetConfigContent> BasicBottomSheet(
 
     val bsContent: @Composable ColumnScope.() -> Unit = {
         val contentModifier = when (type) {
-            Default -> Modifier
-                .clip(
-                    RoundedCornerShape(
-                        topStart = TangemTheme.dimens2.x8,
-                        topEnd = TangemTheme.dimens2.x8,
-                    ),
-                )
-            Modal -> Modifier
-                .padding(
-                    start = TangemTheme.dimens2.x2,
-                    end = TangemTheme.dimens2.x2,
-                    bottom = bottomBarHeight,
-                )
-                .clip(RoundedCornerShape(TangemTheme.dimens2.x8))
+            Default ->
+                Modifier
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = TangemTheme.dimens2.x8,
+                            topEnd = TangemTheme.dimens2.x8,
+                        ),
+                    )
+            Modal ->
+                Modifier
+                    .padding(
+                        start = TangemTheme.dimens2.x2,
+                        end = TangemTheme.dimens2.x2,
+                        bottom = bottomBarHeight,
+                    )
+                    .clip(RoundedCornerShape(TangemTheme.dimens2.x8))
         }
 
         Column(

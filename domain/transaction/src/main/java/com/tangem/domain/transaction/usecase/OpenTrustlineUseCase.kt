@@ -25,11 +25,13 @@ class OpenTrustlineUseCase(
 
             catch(
                 block = {
-                    when (val result = walletManagersFacade.fulfillRequirements(
-                        userWallet.walletId,
-                        currency,
-                        signer,
-                    )) {
+                    when (
+                        val result = walletManagersFacade.fulfillRequirements(
+                            userWallet.walletId,
+                            currency,
+                            signer,
+                        )
+                    ) {
                         is SimpleResult.Failure -> when (val error = result.error) {
                             is BlockchainSdkError.Stellar.MinReserveRequired ->
                                 raise(

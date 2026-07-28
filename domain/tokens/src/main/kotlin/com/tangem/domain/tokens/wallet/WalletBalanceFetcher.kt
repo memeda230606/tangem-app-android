@@ -135,7 +135,7 @@ class WalletBalanceFetcher internal constructor(
                 when {
                     cardTypesResolver.isMultiwalletAllowed() -> multiWalletBalanceFetcher
                     cardTypesResolver.isSingleWalletWithToken() -> singleWalletWithTokenBalanceFetcher
-                    cardTypesResolver.isSingleWallet() -> singleWalletBalanceFetcher
+                    cardTypesResolver.isSingleWallet() || cardTypesResolver.isVisaWallet() -> singleWalletBalanceFetcher
                     else -> error("Unknown type of wallet: $userWalletId")
                 }
             }

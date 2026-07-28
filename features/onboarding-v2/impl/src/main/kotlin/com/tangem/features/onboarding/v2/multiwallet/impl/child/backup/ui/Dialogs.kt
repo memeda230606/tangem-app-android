@@ -16,7 +16,10 @@ internal fun resetBackupCardDialog(onReset: () -> Unit, onDismiss: () -> Unit, o
             onDismissClick()
         },
         onConfirm = onDismiss,
-        onCancel = { onReset(); onDismiss() },
+        onCancel = {
+            onReset()
+            onDismiss()
+        },
     )
 
 internal fun backupCardAttestationFailedDialog(onDismiss: () -> Unit) = MultiWalletBackupUMDialog(

@@ -9,4 +9,14 @@
     <string name="mock_cobrand_batch_error" translatable="false">Must be 4 or 8 hex characters (0–9, A–F)</string>
     <string name="mock_cobrand_card_count_error" translatable="false">Must be 2 or 3</string>
 
+    <string name="nfc_demo_tap_title">Scan your NFC tag</string>
+    <string name="nfc_demo_tap_description">Hold the demo tag near the top of your phone to confirm this simulated operation.</string>
+    <string name="nfc_demo_tap_reading">Reading NFC tag…</string>
+    <string name="nfc_demo_tap_hold_position">Keep the tag in place.</string>
+    <string name="nfc_demo_tap_success">NFC confirmed</string>
+    <string name="nfc_demo_tap_success_description">The simulated operation can now continue.</string>
+    <string name="nfc_demo_tap_failure">NFC scan failed</string>
+    <string name="nfc_demo_tap_failure_description">Remove the tag and try again.</string>
+    <string name="nfc_demo_tap_cancel">Cancel</string>
+
 </resources>

@@ -17,6 +17,11 @@ import com.tangem.core.decompose.model.ParamsContainer
 import com.tangem.core.decompose.navigation.Router
 import com.tangem.core.decompose.ui.UiMessageSender
 import com.tangem.core.navigation.url.UrlOpener
+import com.tangem.core.ui.R
+import com.tangem.core.ui.extensions.resourceReference
+import com.tangem.core.ui.extensions.toWrappedList
+import com.tangem.core.ui.message.DialogMessage
+import com.tangem.core.ui.message.EventMessageAction
 import com.tangem.core.ui.message.dialog.Dialogs
 import com.tangem.domain.card.ScanCardProcessor
 import com.tangem.domain.card.analytics.IntroductionProcess
@@ -34,9 +39,11 @@ import com.tangem.domain.wallets.usecase.GenerateBuyTangemCardLinkUseCase
 import com.tangem.domain.wallets.usecase.SaveWalletUseCase
 import com.tangem.feature.referral.domain.ShouldShowMobileWalletPromoUseCase
 import com.tangem.features.home.api.HomeComponent
+import com.tangem.features.home.impl.BuildConfig
 import com.tangem.features.home.impl.ui.state.HomeUM
 import com.tangem.features.home.impl.ui.state.Stories
 import com.tangem.features.home.impl.ui.state.getRestrictedStories
+import com.tangem.sdk.extensions.localizedDescriptionRes
 import com.tangem.utils.coroutines.CoroutineDispatcherProvider
 import com.tangem.utils.coroutines.Debouncer
 import com.tangem.utils.logging.TangemLogger
@@ -233,9 +240,29 @@ internal class HomeModel @Inject constructor(
     private fun handleScanError(error: TangemError) {
         when (error) {
             is TangemSdkError.NfcFeatureIsUnavailable -> handleNfcFeatureUnavailable()
-            is TangemSdkError -> TangemLogger.e("Scan error occurred", error)
+            is TangemSdkError -> {
+                TangemLogger.e("Scan error occurred", error)
+                if (BuildConfig.NFC_DEMO_ENABLED) showSdkError(error)
+            }
             else -> TangemLogger.e("Error happened", error)
         }
+    }
+
+    private fun showSdkError(error: TangemSdkError) {
+        val resource = error.localizedDescriptionRes()
+        val messageResId = resource.resId ?: R.string.common_unknown_error
+        val messageArgs = resource.args.map { it.value }.toWrappedList()
+
+        uiMessageSender.send(
+            DialogMessage(
+                title = resourceReference(R.string.common_error),
+                message = resourceReference(messageResId, messageArgs),
+                firstAction = EventMessageAction(
+                    title = resourceReference(R.string.common_ok),
+                    onClick = {},
+                ),
+            ),
+        )
     }
 
     private fun handleNfcFeatureUnavailable() {

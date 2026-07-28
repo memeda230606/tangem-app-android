@@ -88,9 +88,10 @@ internal class DefaultDerivationsRepository @Inject constructor(
     private fun UserWallet.getExistingDerivedKeys(): Map<ByteArrayKey, ExtendedPublicKeysMap> {
         return when (this) {
             is UserWallet.Cold -> scanResponse.derivedKeys
-            is UserWallet.Hot -> wallets
-                ?.associate { it.publicKey.toMapKey() to ExtendedPublicKeysMap(it.derivedKeys) }
-                .orEmpty()
+            is UserWallet.Hot ->
+                wallets
+                    ?.associate { it.publicKey.toMapKey() to ExtendedPublicKeysMap(it.derivedKeys) }
+                    .orEmpty()
         }
     }
 

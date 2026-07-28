@@ -6,8 +6,21 @@ plugins {
     id("configuration")
 }
 
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+}
+
 android {
     namespace = "com.tangem.data.walletmanager"
+
+    // Production bindings are excluded from the mocked build, which uses deterministic local balances.
+    buildTypes.configureEach {
+        if (name != "mocked") {
+            sourceSets.named(name) {
+                java.srcDir("src/prodDi/java")
+            }
+        }
+    }
 }
 
 dependencies {
@@ -43,6 +56,8 @@ dependencies {
     implementation(projects.libs.blockchainSdk)
     implementation(deps.androidx.datastore)
     implementation(deps.arrow.core)
+    implementation(deps.moshi)
+    implementation(deps.moshi.kotlin)
 
     /** Testing libraries */
     testRuntimeOnly(deps.test.junit5.engine)

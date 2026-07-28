@@ -112,7 +112,8 @@ internal class DefaultCardCryptoCurrencyFactory(
     }
 
     override fun createPrimaryCurrencyForSingleCurrencyCard(userWallet: UserWallet.Cold): CryptoCurrency {
-        require(userWallet.scanResponse.cardTypesResolver.isSingleWallet()) {
+        val cardTypesResolver = userWallet.scanResponse.cardTypesResolver
+        require(cardTypesResolver.isSingleWallet() || cardTypesResolver.isVisaWallet()) {
             "It isn't single-currency wallet"
         }
 

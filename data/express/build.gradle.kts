@@ -9,6 +9,15 @@ plugins {
 
 android {
     namespace = "com.tangem.data.express"
+
+    // Production asset synchronization is replaced with deterministic local state in mocked builds.
+    buildTypes.configureEach {
+        if (name != "mocked") {
+            sourceSets.named(name) {
+                java.srcDir("src/prodDi/java")
+            }
+        }
+    }
 }
 
 dependencies {

@@ -131,10 +131,12 @@ internal class YieldSupplyApproveModel @Inject constructor(
         val yieldSupplyFeeUM = uiState.value.yieldSupplyFeeUM as? YieldSupplyFeeUM.Content ?: return
         uiState.update(YieldSupplyTransactionInProgressTransformer)
 
-        analyticsEventHandler.send(YieldSupplyAnalytics.ButtonGiveApprove(
-            token = cryptoCurrency.symbol,
-            blockchain = cryptoCurrency.network.name,
-        ))
+        analyticsEventHandler.send(
+            YieldSupplyAnalytics.ButtonGiveApprove(
+                token = cryptoCurrency.symbol,
+                blockchain = cryptoCurrency.network.name,
+            ),
+        )
 
         modelScope.launch(dispatchers.default) {
             sendTransactionUseCase(
@@ -197,11 +199,13 @@ internal class YieldSupplyApproveModel @Inject constructor(
                 memoType = Basic.TransactionSent.MemoType.Null,
             ),
         )
-        analyticsEventHandler.send(YieldSupplyAnalytics.ApprovalAction(
-            token = cryptoCurrency.symbol,
-            blockchain = cryptoCurrency.network.name,
-            action = YieldSupplyAnalytics.Action.Approve,
-        ))
+        analyticsEventHandler.send(
+            YieldSupplyAnalytics.ApprovalAction(
+                token = cryptoCurrency.symbol,
+                blockchain = cryptoCurrency.network.name,
+                action = YieldSupplyAnalytics.Action.Approve,
+            ),
+        )
         params.callback.onTransactionSent()
     }
 

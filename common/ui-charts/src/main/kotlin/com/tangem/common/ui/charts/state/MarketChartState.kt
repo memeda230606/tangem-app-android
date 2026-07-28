@@ -20,7 +20,8 @@ import java.math.BigDecimal
 fun rememberMarketChartState(
     dataProducer: MarketChartDataProducer = remember { MarketChartDataProducer.build {} },
     colorMapper: (MarketChartLook.Type) -> Color = remember {
-        { type ->
+        {
+                type ->
             when (type) {
                 MarketChartLook.Type.Growing -> Color.Green
                 MarketChartLook.Type.Falling -> Color.Red

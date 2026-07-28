@@ -1,6 +1,7 @@
 package com.tangem.data.pay
 
 import com.tangem.common.card.FirmwareVersion
+import com.tangem.data.pay.repository.TangemPayFixturePolicy
 import com.tangem.domain.common.wallets.UserWalletsListRepository
 import com.tangem.domain.models.pay.TangemPayEligibilityType
 import com.tangem.utils.coroutines.AppCoroutineScope
@@ -22,6 +23,7 @@ internal class DefaultTangemPayEligibilityManager @Inject constructor(
     private val userWalletsListRepository: UserWalletsListRepository,
     private val coroutineScope: AppCoroutineScope,
     private val onboardingRepository: OnboardingRepository,
+    private val fixturePolicy: TangemPayFixturePolicy,
 ) : TangemPayEligibilityManager {
 
     private var cachedEligibleWallets: Map<TangemPayEntryPoint?, List<UserWalletData>> = emptyMap()
@@ -86,6 +88,7 @@ internal class DefaultTangemPayEligibilityManager @Inject constructor(
 
         val candidates = wallets.filter { wallet ->
             wallet.isMultiCurrency && !wallet.isLocked && wallet.isCompatible() &&
+                fixturePolicy.shouldExposeTangemPay(wallet.walletId) &&
                 !onboardingRepository.isTangemPayDeactivated(wallet.walletId)
         }
 

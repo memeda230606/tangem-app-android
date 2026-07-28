@@ -42,7 +42,11 @@ object DemoConfig {
     )
 
     fun isDemoCardId(cardId: String): Boolean = demoCardIds.contains(cardId) ||
+        isNfcDemoCardId(cardId) ||
         cardId.startsWith(DEMO_NOTE_AS_MILTIWALLET_BATCH)
+
+    /** Card IDs reserved for the ordinary-NFC local fixtures. */
+    fun isNfcDemoCardId(cardId: String): Boolean = cardId in nfcDemoCardIds
 
     fun isTestDemoCardId(cardId: String): Boolean = testDemoCardIds.contains(cardId)
 
@@ -456,4 +460,9 @@ object DemoConfig {
     )
 
     private val debugTestDemoCardIds = emptyList<String>()
+
+    private val nfcDemoCardIds = setOf(
+        "AF05888888880018", // Wallet 2 fixture
+        "AE05888888880018", // Visa fixture
+    )
 }

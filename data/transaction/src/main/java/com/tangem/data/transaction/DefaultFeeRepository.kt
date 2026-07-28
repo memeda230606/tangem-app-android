@@ -84,7 +84,8 @@ internal class DefaultFeeRepository(
         transactionData: TransactionData,
     ): TransactionFee {
         val transactionSender = if (userWallet is UserWallet.Cold &&
-            demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId)
+            demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId) &&
+            !demoConfig.isNfcDemoCardId(userWallet.scanResponse.card.cardId)
         ) {
             demoTransactionSender(userWallet, cryptoCurrency)
         } else {

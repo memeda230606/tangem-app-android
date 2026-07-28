@@ -12,11 +12,13 @@ internal class SdkTransactionHistoryItemConverter(
     gaslessFeeAddresses: Set<String>,
 ) : Converter<SdkTransactionHistoryItem, TxInfo> {
 
-    private val typeConverter by lazy { SdkTransactionTypeConverter(
-        smartContractMethods = smartContractMethods,
-        yieldSupplyAddresses = yieldSupplyAddresses,
-        gaslessFeeAddresses = gaslessFeeAddresses,
-    ) }
+    private val typeConverter by lazy {
+        SdkTransactionTypeConverter(
+            smartContractMethods = smartContractMethods,
+            yieldSupplyAddresses = yieldSupplyAddresses,
+            gaslessFeeAddresses = gaslessFeeAddresses,
+        )
+    }
 
     override fun convert(value: SdkTransactionHistoryItem): TxInfo = TxInfo(
         txHash = value.txHash,

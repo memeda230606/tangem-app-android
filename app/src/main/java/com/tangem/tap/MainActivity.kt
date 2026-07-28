@@ -2,6 +2,7 @@ package com.tangem.tap
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Build
@@ -23,14 +24,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import arrow.core.getOrElse
+import com.tangem.common.routing.AppRoute
 import com.tangem.common.routing.AppRouter
 import com.tangem.common.routing.deeplink.DeeplinkConst.WEBLINK_KEY
 import com.tangem.common.routing.deeplink.PayloadToDeeplinkConverter
+import com.tangem.common.routing.entity.InitScreenLaunchMode
 import com.tangem.core.analytics.api.AnalyticsEventHandler
 import com.tangem.core.decompose.context.AppComponentContext
 import com.tangem.core.decompose.di.RootAppComponentContext
@@ -51,13 +55,17 @@ import com.tangem.domain.wallets.hot.HotWalletPasswordRequester
 import com.tangem.domain.wallets.usecase.ClearAllHotWalletContextualUnlockUseCase
 import com.tangem.features.tester.api.TesterMenuLauncher
 import com.tangem.google.GoogleServicesHelper
-import com.tangem.operations.backup.BackupService
 import com.tangem.sdk.api.BackupServiceHolder
+import com.tangem.sdk.api.CardBackupService
 import com.tangem.sdk.api.TangemSdkManager
 import com.tangem.tap.common.ActivityResultCallbackHolder
 import com.tangem.tap.common.OnActivityResultCallback
 import com.tangem.tap.common.analytics.events.Push
 import com.tangem.tap.common.apptheme.MutableAppThemeModeHolder
+import com.tangem.tap.domain.sdk.mocks.NfcDemoForegroundReceiver
+import com.tangem.tap.domain.sdk.mocks.NfcDemoBackupService
+import com.tangem.tap.domain.sdk.mocks.NfcRoutingBackupService
+import com.tangem.tap.domain.sdk.mocks.NfcDemoHotWalletBridge
 import com.tangem.tap.features.intentHandler.handlers.BackgroundScanIntentHandler
 import com.tangem.tap.features.main.MainViewModel
 import com.tangem.tap.routing.component.RoutingComponent
@@ -76,7 +84,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 lateinit var tangemSdkManager: TangemSdkManager
-lateinit var backupService: BackupService
+lateinit var backupService: CardBackupService
 internal var lockUserWalletsTimer: LockUserWalletsTimer? = null
     private set
 
@@ -131,6 +139,9 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
     lateinit var backupServiceHolder: BackupServiceHolder
 
     @Inject
+    internal lateinit var nfcDemoHotWalletBridge: NfcDemoHotWalletBridge
+
+    @Inject
     lateinit var setGoogleServicesAvailabilityUseCase: SetGoogleServicesAvailabilityUseCase
 
     @Inject
@@ -168,6 +179,9 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
     private lateinit var appThemeModeFlow: SharedFlow<AppThemeMode>
 
     private val onActivityResultCallbacks = mutableListOf<OnActivityResultCallback>()
+
+    private val nfcDemoForegroundReceiver = NfcDemoForegroundReceiver()
+    private var isNfcDemoForegroundReceiverRegistered = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         TangemLogger.i("onCreate: data=${intent?.data}, extras=${intent?.extras?.keySet()}")
@@ -254,7 +268,18 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
         cardSdkOwner.register(activity = this)
         tangemSdkManager = injectedTangemSdkManager
 
-        backupServiceHolder.createAndSetService(cardSdkConfigRepository.sdk, this)
+        if (BuildConfig.NFC_DEMO_ENABLED) {
+            backupServiceHolder.createAndSetService(cardSdkConfigRepository.sdk, this)
+            val realBackupService = requireNotNull(backupServiceHolder.backupService.get())
+            backupServiceHolder.setService(
+                NfcRoutingBackupService(
+                    real = realBackupService,
+                    demo = NfcDemoBackupService(applicationContext, nfcDemoHotWalletBridge),
+                ),
+            )
+        } else {
+            backupServiceHolder.createAndSetService(cardSdkConfigRepository.sdk, this)
+        }
         backupService = requireNotNull(backupServiceHolder.backupService.get()) // will be deleted eventually
 
         lockUserWalletsTimer = LockUserWalletsTimer(
@@ -315,10 +340,12 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
 
     override fun onStart() {
         super.onStart()
+        registerNfcDemoForegroundReceiver()
         TangemLogger.i("onStart")
     }
 
     override fun onStop() {
+        unregisterNfcDemoForegroundReceiver()
         super.onStop()
         TangemLogger.i("onStop")
     }
@@ -362,6 +389,17 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
         val isFromPush = intent.extras?.containsKey(OPENED_FROM_GCM_PUSH) == true
         if (isFromPush) {
             analyticsEventsHandler.send(Push.PushNotificationOpened())
+        }
+
+        val launchMode = backgroundScanIntentHandler.getInitScreenLaunchMode(intent)
+        if (launchMode == InitScreenLaunchMode.WithCardScan) {
+            appRouter.replaceAll(
+                AppRoute.Home(
+                    launchMode = launchMode,
+                    scanRequestId = System.nanoTime(),
+                ),
+            )
+            return
         }
 
         handleDeepLink(intent = intent, isFromOnNewIntent = true)
@@ -443,6 +481,25 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
                 setGooglePayAvailabilityUseCase(false)
             }
         }
+    }
+
+    private fun registerNfcDemoForegroundReceiver() {
+        if (!BuildConfig.NFC_DEMO_ENABLED || isNfcDemoForegroundReceiverRegistered) return
+
+        ContextCompat.registerReceiver(
+            this,
+            nfcDemoForegroundReceiver,
+            IntentFilter(NfcDemoForegroundReceiver.HONOR_NDEF_DISCOVERED),
+            ContextCompat.RECEIVER_EXPORTED,
+        )
+        isNfcDemoForegroundReceiverRegistered = true
+    }
+
+    private fun unregisterNfcDemoForegroundReceiver() {
+        if (!isNfcDemoForegroundReceiverRegistered) return
+
+        unregisterReceiver(nfcDemoForegroundReceiver)
+        isNfcDemoForegroundReceiverRegistered = false
     }
 
     companion object {

@@ -23,12 +23,12 @@ import com.tangem.hot.sdk.model.HotAuth
 import com.tangem.hot.sdk.model.MnemonicType
 import com.tangem.utils.coroutines.CoroutineDispatcherProvider
 import com.tangem.utils.coroutines.runSuspendCatching
+import com.tangem.utils.logging.TangemLogger
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.tangem.utils.logging.TangemLogger
 import javax.inject.Inject
 
 @Suppress("LongParameterList")
@@ -115,7 +115,14 @@ internal class CreateMobileWalletModel @Inject constructor(
                     syncWalletWithRemoteUseCase(userWalletId = userWallet.walletId)
                 }
 
-                router.replaceAll(AppRoute.Wallet)
+                TangemLogger.i("[HotWallet] Wallet created; opening the activation flow")
+                router.replaceAll(
+                    AppRoute.Wallet,
+                    AppRoute.WalletActivation(
+                        userWalletId = userWallet.walletId,
+                        isBackupExists = false,
+                    ),
+                )
             }.onFailure { throwable ->
                 TangemLogger.e("Error", throwable)
 

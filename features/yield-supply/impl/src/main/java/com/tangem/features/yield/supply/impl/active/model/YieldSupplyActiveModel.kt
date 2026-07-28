@@ -76,7 +76,8 @@ internal class YieldSupplyActiveModel @Inject constructor(
     private val yieldSupplyFeatureToggles: YieldSupplyFeatureToggles,
     private val designFeatureToggles: DesignFeatureToggles,
     private val boostStoryPreloader: YieldBoostStoryPreloader,
-) : Model(), YieldSupplyStopEarningComponent.ModelCallback,
+) : Model(),
+    YieldSupplyStopEarningComponent.ModelCallback,
     YieldSupplyApproveComponent.ModelCallback {
 
     private val params: YieldSupplyActiveComponent.Params = paramsContainer.require()

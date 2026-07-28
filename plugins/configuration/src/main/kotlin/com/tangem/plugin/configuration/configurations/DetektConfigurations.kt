@@ -30,7 +30,7 @@ private fun DetektExtension.configure(project: Project) {
         )
     )
 
-    ignoredBuildTypes = listOf("release", "internal", "external", "mocked")
+    ignoredBuildTypes = listOf("release", "internal", "external", "mocked", "hybrid")
     ignoredFlavors = listOf("huawei")
 }
 

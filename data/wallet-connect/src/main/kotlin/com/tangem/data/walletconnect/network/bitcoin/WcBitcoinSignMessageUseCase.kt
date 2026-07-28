@@ -80,12 +80,14 @@ internal class WcBitcoinSignMessageUseCase @AssistedInject constructor(
         val addressToSign = method.address ?: method.account
 
         // Use MessageSigner to sign the message
-        when (val result = walletManager.signMessage(
-            message = method.message,
-            address = addressToSign,
-            protocol = method.protocol,
-            signer = signer,
-        )) {
+        when (
+            val result = walletManager.signMessage(
+                message = method.message,
+                address = addressToSign,
+                protocol = method.protocol,
+                signer = signer,
+            )
+        ) {
             is SdkResult.Success -> {
                 val response = buildJsonResponse(result.data)
                 val wcRespondResult = respondService.respond(rawSdkRequest, response)

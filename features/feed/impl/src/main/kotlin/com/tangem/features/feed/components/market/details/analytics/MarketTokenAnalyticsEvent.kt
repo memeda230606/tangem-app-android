@@ -19,7 +19,8 @@ internal sealed class MarketTokenAnalyticsEvent(
         params = mapOf(
             AnalyticsParam.TOKEN_PARAM to tokenSymbol,
         ),
-    ), OneTimePerSessionEvent {
+    ),
+        OneTimePerSessionEvent {
         override val oneTimeEventId: String = event + tokenSymbol
     }
 
@@ -30,7 +31,8 @@ internal sealed class MarketTokenAnalyticsEvent(
         params = mapOf(
             AnalyticsParam.TOKEN_PARAM to tokenSymbol,
         ),
-    ), OneTimePerSessionEvent {
+    ),
+        OneTimePerSessionEvent {
         override val oneTimeEventId: String = event + tokenSymbol
     }
 

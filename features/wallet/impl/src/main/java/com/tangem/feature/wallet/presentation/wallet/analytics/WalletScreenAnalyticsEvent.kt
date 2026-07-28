@@ -33,7 +33,8 @@ sealed class WalletScreenAnalyticsEvent {
                 put("Backuped", if (isBackedUp) "Yes" else "No")
                 putAll(getReferralParams(referralId))
             },
-        ), AppsFlyerIncludedEvent
+        ),
+            AppsFlyerIncludedEvent
 
         data class NoticeFinishActivation(
             private val activationState: ActivationState,

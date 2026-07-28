@@ -54,15 +54,17 @@ internal class SendWithSwapSuccessModel @Inject constructor(
                     onClick = appRouter::pop,
                 ),
                 prevButton = null,
-                secondaryPairButtonsUM = (NavigationButton(
-                    textReference = resourceReference(R.string.common_explore),
-                    iconRes = R.drawable.ic_web_24,
-                    onClick = ::onExploreClick,
-                ) to NavigationButton(
-                    textReference = resourceReference(R.string.common_share),
-                    iconRes = R.drawable.ic_share_24,
-                    onClick = ::onShareClick,
-                )).takeUnless { confirmUM?.txUrl.isNullOrBlank() },
+                secondaryPairButtonsUM = (
+                    NavigationButton(
+                        textReference = resourceReference(R.string.common_explore),
+                        iconRes = R.drawable.ic_web_24,
+                        onClick = ::onExploreClick,
+                    ) to NavigationButton(
+                        textReference = resourceReference(R.string.common_share),
+                        iconRes = R.drawable.ic_share_24,
+                        onClick = ::onShareClick,
+                    )
+                    ).takeUnless { confirmUM?.txUrl.isNullOrBlank() },
             ),
         )
     }

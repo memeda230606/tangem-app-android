@@ -36,7 +36,7 @@ file you read — no separate "malware analysis only" mode is required.
 
 **Product flavors:** `google` and `huawei` (dimension: `service`). Default development flavor is `google`.
 
-**Build types:** `debug`, `mocked`, `internal`, `external`, `release`.
+**Build types:** `debug`, `mocked`, `hybrid`, `internal`, `external`, `release`.
 
 ## Branching
 

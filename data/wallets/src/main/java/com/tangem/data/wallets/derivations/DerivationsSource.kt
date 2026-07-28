@@ -47,9 +47,10 @@ internal sealed interface DerivationsSource {
         override fun getWalletPublicKey(curve: EllipticCurve): ByteArray? {
             return when (userWallet) {
                 is UserWallet.Cold -> userWallet.scanResponse.getWalletPublicKey(curve)
-                is UserWallet.Hot -> userWallet.wallets
-                    ?.firstOrNull { it.curve == curve && it.chainCode != null }
-                    ?.publicKey
+                is UserWallet.Hot ->
+                    userWallet.wallets
+                        ?.firstOrNull { it.curve == curve && it.chainCode != null }
+                        ?.publicKey
             }
         }
 

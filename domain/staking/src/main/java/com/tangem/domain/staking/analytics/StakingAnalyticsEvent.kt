@@ -22,7 +22,8 @@ sealed class StakingAnalyticsEvent(
         params = mapOf(
             "Validators Count" to validatorsCount.toString(),
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     class WhatIsStaking : StakingAnalyticsEvent(
         event = "Link - What Is Staking",
@@ -41,7 +42,8 @@ sealed class StakingAnalyticsEvent(
             "Validator" to validator,
             "Action" to action.asAnalyticName,
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     data class StakeInProgressScreenOpened(
         val validator: String,
@@ -54,7 +56,8 @@ sealed class StakingAnalyticsEvent(
             "Action" to action.asAnalyticName,
             AnalyticsParam.Key.FEE_ASSET_TYPE to feeAssetType.value,
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     class RewardScreenOpened : StakingAnalyticsEvent(
         event = "Reward Screen Opened",

@@ -25,7 +25,9 @@ class IsNeedToBackupUseCase(
                 if (wallet == null) {
                     false
                 } else {
-                    wallet is UserWallet.Cold && wallet.scanResponse.card.backupStatus is CardDTO.BackupStatus.NoBackup
+                    wallet is UserWallet.Cold &&
+                        wallet.scanResponse.card.settings.isBackupAllowed &&
+                        wallet.scanResponse.card.backupStatus is CardDTO.BackupStatus.NoBackup
                 }
             }
     }

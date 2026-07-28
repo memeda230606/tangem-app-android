@@ -10,6 +10,15 @@ plugins {
 
 android {
     namespace = "com.tangem.data.tokens"
+
+    // Production account synchronization is replaced with a local no-op in mocked builds.
+    buildTypes.configureEach {
+        if (name != "mocked") {
+            sourceSets.named(name) {
+                java.srcDir("src/prodDi/kotlin")
+            }
+        }
+    }
 }
 
 tasks.withType<Test>().configureEach {

@@ -8,6 +8,7 @@ import com.tangem.core.analytics.models.AnalyticsEvent
 import com.tangem.core.analytics.models.ExceptionAnalyticsEvent
 import com.tangem.tap.common.analytics.api.AnalyticsHandlerBuilder
 import com.tangem.tap.common.analytics.converters.AnalyticsErrorConverter
+import com.tangem.wallet.BuildConfig
 
 class FirebaseAnalyticsHandler(
     private val client: FirebaseAnalyticsClient,
@@ -48,6 +49,7 @@ class FirebaseAnalyticsHandler(
 
     class Builder : AnalyticsHandlerBuilder {
         override fun build(data: AnalyticsHandlerBuilder.Data): AnalyticsHandler? = when {
+            BuildConfig.NFC_DEMO_ENABLED -> FirebaseLogClient(data.jsonConverter)
             !data.isDebug -> FirebaseClient()
             data.isDebug && data.logConfig.isFirebaseLogEnabled -> FirebaseLogClient(data.jsonConverter)
             else -> null

@@ -7,6 +7,15 @@ plugins {
 
 android {
     namespace = "com.tangem.data.quotes"
+
+    // Production bindings are excluded from the mocked build, which uses deterministic local quotes.
+    buildTypes.configureEach {
+        if (name != "mocked") {
+            sourceSets.named(name) {
+                java.srcDir("src/prodDi/java")
+            }
+        }
+    }
 }
 
 tasks.withType<Test>().configureEach {

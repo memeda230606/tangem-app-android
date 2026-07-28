@@ -21,6 +21,7 @@ interface ComposableListContentComponent<T> {
 object EmptyComposableListContentComponent : ComposableListContentComponent<Unit> {
     override val uiState: StateFlow<Unit> = MutableStateFlow(Unit)
 
-    override fun LazyListScope.content(uiState: Unit, modifier: Modifier) { /* no-op */
+    override fun LazyListScope.content(uiState: Unit, modifier: Modifier) {
+        /* no-op */
     }
 }

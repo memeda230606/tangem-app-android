@@ -5,6 +5,8 @@ import com.tangem.domain.card.common.util.twinsIsTwinned
 import com.tangem.domain.card.repository.CardRepository
 import com.tangem.domain.models.scan.CardDTO
 import com.tangem.domain.models.scan.ScanResponse
+import com.tangem.domain.visa.model.VisaCardActivationStatus
+import com.tangem.domain.visa.repository.VisaActivationStatusRepository
 import com.tangem.tap.features.demo.DemoHelper
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,16 +14,14 @@ import javax.inject.Singleton
 @Singleton
 class OnboardingHelper @Inject constructor(
     private val cardRepository: CardRepository,
+    private val visaActivationStatusRepository: VisaActivationStatusRepository,
 ) {
     suspend fun isOnboardingCase(response: ScanResponse): Boolean {
         val cardId = response.card.cardId
 
         return when {
             response.cardTypesResolver.isVisaWallet() -> {
-                // if (response.visaCardActivationStatus == null) error("Visa card activation status is null")
-                //
-                // response.visaCardActivationStatus !is VisaCardActivationStatus.Activated
-                true
+                visaActivationStatusRepository.get(response.card.cardId) !is VisaCardActivationStatus.Activated
             }
 
             response.cardTypesResolver.isTangemTwins() -> {

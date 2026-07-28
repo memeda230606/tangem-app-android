@@ -318,7 +318,8 @@ private fun ProviderLoadingState(modifier: Modifier = Modifier) {
 @Composable
 private fun BoxScope.ProviderChevron(selectionType: ProviderState.SelectionType, isSelected: Boolean) {
     when (selectionType) {
-        ProviderState.SelectionType.NONE -> { /* no-op */
+        ProviderState.SelectionType.NONE -> {
+            /* no-op */
         }
         ProviderState.SelectionType.CLICK -> {
             Icon(

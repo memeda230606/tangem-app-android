@@ -21,7 +21,6 @@ import com.tangem.features.hotwallet.accesscode.ACCESS_CODE_LENGTH
 import com.tangem.features.hotwallet.accesscoderequest.entity.HotAccessCodeRequestUM
 import com.tangem.features.hotwallet.impl.R
 import com.tangem.hot.sdk.model.HotAuth
-import com.tangem.hot.sdk.model.HotWalletId
 import com.tangem.utils.coroutines.CoroutineDispatcherProvider
 import com.tangem.utils.coroutines.JobHolder
 import com.tangem.utils.coroutines.saveIn
@@ -57,7 +56,7 @@ internal class HotAccessCodeRequestModel @Inject constructor(
         field = MutableStateFlow(getInitialState())
 
     suspend fun show(attemptRequest: HotWalletPasswordRequester.AttemptRequest) {
-        if (userWalletExists(attemptRequest.hotWalletId).not()) {
+        if (userWalletExists(attemptRequest).not()) {
             TangemLogger.e("User wallet with id ${attemptRequest.hotWalletId} does not exist")
             result.value = HotWalletPasswordRequester.Result.Dismiss
             return
@@ -210,15 +209,19 @@ internal class HotAccessCodeRequestModel @Inject constructor(
         }.saveIn(attemptsRequestJobHolder)
     }
 
-    private suspend fun userWalletExists(id: HotWalletId): Boolean {
-        return userWalletsListRepository.userWalletsSync()
-            .any { it is UserWallet.Hot && it.hotWalletId == id }
+    private suspend fun userWalletExists(request: HotWalletPasswordRequester.AttemptRequest): Boolean {
+        return userWalletsListRepository.userWalletsSync().any { wallet ->
+            request.userWalletId?.let(wallet.walletId::equals)
+                ?: (wallet is UserWallet.Hot && wallet.hotWalletId == request.hotWalletId)
+        }
     }
 
     private suspend fun deleteUserWallet() {
         val currentRequest = currentRequest.value ?: return
-        val userWallet = userWalletsListRepository.userWalletsSync()
-            .firstOrNull { it is UserWallet.Hot && it.hotWalletId == currentRequest.hotWalletId } ?: return
+        val userWallet = userWalletsListRepository.userWalletsSync().firstOrNull { wallet ->
+            currentRequest.userWalletId?.let(wallet.walletId::equals)
+                ?: (wallet is UserWallet.Hot && wallet.hotWalletId == currentRequest.hotWalletId)
+        } ?: return
 
         if (hotWalletFeatureToggles.isAssetsDiscoveryEnabled) {
             startAssetsDiscoveryUseCase.cancel(userWallet.walletId)

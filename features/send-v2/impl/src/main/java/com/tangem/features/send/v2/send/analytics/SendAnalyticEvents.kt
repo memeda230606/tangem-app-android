@@ -50,7 +50,8 @@ internal sealed class SendAnalyticEvents(
             put(FEE_TOKEN, feeToken)
             put(AnalyticsParam.Key.FEE_ASSET_TYPE, feeAssetType.value)
         },
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     class ChooseTokenScreenOpened : SendAnalyticEvents(
         event = "Choose Token Screen Opened",

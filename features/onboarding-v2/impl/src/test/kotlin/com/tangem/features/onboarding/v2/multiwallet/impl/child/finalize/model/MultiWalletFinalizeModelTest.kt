@@ -1,7 +1,6 @@
 package com.tangem.features.onboarding.v2.multiwallet.impl.child.finalize.model
 
 import com.tangem.common.CompletionResult
-import com.tangem.common.card.Card
 import com.tangem.common.core.TangemSdkError
 import com.tangem.core.analytics.api.AnalyticsEventHandler
 import com.tangem.core.decompose.model.ParamsContainer
@@ -9,6 +8,7 @@ import com.tangem.core.decompose.ui.UiMessageSender
 import com.tangem.domain.card.repository.CardRepository
 import com.tangem.domain.feedback.GetWalletMetaInfoUseCase
 import com.tangem.domain.feedback.SendFeedbackEmailUseCase
+import com.tangem.domain.models.scan.CardDTO
 import com.tangem.domain.models.scan.ScanResponse
 import com.tangem.domain.onboarding.repository.OnboardingRepository
 import com.tangem.domain.wallets.builder.ColdUserWalletBuilder
@@ -23,8 +23,8 @@ import com.tangem.features.onboarding.v2.multiwallet.impl.child.MultiWalletChild
 import com.tangem.features.onboarding.v2.multiwallet.impl.child.finalize.MultiWalletFinalizeComponent
 import com.tangem.features.onboarding.v2.multiwallet.impl.child.finalize.ui.state.MultiWalletFinalizeUM
 import com.tangem.features.onboarding.v2.multiwallet.impl.model.OnboardingMultiWalletState
-import com.tangem.operations.backup.BackupService
 import com.tangem.sdk.api.BackupServiceHolder
+import com.tangem.sdk.api.CardBackupService
 import com.tangem.sdk.api.TangemSdkManager
 import com.tangem.utils.coroutines.TestingCoroutineDispatcherProvider
 import io.mockk.*
@@ -46,8 +46,8 @@ import java.lang.ref.WeakReference
 internal class MultiWalletFinalizeModelTest {
 
     private val backupServiceHolder: BackupServiceHolder = mockk()
-    private val backupService: BackupService = mockk()
-    private val backupServiceWeakRef: WeakReference<BackupService> = WeakReference(backupService)
+    private val backupService: CardBackupService = mockk()
+    private val backupServiceWeakRef: WeakReference<CardBackupService> = WeakReference(backupService)
     private val tangemSdkManager: TangemSdkManager = mockk(relaxUnitFun = true)
     private val getWalletMetaInfoUseCase: GetWalletMetaInfoUseCase = mockk()
     private val sendFeedbackEmailUseCase: SendFeedbackEmailUseCase = mockk()
@@ -95,7 +95,7 @@ internal class MultiWalletFinalizeModelTest {
         every { backupService.primaryCardBatchId } returns NON_RING_BATCH_ID
         every { backupService.backupCardIds } returns listOf("backup-1-bbbb", "backup-2-cccc")
         every { backupService.backupCardsBatchIds } returns listOf(NON_RING_BATCH_ID, NON_RING_BATCH_ID)
-        every { backupService.currentState } returns BackupService.State.FinalizingPrimaryCard
+        every { backupService.currentState } returns CardBackupService.State.FinalizingPrimaryCard
         coEvery { onboardingRepository.saveUnfinishedFinalizeOnboarding(any()) } just Runs
     }
 
@@ -276,7 +276,7 @@ internal class MultiWalletFinalizeModelTest {
     @Test
     fun `GIVEN non-Ring primary AND success WHEN onScanClick THEN state moves to BackupDevice1`() = runTest {
         every { backupService.primaryCardBatchId } returns NON_RING_BATCH_ID
-        val callbackSlot = slot<(CompletionResult<Card>) -> Unit>()
+        val callbackSlot = slot<(CompletionResult<CardDTO>) -> Unit>()
         every {
             backupService.proceedBackup(iconScanRes = null, callback = capture(callbackSlot))
         } just Runs
@@ -334,7 +334,7 @@ internal class MultiWalletFinalizeModelTest {
     @Test
     fun `GIVEN primary AND failure WHEN onScanClick THEN state is unchanged AND no event emitted`() = runTest {
         every { backupService.primaryCardBatchId } returns NON_RING_BATCH_ID
-        val callbackSlot = slot<(CompletionResult<Card>) -> Unit>()
+        val callbackSlot = slot<(CompletionResult<CardDTO>) -> Unit>()
         every {
             backupService.proceedBackup(iconScanRes = null, callback = capture(callbackSlot))
         } just Runs
@@ -379,7 +379,7 @@ internal class MultiWalletFinalizeModelTest {
         multiWalletStateFlow.value = multiWalletStateFlow.value.copy(
             startFromFinalize = OnboardingMultiWalletState.FinalizeStage.ScanBackupFirstCard,
         )
-        val callbackSlot = slot<(CompletionResult<Card>) -> Unit>()
+        val callbackSlot = slot<(CompletionResult<CardDTO>) -> Unit>()
         every {
             backupService.proceedBackup(iconScanRes = null, callback = capture(callbackSlot))
         } just Runs
@@ -402,7 +402,7 @@ internal class MultiWalletFinalizeModelTest {
         multiWalletStateFlow.value = multiWalletStateFlow.value.copy(
             startFromFinalize = OnboardingMultiWalletState.FinalizeStage.ScanBackupFirstCard,
         )
-        val callbackSlot = slot<(CompletionResult<Card>) -> Unit>()
+        val callbackSlot = slot<(CompletionResult<CardDTO>) -> Unit>()
         every {
             backupService.proceedBackup(iconScanRes = null, callback = capture(callbackSlot))
         } just Runs
@@ -426,13 +426,13 @@ internal class MultiWalletFinalizeModelTest {
             multiWalletStateFlow.value = multiWalletStateFlow.value.copy(
                 startFromFinalize = OnboardingMultiWalletState.FinalizeStage.ScanBackupFirstCard,
             )
-            every { backupService.currentState } returns BackupService.State.FinalizingBackupCard(index = 1)
+            every { backupService.currentState } returns CardBackupService.State.FinalizingBackupCard(index = 1)
 
             mockkConstructor(BackupValidator::class)
             every { anyConstructed<BackupValidator>().isValidBackupStatus(any()) } returns true
 
-            val card: Card = mockk(relaxed = true)
-            val callbackSlot = slot<(CompletionResult<Card>) -> Unit>()
+            val card: CardDTO = mockk(relaxed = true)
+            val callbackSlot = slot<(CompletionResult<CardDTO>) -> Unit>()
             every {
                 backupService.proceedBackup(iconScanRes = null, callback = capture(callbackSlot))
             } just Runs

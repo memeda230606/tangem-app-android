@@ -336,7 +336,9 @@ private fun SelectorDialogContent(
     LazyColumn(modifier = modifier) {
         itemsIndexed(items = items) { index, itemText ->
             val onClick = remember(index) {
-                { onSelect(index) }
+                {
+                    onSelect(index)
+                }
             }
 
             val interactionSource = remember { MutableInteractionSource() }

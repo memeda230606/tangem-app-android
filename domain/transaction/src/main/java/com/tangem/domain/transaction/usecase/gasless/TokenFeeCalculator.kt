@@ -44,7 +44,8 @@ internal class TokenFeeCalculator(
     ): Either<GetFeeError, TransactionFee> {
         return either {
             val transactionSender = if (userWallet is UserWallet.Cold &&
-                demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId)
+                demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId) &&
+                !demoConfig.isNfcDemoCardId(userWallet.scanResponse.card.cardId)
             ) {
                 demoTransactionSender(userWallet, network)
             } else {
@@ -68,7 +69,8 @@ internal class TokenFeeCalculator(
             val network = txTokenCurrencyStatus.currency.network
             val amountData = amount.convertToSdkAmount(txTokenCurrencyStatus)
             val result = if (userWallet is UserWallet.Cold &&
-                demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId)
+                demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId) &&
+                !demoConfig.isNfcDemoCardId(userWallet.scanResponse.card.cardId)
             ) {
                 demoTransactionSender(userWallet, network).estimateFee(
                     amount = amountData,

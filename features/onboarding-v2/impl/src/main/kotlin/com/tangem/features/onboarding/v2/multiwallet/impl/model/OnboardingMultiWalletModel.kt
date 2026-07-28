@@ -20,8 +20,8 @@ import com.tangem.features.onboarding.v2.multiwallet.impl.model.OnboardingMultiW
 import com.tangem.features.onboarding.v2.multiwallet.impl.ui.state.OnboardingMultiWalletUM
 import com.tangem.features.onboarding.v2.title.OnboardingTitle
 import com.tangem.operations.attestation.ArtworkSize
-import com.tangem.operations.backup.BackupService
 import com.tangem.sdk.api.BackupServiceHolder
+import com.tangem.sdk.api.CardBackupService
 import com.tangem.utils.coroutines.CoroutineDispatcherProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -98,7 +98,7 @@ internal class OnboardingMultiWalletModel @Inject constructor(
                                 cardPublicKey = backup.card2.cardPublicKey,
                                 size = ArtworkSize.LARGE,
                                 manufacturerName = backup.card2.manufacturer.name,
-                                firmwareVersion = backup.card2.firmwareVersion,
+                                firmwareVersion = backup.card2.firmwareVersion.toSdkFirmwareVersion(),
                             )
                         _uiState.update {
                             it.copy(artwork2 = artworkUMConverter.convert(artwork))
@@ -111,7 +111,7 @@ internal class OnboardingMultiWalletModel @Inject constructor(
                                 cardPublicKey = backup.card3.cardPublicKey,
                                 size = ArtworkSize.LARGE,
                                 manufacturerName = backup.card3.manufacturer.name,
-                                firmwareVersion = backup.card3.firmwareVersion,
+                                firmwareVersion = backup.card3.firmwareVersion.toSdkFirmwareVersion(),
                             )
                         _uiState.update {
                             it.copy(artwork3 = artworkUMConverter.convert(artwork))
@@ -158,8 +158,8 @@ internal class OnboardingMultiWalletModel @Inject constructor(
     private fun getInitialStartFromFinalize(): FinalizeStage? {
         val backupService = backupServiceHolder.backupService.get() ?: return null
         return when (val state = backupService.currentState) {
-            BackupService.State.FinalizingPrimaryCard -> FinalizeStage.ScanPrimaryCard
-            is BackupService.State.FinalizingBackupCard -> if (state.index == 1) {
+            CardBackupService.State.FinalizingPrimaryCard -> FinalizeStage.ScanPrimaryCard
+            is CardBackupService.State.FinalizingBackupCard -> if (state.index == 1) {
                 FinalizeStage.ScanBackupFirstCard
             } else {
                 FinalizeStage.ScanBackupSecondCard
@@ -171,8 +171,8 @@ internal class OnboardingMultiWalletModel @Inject constructor(
     private fun isThreeCardsInit(): Boolean {
         val backupService = backupServiceHolder.backupService.get() ?: return true
         return when (backupService.currentState) {
-            BackupService.State.FinalizingPrimaryCard,
-            is BackupService.State.FinalizingBackupCard,
+            CardBackupService.State.FinalizingPrimaryCard,
+            is CardBackupService.State.FinalizingBackupCard,
             -> {
                 backupService.addedBackupCardsCount > 1
             }

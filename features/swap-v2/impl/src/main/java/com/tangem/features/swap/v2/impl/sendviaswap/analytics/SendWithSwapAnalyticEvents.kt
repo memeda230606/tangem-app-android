@@ -38,7 +38,8 @@ internal sealed class SendWithSwapAnalyticEvents(
             put(RATE_TYPE, rateType.name)
             put(PROVIDER, providerName)
         },
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     /** Amount screen opened */
     data class AmountScreenOpened(
@@ -54,7 +55,8 @@ internal sealed class SendWithSwapAnalyticEvents(
             put(RECEIVE_BLOCKCHAIN, toToken.network.name)
             put(RATE_TYPE, rateType.name)
         },
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     data class TransactionScreenOpened(
         val providerName: String,
@@ -77,7 +79,8 @@ internal sealed class SendWithSwapAnalyticEvents(
             if (toDerivationIndex != null) put(ACCOUNT_DERIVATION_TO, toDerivationIndex.toString())
             put(AnalyticsParam.Key.FEE_ASSET_TYPE, feeAssetType.value)
         },
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     data class OnSendClick(
         val providerName: String,
@@ -98,7 +101,8 @@ internal sealed class SendWithSwapAnalyticEvents(
             if (fromDerivationIndex != null) put(ACCOUNT_DERIVATION_FROM, fromDerivationIndex.toString())
             if (toDerivationIndex != null) put(ACCOUNT_DERIVATION_TO, toDerivationIndex.toString())
         },
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     data class NoticeCanNotSwapToken(
         val fromToken: CryptoCurrency,

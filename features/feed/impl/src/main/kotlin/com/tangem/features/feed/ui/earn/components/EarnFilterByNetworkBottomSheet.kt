@@ -107,8 +107,10 @@ private fun ContentV1(content: EarnFilterByNetworkBottomSheetContentUM) {
 @Composable
 private fun ContentV2(content: EarnFilterByNetworkBottomSheetContentUM) {
     val allMyNetworks = remember(content) {
-        (content.networks.filterIsInstance<EarnFilterNetworkUM.AllNetworks>() +
-            content.networks.filterIsInstance<EarnFilterNetworkUM.MyNetworks>()).toImmutableList()
+        (
+            content.networks.filterIsInstance<EarnFilterNetworkUM.AllNetworks>() +
+                content.networks.filterIsInstance<EarnFilterNetworkUM.MyNetworks>()
+            ).toImmutableList()
     }
     val specificNetworks = remember(content) {
         content

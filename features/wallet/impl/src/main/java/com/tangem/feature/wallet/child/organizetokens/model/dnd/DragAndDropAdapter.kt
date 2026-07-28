@@ -76,9 +76,10 @@ internal class DragAndDropAdapter(
                 is OrganizeRowItemUM.Placeholder,
                 is OrganizeRowItemUM.Portfolio,
                 -> tokensUM.tokenList
-                is OrganizeRowItemUM.Network -> draggableGroupsOperations
-                    .collapseGroup(tokensUM.tokenList, item)
-                    .divideMovingItem(item)
+                is OrganizeRowItemUM.Network ->
+                    draggableGroupsOperations
+                        .collapseGroup(tokensUM.tokenList, item)
+                        .divideMovingItem(item)
                 is OrganizeRowItemUM.Token -> tokensUM.tokenList.divideMovingItem(item)
             }.toPersistentList(),
         )
@@ -92,9 +93,10 @@ internal class DragAndDropAdapter(
         dragAndDropUpdates.value = DragOperation(
             type = DragOperation.Type.End(isItemsOrderChanged = checkIsItemsOrderChanged(tokensUM)),
             tokenList = when (draggingItem) {
-                is OrganizeRowItemUM.Network -> draggableGroupsOperations
-                    .expandGroups(tokensUM.tokenList, tokensUM.isAccountsMode)
-                    .uniteItems(tokensUM.isAccountsMode)
+                is OrganizeRowItemUM.Network ->
+                    draggableGroupsOperations
+                        .expandGroups(tokensUM.tokenList, tokensUM.isAccountsMode)
+                        .uniteItems(tokensUM.isAccountsMode)
                 is OrganizeRowItemUM.Token -> tokensUM.tokenList.uniteItems(tokensUM.isAccountsMode)
                 is OrganizeRowItemUM.Placeholder,
                 is OrganizeRowItemUM.Portfolio,

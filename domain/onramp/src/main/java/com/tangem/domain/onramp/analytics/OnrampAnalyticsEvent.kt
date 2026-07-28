@@ -29,7 +29,8 @@ sealed class OnrampAnalyticsEvent(
             SOURCE to source.analyticsName,
             TOKEN_PARAM to tokenSymbol,
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     class SelectCurrencyScreenOpened : OnrampAnalyticsEvent(event = "Currency Screen Opened")
 
@@ -134,7 +135,8 @@ sealed class OnrampAnalyticsEvent(
             "Currency Type" to currency,
             PAYMENT_METHOD to paymentMethod,
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     class MinAmountError : OnrampAnalyticsEvent(event = "Error - Min Amount")
     class MaxAmountError : OnrampAnalyticsEvent(event = "Error - Max Amount")

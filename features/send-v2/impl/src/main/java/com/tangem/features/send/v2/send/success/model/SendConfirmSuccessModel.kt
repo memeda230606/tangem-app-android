@@ -77,15 +77,17 @@ internal class SendConfirmSuccessModel @Inject constructor(
                             },
                         ),
                         prevButton = null,
-                        secondaryPairButtonsUM = (NavigationButton(
-                            textReference = resourceReference(R.string.common_explore),
-                            iconRes = R.drawable.ic_web_24,
-                            onClick = ::onExploreClick,
-                        ) to NavigationButton(
-                            textReference = resourceReference(R.string.common_share),
-                            iconRes = R.drawable.ic_share_24,
-                            onClick = ::onShareClick,
-                        )).takeIf { params.txUrl.isNotEmpty() },
+                        secondaryPairButtonsUM = (
+                            NavigationButton(
+                                textReference = resourceReference(R.string.common_explore),
+                                iconRes = R.drawable.ic_web_24,
+                                onClick = ::onExploreClick,
+                            ) to NavigationButton(
+                                textReference = resourceReference(R.string.common_share),
+                                iconRes = R.drawable.ic_share_24,
+                                onClick = ::onShareClick,
+                            )
+                            ).takeIf { params.txUrl.isNotEmpty() },
                     ),
                 ),
             )

@@ -13,7 +13,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-internal class MultiWalletAccountListFetcherModule {
+internal object MultiWalletAccountListFetcherProductionModule {
 
     @Singleton
     @Provides

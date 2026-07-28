@@ -24,7 +24,6 @@ import com.tangem.core.ui.res.TangemThemePreviewRedesign
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-
 @Composable
 fun TangemCollapsingTopBar(
     state: TangemCollapsingAppBarState,

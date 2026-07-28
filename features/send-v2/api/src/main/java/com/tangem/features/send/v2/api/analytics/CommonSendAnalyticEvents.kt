@@ -27,7 +27,8 @@ sealed class CommonSendAnalyticEvents(
         params = mapOf(
             SOURCE to source.analyticsName,
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     /** Amount screen opened */
     data class AmountScreenOpened(
@@ -41,7 +42,8 @@ sealed class CommonSendAnalyticEvents(
             SOURCE to source.analyticsName,
             TYPE to type.analyticsName,
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     /** Fee screen opened */
     data class FeeScreenOpened(
@@ -114,7 +116,8 @@ sealed class CommonSendAnalyticEvents(
             }
             put(TYPE, type.analyticsName)
         },
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     /** If transaction delays notification is present */
     data class NoticeTransactionDelays(

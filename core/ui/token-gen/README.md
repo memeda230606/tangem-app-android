@@ -1,10 +1,20 @@
 # token-gen
 
-Generates Kotlin (Jetpack Compose) source files from design tokens defined in the `ds-tokens` git submodule.
+Generates Kotlin (Jetpack Compose) source files from design tokens defined in the optional `ds-tokens` git submodule.
+
+The Android project uses the generated files committed under
+`core/ui/src/main/java/com/tangem/core/ui/res/generated/` by default, so a standalone checkout does not need the
+`ds-tokens` submodule to build.
+
+To strictly verify the committed files against a local `ds-tokens` checkout, run:
+
+```bash
+./gradlew :core:ui:verifyDesignTokens -PstrictDesignTokens=true
+```
 
 ## Updating tokens
 
-1. Update the `ds-tokens` submodule to the latest commit:
+1. Initialize or update the optional `ds-tokens` submodule:
    ```bash
    git submodule update --remote core/ui/ds-tokens
    ```

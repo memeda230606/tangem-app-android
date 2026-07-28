@@ -29,30 +29,38 @@ internal sealed class FeedAnalyticsEvent(
         ),
     )
 
-    data class NewsCarouselTrendingClicked(private val newsId: Int) : FeedAnalyticsEvent(
-        event = "News Carousel Trending Clicked",
-        params = mapOf(
-            "News id" to newsId.toString(),
+    data class NewsCarouselTrendingClicked(private val newsId: Int) :
+        FeedAnalyticsEvent(
+            event = "News Carousel Trending Clicked",
+            params = mapOf(
+                "News id" to newsId.toString(),
+            ),
         ),
-    ), OneTimePerSessionEvent {
+        OneTimePerSessionEvent {
         override val oneTimeEventId: String = event
     }
 
-    class NewsCarouselAllNewsButton : FeedAnalyticsEvent(
-        event = "News Carousel All News button",
-    ), OneTimePerSessionEvent {
+    class NewsCarouselAllNewsButton :
+        FeedAnalyticsEvent(
+            event = "News Carousel All News button",
+        ),
+        OneTimePerSessionEvent {
         override val oneTimeEventId: String = event
     }
 
-    class NewsCarouselEndReached : FeedAnalyticsEvent(
-        event = "News Carousel End Reached",
-    ), OneTimePerSessionEvent {
+    class NewsCarouselEndReached :
+        FeedAnalyticsEvent(
+            event = "News Carousel End Reached",
+        ),
+        OneTimePerSessionEvent {
         override val oneTimeEventId: String = event
     }
 
-    class NewsCarouselScrolled : FeedAnalyticsEvent(
-        event = "News Carousel Scrolled",
-    ), OneTimePerSessionEvent {
+    class NewsCarouselScrolled :
+        FeedAnalyticsEvent(
+            event = "News Carousel Scrolled",
+        ),
+        OneTimePerSessionEvent {
         override val oneTimeEventId: String = event
     }
 

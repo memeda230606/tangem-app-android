@@ -128,12 +128,18 @@ internal fun MessageBottomSheetUM.button(init: @MessageBottomSheetDsl MessageBot
 
 @Suppress("NestedScopeFunctions")
 fun MessageBottomSheetUM.primaryButton(init: @MessageBottomSheetDsl MessageBottomSheetUM.Button.() -> Unit) = apply {
-    button { isPrimary = true; apply(init) }
+    button {
+        isPrimary = true
+        apply(init)
+    }
 }
 
 @Suppress("NestedScopeFunctions")
 fun MessageBottomSheetUM.secondaryButton(init: @MessageBottomSheetDsl MessageBottomSheetUM.Button.() -> Unit) = apply {
-    button { isPrimary = false; apply(init) }
+    button {
+        isPrimary = false
+        apply(init)
+    }
 }
 
 fun MessageBottomSheetUM.Button.onClick(block: MessageBottomSheetUM.CloseScope.() -> Unit) = apply {

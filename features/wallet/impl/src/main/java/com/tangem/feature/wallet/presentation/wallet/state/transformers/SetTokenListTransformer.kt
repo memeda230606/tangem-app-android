@@ -112,9 +112,10 @@ internal class SetTokenListTransformer(
 
     private fun TangemPayMainUM.toLoadedState(): TangemPayMainUM {
         val paymentAccountStatus = when (params) {
-            is TokenConverterParams.Account -> params.accountList.accountStatuses
-                .filterIsInstance<AccountStatus.Payment>()
-                .firstOrNull()
+            is TokenConverterParams.Account ->
+                params.accountList.accountStatuses
+                    .filterIsInstance<AccountStatus.Payment>()
+                    .firstOrNull()
             is TokenConverterParams.Wallet -> return TangemPayMainUM.Empty
         } ?: return this
 

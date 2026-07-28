@@ -2,6 +2,7 @@ package com.tangem.domain.wallets.hot
 
 import com.tangem.hot.sdk.model.HotAuth
 import com.tangem.hot.sdk.model.HotWalletId
+import com.tangem.domain.models.wallet.UserWalletId
 
 /**
  * Interface for requesting the password for a hot wallet.
@@ -43,6 +44,7 @@ interface HotWalletPasswordRequester {
         val hotWalletId: HotWalletId,
         val authMode: Boolean,
         val hasBiometry: Boolean,
+        val userWalletId: UserWalletId? = null,
     )
 
     sealed class Result {

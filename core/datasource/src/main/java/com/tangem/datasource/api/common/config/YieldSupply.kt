@@ -29,6 +29,7 @@ internal class YieldSupply(
             -> ApiEnvironment.MOCK
             DEBUG_BUILD_TYPE,
             INTERNAL_BUILD_TYPE,
+            HYBRID_BUILD_TYPE,
             EXTERNAL_BUILD_TYPE,
             RELEASE_BUILD_TYPE,
             -> ApiEnvironment.PROD
@@ -61,9 +62,12 @@ internal class YieldSupply(
     )
 
     private fun createHeaders(apiEnvironment: ApiEnvironment) = buildMap {
-        put(key = "api-key", value = ProviderSuspend {
-            getApiKey(apiEnvironment)
-        })
+        put(
+            key = "api-key",
+            value = ProviderSuspend {
+                getApiKey(apiEnvironment)
+            },
+        )
         putAll(from = RequestHeader.AppVersionPlatformHeaders(appInfoProvider).values)
         putAll(from = RequestHeader.AuthenticationHeader(authProvider).values)
     }

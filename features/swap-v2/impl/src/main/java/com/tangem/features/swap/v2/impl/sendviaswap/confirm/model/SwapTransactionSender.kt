@@ -128,7 +128,10 @@ internal class SwapTransactionSender @AssistedInject constructor(
             rateType = rateType,
             expressOperationType = expressOperationType,
             quoteId = (confirmData.quote as? SwapQuoteUM.Content)?.quoteId,
-        ).getOrElse { error -> onExpressError(error); return }
+        ).getOrElse { error ->
+            onExpressError(error)
+            return
+        }
 
         createAndSendCexTransaction(
             fromAmount = fromTransactionAmount,

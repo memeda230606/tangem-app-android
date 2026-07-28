@@ -29,11 +29,13 @@ class RetryIncompleteTransactionUseCase(
 
             catch(
                 block = {
-                    when (val result = walletManagersFacade.fulfillRequirements(
-                        userWallet.walletId,
-                        currency,
-                        signer,
-                    )) {
+                    when (
+                        val result = walletManagersFacade.fulfillRequirements(
+                            userWallet.walletId,
+                            currency,
+                            signer,
+                        )
+                    ) {
                         is SimpleResult.Failure -> {
                             val error = result.error as? BlockchainSdkError
                             when (error) {

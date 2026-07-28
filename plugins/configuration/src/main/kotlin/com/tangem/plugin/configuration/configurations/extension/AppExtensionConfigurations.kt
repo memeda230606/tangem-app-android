@@ -90,7 +90,9 @@ private fun AndroidBuildType.configureBuildVariant(appExtension: AppExtension, b
             signingConfig = appExtension.signingConfigs.getByName(BuildType.Debug.id)
             ndk.abiFilters += x86_64
         }
-        BuildType.Mocked -> {
+        BuildType.Mocked,
+        BuildType.Hybrid
+        -> {
             initWith(appExtension.buildTypes.getByName(BuildType.Release.id))
             matchingFallbacks.add(BuildType.Release.id)
             signingConfig = appExtension.signingConfigs.getByName(BuildType.Debug.id)

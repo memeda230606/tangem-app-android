@@ -7,20 +7,26 @@ import com.tangem.blockchain.common.TransactionSigner
 import com.tangem.core.analytics.models.Basic.TransactionSent.WalletForm
 import com.tangem.core.analytics.store.LastSignedWalletFormStore
 import com.tangem.data.card.TransactionSignerFactory
+import com.tangem.data.wallets.hot.TangemHotWalletSigner
 import com.tangem.domain.card.models.TwinKey
 import com.tangem.domain.common.wallets.UserWalletsListRepository
 import com.tangem.domain.common.wallets.update
 import com.tangem.domain.models.wallet.UserWallet
 import com.tangem.domain.models.wallet.UserWalletId
+import com.tangem.domain.demo.models.DemoConfig
 import com.tangem.tap.domain.TangemSigner
 import com.tangem.tap.domain.TangemSignerResponse
+import com.tangem.tap.domain.sdk.mocks.NfcDemoHotWalletBridge
 import com.tangem.utils.coroutines.AppCoroutineScope
+import com.tangem.wallet.BuildConfig
 import kotlinx.coroutines.launch
 
 internal class DefaultTransactionSignerFactory(
     private val lastSignedWalletFormStore: LastSignedWalletFormStore,
     private val userWalletsListRepository: UserWalletsListRepository,
     private val coroutineScope: AppCoroutineScope,
+    private val nfcDemoHotWalletBridge: NfcDemoHotWalletBridge,
+    private val hotWalletSignerFactory: TangemHotWalletSigner.Factory,
 ) : TransactionSignerFactory {
 
     override fun createTransactionSigner(
@@ -29,6 +35,18 @@ internal class DefaultTransactionSignerFactory(
         twinKey: TwinKey?,
         userWalletId: UserWalletId,
     ): TransactionSigner {
+        if (BuildConfig.MOCK_DATA_SOURCE) return NfcDemoVisualTransactionSigner
+
+        if (BuildConfig.NFC_DEMO_ENABLED) {
+            val coldWallet = userWalletsListRepository.userWallets.value.orEmpty()
+                .firstOrNull { it.walletId == userWalletId } as? UserWallet.Cold
+            if (coldWallet != null && DemoConfig.isNfcDemoCardId(coldWallet.scanResponse.card.cardId)) {
+                val hotWallet = nfcDemoHotWalletBridge.signerWallet(userWalletId)
+                    ?: return NfcDemoColdWalletSigner
+                return hotWalletSignerFactory.create(hotWallet)
+            }
+        }
+
         return TangemSigner(
             cardId = cardId,
             tangemSdk = sdk,

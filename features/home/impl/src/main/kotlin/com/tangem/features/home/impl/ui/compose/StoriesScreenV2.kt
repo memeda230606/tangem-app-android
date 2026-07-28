@@ -40,7 +40,9 @@ internal fun StoriesScreenV2(state: HomeUM, onGetStartedClick: () -> Unit, modif
     }
 
     val goToPreviousStory = remember(currentStory, currentStoryIndex) {
-        { currentStory = state.stories[max(0, currentStoryIndex - 1)] }
+        {
+            currentStory = state.stories[max(0, currentStoryIndex - 1)]
+        }
     }
     val goToNextStory = remember(currentStory, currentStoryIndex) {
         {

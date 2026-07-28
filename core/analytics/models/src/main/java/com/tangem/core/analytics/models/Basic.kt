@@ -16,7 +16,8 @@ sealed class Basic(
         params = mapOf(
             AnalyticsParam.SOURCE to source.value,
         ),
-    ), CriticalEvent
+    ),
+        CriticalEvent
 
     /**
      * Tracks any sign-in into a wallet (card scan, FaceID, or wallet switch).
@@ -35,7 +36,9 @@ sealed class Basic(
             put(AnalyticsParam.WALLET_TYPE, if (isImported) "Seed Phrase" else "Seedless")
             put(AnalyticsParam.BACKUPED, if (isBackedUp) "Yes" else "No")
         },
-    ), CriticalEvent, OneTimePerSessionEvent {
+    ),
+        CriticalEvent,
+        OneTimePerSessionEvent {
         override val oneTimeEventId: String = id
     }
 
@@ -59,7 +62,9 @@ sealed class Basic(
             event = "Topped up",
             params = mapOf(AnalyticsParam.CURRENCY to walletType.value),
         ),
-        OneTimeAnalyticsEvent, AppsFlyerIncludedEvent, CriticalEvent {
+        OneTimeAnalyticsEvent,
+        AppsFlyerIncludedEvent,
+        CriticalEvent {
 
         override val oneTimeEventId: String = id + userWalletId
     }
@@ -84,7 +89,9 @@ sealed class Basic(
                 }
                 put(AnalyticsParam.MEMO, memoType.name)
             },
-        ), AppsFlyerIncludedEvent, CriticalEvent {
+        ),
+        AppsFlyerIncludedEvent,
+        CriticalEvent {
         enum class MemoType {
             Empty, Full, Null
         }
@@ -97,24 +104,29 @@ sealed class Basic(
     /**
      * Tracks the user invoking the "Request Support" email flow from various screens of the app.
      */
-    class ButtonSupport(source: AnalyticsParam.ScreensSources) : Basic(
-        event = "Request Support",
-        params = mapOf(
-            AnalyticsParam.SOURCE to source.value,
+    class ButtonSupport(source: AnalyticsParam.ScreensSources) :
+        Basic(
+            event = "Request Support",
+            params = mapOf(
+                AnalyticsParam.SOURCE to source.value,
+            ),
         ),
-    ), CriticalEvent
+        CriticalEvent
 
     /**
      * Tracks loading of the user's total balance after sign-in. Reports whether the balance is
      * empty, has funds, failed to load, or could not be returned because of a custom token.
      */
-    class BalanceLoaded(balance: AnalyticsParam.CardBalanceState, tokensCount: Int?) : Basic(
-        event = "Balance Loaded",
-        params = buildMap {
-            put(AnalyticsParam.BALANCE, balance.value)
-            tokensCount?.let { put(AnalyticsParam.TOKENS_COUNT, it.toString()) }
-        },
-    ), AppsFlyerIncludedEvent, CriticalEvent
+    class BalanceLoaded(balance: AnalyticsParam.CardBalanceState, tokensCount: Int?) :
+        Basic(
+            event = "Balance Loaded",
+            params = buildMap {
+                put(AnalyticsParam.BALANCE, balance.value)
+                tokensCount?.let { put(AnalyticsParam.TOKENS_COUNT, it.toString()) }
+            },
+        ),
+        AppsFlyerIncludedEvent,
+        CriticalEvent
 
     class TokenBalance(balance: AnalyticsParam.EmptyFull, token: String) : Basic(
         event = "Token Balance",

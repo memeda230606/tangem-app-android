@@ -300,7 +300,8 @@ dependencies {
     implementation(projects.features.kyc.api)
     debugImplementation(projects.features.kyc.impl)
     internalImplementation(projects.features.kyc.impl)
-    mockedImplementation(projects.features.kyc.impl)
+    mockedImplementation(projects.features.kyc.mock)
+    hybridImplementation(projects.features.kyc.mock)
     releaseImplementation(projects.features.kyc.impl)
     externalImplementation(projects.features.kyc.impl)
     implementation(projects.features.welcome.api)
@@ -438,6 +439,7 @@ dependencies {
     /** Chucker */
     debugImplementation(deps.chucker)
     mockedImplementation(deps.chucker)
+    hybridImplementation(deps.chucker)
     externalImplementation(deps.chuckerStub)
     internalImplementation(deps.chuckerStub)
     releaseImplementation(deps.chuckerStub)

@@ -4,6 +4,7 @@ import android.net.Uri
 import com.google.common.truth.Truth
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchainsdk.utils.ExcludedBlockchains
+import com.tangem.blockchainsdk.utils.toNetworkId
 import com.tangem.common.card.WalletData
 import com.tangem.common.test.domain.card.MockScanResponseFactory
 import com.tangem.common.test.domain.token.MockCryptoCurrencyFactory
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -353,6 +355,13 @@ internal class DefaultCardCryptoCurrencyFactoryTest {
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     inner class CreatePrimaryCurrencyForSingleCurrencyCard {
 
+        @Test
+        fun `create Polygon currency for Visa wallet`() {
+            val actual = factory.createPrimaryCurrencyForSingleCurrencyCard(createVisaWallet())
+
+            Truth.assertThat(actual.network.id.rawId.value).isEqualTo(Blockchain.Polygon.toNetworkId())
+        }
+
         @ParameterizedTest
         @ProvideTestModels
         fun `create primary currency for single currency card`(model: CreatePrimaryCurrencyForSingleWalletModel) =
@@ -525,6 +534,23 @@ internal class DefaultCardCryptoCurrencyFactoryTest {
                     },
                 )
             },
+            hasBackupError = false,
+        )
+    }
+
+    private fun createVisaWallet(): UserWallet.Cold {
+        return UserWallet.Cold(
+            name = "Tangem Visa",
+            walletId = UserWalletId("011"),
+            cardsInWallet = setOf(),
+            isMultiCurrency = false,
+            scanResponse = MockScanResponseFactory.create(
+                cardConfig = GenericCardConfig(maxWalletCount = 1),
+                derivedKeys = emptyMap(),
+            ).copy(
+                productType = ProductType.Visa,
+                walletData = null,
+            ),
             hasBackupError = false,
         )
     }

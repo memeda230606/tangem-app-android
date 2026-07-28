@@ -18,7 +18,9 @@ sealed class Settings(
     ) : Settings(
         event = "Cold Wallet Added",
         params = mapOf(AnalyticsParam.SOURCE to (source?.value ?: "Unknown")),
-    ), OneTimeAnalyticsEvent, AppsFlyerIncludedEvent {
+    ),
+        OneTimeAnalyticsEvent,
+        AppsFlyerIncludedEvent {
         override val oneTimeEventId: String = id
     }
 }

@@ -37,7 +37,8 @@ sealed class TokenReceiveNewAnalyticsEvent(
             BLOCKCHAIN to blockchainName,
             SOURCE to tokenReceiveSource.name,
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     class ButtonCopyEns(
         token: String,

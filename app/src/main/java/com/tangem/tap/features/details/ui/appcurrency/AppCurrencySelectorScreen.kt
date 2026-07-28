@@ -227,7 +227,9 @@ private fun CurrenciesList(
             key = Currency::id,
         ) { currency ->
             val onClick = remember(key1 = currency) {
-                { onCurrencyClick(currency) }
+                {
+                    onCurrencyClick(currency)
+                }
             }
 
             CurrencyItem(

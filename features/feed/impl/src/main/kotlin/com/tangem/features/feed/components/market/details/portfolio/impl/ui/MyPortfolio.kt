@@ -186,19 +186,23 @@ private fun Modifier.getBackgroundModifier(
     val allRound = RoundedCornerShape(size = radius)
     val backgroundModifier = when (item) {
         is WalletHeader -> this
-        is PortfolioHeader -> this
-            .clip(topRound)
-            .background(color = color)
+        is PortfolioHeader ->
+            this
+                .clip(topRound)
+                .background(color = color)
         is PortfolioTokenUM -> when {
-            previousItem is PortfolioHeader && nextItem !is PortfolioTokenUM -> this
-                .clip(bottomRound)
-                .background(color = color)
-            previousItem is WalletHeader && nextItem !is PortfolioTokenUM -> this
-                .clip(allRound)
-                .background(color = color)
-            previousItem is PortfolioTokenUM && nextItem !is PortfolioTokenUM -> this
-                .clip(bottomRound)
-                .background(color = color)
+            previousItem is PortfolioHeader && nextItem !is PortfolioTokenUM ->
+                this
+                    .clip(bottomRound)
+                    .background(color = color)
+            previousItem is WalletHeader && nextItem !is PortfolioTokenUM ->
+                this
+                    .clip(allRound)
+                    .background(color = color)
+            previousItem is PortfolioTokenUM && nextItem !is PortfolioTokenUM ->
+                this
+                    .clip(bottomRound)
+                    .background(color = color)
             else -> this.background(color = color)
         }
     }

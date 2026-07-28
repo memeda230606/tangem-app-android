@@ -1276,8 +1276,9 @@ internal class StateBuilder(
         return when (filterType) {
             ProviderFilterType.ALL -> true
             ProviderFilterType.CEX -> typeStr == ExchangeProviderType.CEX.providerName
-            ProviderFilterType.DEX -> typeStr == ExchangeProviderType.DEX.providerName ||
-                typeStr == ExchangeProviderType.DEX_BRIDGE.providerName
+            ProviderFilterType.DEX ->
+                typeStr == ExchangeProviderType.DEX.providerName ||
+                    typeStr == ExchangeProviderType.DEX_BRIDGE.providerName
         }
     }
 }

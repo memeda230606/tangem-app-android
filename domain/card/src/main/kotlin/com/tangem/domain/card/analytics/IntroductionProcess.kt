@@ -30,7 +30,8 @@ sealed class IntroductionProcess(
             put(AnalyticsParam.SCREEN_TYPE, screenType.value)
             putAll(getReferralParams(referralId))
         },
-    ), CriticalEvent {
+    ),
+        CriticalEvent {
         enum class ScreenType(val value: String) {
             Cold("Cold Wallet"),
             Hot("Mobile Wallet"),

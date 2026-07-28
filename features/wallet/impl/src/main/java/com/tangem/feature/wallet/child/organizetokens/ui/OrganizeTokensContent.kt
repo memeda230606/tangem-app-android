@@ -137,7 +137,8 @@ private fun TokenList(
         modifier = modifier.background(TangemTheme.colors2.surface.level2),
     ) {
         val onDragEnd: (Int, Int) -> Unit = remember {
-            { _, _ ->
+            {
+                    _, _ ->
                 dragAndDropIntents.onItemDraggingEnd()
             }
         }

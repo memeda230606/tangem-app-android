@@ -39,7 +39,8 @@ sealed class SwapEvents(
             RECEIVE_TOKEN to toCurrency?.symbol.orEmpty(),
             "Receive Blockchain" to toCurrency?.network?.name.orEmpty(),
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     class SwapType(val mode: SwapUIMode) : SwapEvents(
         event = "Swap type simple/detailed",
@@ -168,7 +169,8 @@ sealed class SwapEvents(
             put(AnalyticsParam.Key.FEE_ASSET_TYPE, feeAssetType.value)
             putAll(getReferralParams(referralId))
         },
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     class ProviderClicked : SwapEvents("Provider Clicked")
 

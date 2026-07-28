@@ -27,6 +27,7 @@ import com.tangem.domain.models.scan.CardDTO.Companion.RING_BATCH_IDS
 import com.tangem.domain.models.scan.CardDTO.Companion.RING_BATCH_PREFIX
 import com.tangem.domain.models.scan.ProductType
 import com.tangem.domain.models.scan.ScanResponse
+import com.tangem.domain.visa.repository.VisaActivationStatusRepository
 import com.tangem.features.onboarding.v2.OnboardingV2FeatureToggles
 import com.tangem.operations.PreflightReadMode
 import com.tangem.operations.ScanTask
@@ -52,6 +53,7 @@ internal class ScanProductTask(
     private val shouldCheckIsAlreadyActivated: Boolean,
     private val isDynamicAddressesEnabled: Boolean,
     private val cardRepository: CardRepository,
+    private val visaActivationStatusRepository: VisaActivationStatusRepository? = null,
     override val allowsRequestAccessCodeFromRepository: Boolean = false,
 ) : CardSessionRunnable<ScanResponse> {
 
@@ -160,11 +162,8 @@ internal class ScanProductTask(
                         card = cardDto,
                         session = session,
                     ) { scanResponseResult ->
-                        // callback(
-                        // scanResponseResult.map { scanResponse ->
-                        //     scanResponse.copy(visaCardActivationStatus = result.data)
-                        // },
-                        // )
+                        visaActivationStatusRepository?.set(cardDto.cardId, result.data)
+                        callback(scanResponseResult)
                     }
                 }
                 is CompletionResult.Failure -> {

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mock_kyc_title">Identity verification demo</string>
+    <string name="mock_kyc_description">Choose a local result. No identity data is collected or sent.</string>
+    <string name="mock_kyc_approved">Verification approved</string>
+    <string name="mock_kyc_rejected">Verification declined</string>
+    <string name="mock_kyc_approve">Simulate approval</string>
+    <string name="mock_kyc_reject">Simulate decline</string>
+    <string name="mock_kyc_back_to_card">Return to card</string>
+</resources>

@@ -1,6 +1,5 @@
 package com.tangem.features.onboarding.v2.multiwallet.impl.model
 
-import com.tangem.common.card.Card
 import com.tangem.common.card.FirmwareVersion as SdkFirmwareVersion
 import com.tangem.common.routing.AppRoute
 import com.tangem.common.ui.userwallet.converter.ArtworkUMConverter
@@ -25,8 +24,8 @@ import com.tangem.features.onboarding.v2.multiwallet.api.OnboardingMultiWalletCo
 import com.tangem.features.onboarding.v2.multiwallet.impl.child.MultiWalletChildParams
 import com.tangem.features.onboarding.v2.title.OnboardingTitle
 import com.tangem.operations.attestation.ArtworkSize
-import com.tangem.operations.backup.BackupService
 import com.tangem.sdk.api.BackupServiceHolder
+import com.tangem.sdk.api.CardBackupService
 import com.tangem.utils.coroutines.TestingCoroutineDispatcherProvider
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,7 +45,7 @@ internal class OnboardingMultiWalletModelTest {
     private val analyticsHandler: AnalyticsEventHandler = mockk(relaxUnitFun = true)
     private val router: Router = mockk(relaxUnitFun = true)
     private val backupServiceHolder: BackupServiceHolder = mockk()
-    private val backupServiceWeakRef: WeakReference<BackupService> = WeakReference(null)
+    private val backupServiceWeakRef: WeakReference<CardBackupService> = WeakReference(null)
     private val onboardingRepository: OnboardingRepository = mockk(relaxUnitFun = true)
     private val getCardImageUseCase: GetCardImageUseCase = mockk()
     private val uiMessageSender: UiMessageSender = mockk(relaxUnitFun = true)
@@ -274,7 +273,7 @@ internal class OnboardingMultiWalletModelTest {
                 cardPublicKey = card2Info.cardPublicKey,
                 size = ArtworkSize.LARGE,
                 manufacturerName = card2Info.manufacturer.name,
-                firmwareVersion = card2Info.firmwareVersion,
+                firmwareVersion = card2Info.firmwareVersion.toSdkFirmwareVersion(),
             )
         } returns artwork2Model
         every { artworkUMConverter.convert(artwork2Model) } returns artwork2Um
@@ -291,7 +290,7 @@ internal class OnboardingMultiWalletModelTest {
                 cardPublicKey = card2Info.cardPublicKey,
                 size = ArtworkSize.LARGE,
                 manufacturerName = card2Info.manufacturer.name,
-                firmwareVersion = card2Info.firmwareVersion,
+                firmwareVersion = card2Info.firmwareVersion.toSdkFirmwareVersion(),
             )
         }
         Assertions.assertEquals(artwork2Um, model.uiState.value.artwork2)
@@ -311,7 +310,7 @@ internal class OnboardingMultiWalletModelTest {
                 cardPublicKey = card2Info.cardPublicKey,
                 size = ArtworkSize.LARGE,
                 manufacturerName = card2Info.manufacturer.name,
-                firmwareVersion = card2Info.firmwareVersion,
+                firmwareVersion = card2Info.firmwareVersion.toSdkFirmwareVersion(),
             )
         } returns artwork2Model
         every { artworkUMConverter.convert(artwork2Model) } returns artwork2Um
@@ -321,7 +320,7 @@ internal class OnboardingMultiWalletModelTest {
                 cardPublicKey = card3Info.cardPublicKey,
                 size = ArtworkSize.LARGE,
                 manufacturerName = card3Info.manufacturer.name,
-                firmwareVersion = card3Info.firmwareVersion,
+                firmwareVersion = card3Info.firmwareVersion.toSdkFirmwareVersion(),
             )
         } returns artwork3Model
         every { artworkUMConverter.convert(artwork3Model) } returns artwork3Um
@@ -340,7 +339,7 @@ internal class OnboardingMultiWalletModelTest {
                 cardPublicKey = card3Info.cardPublicKey,
                 size = ArtworkSize.LARGE,
                 manufacturerName = card3Info.manufacturer.name,
-                firmwareVersion = card3Info.firmwareVersion,
+                firmwareVersion = card3Info.firmwareVersion.toSdkFirmwareVersion(),
             )
         }
         Assertions.assertEquals(artwork3Um, model.uiState.value.artwork3)
@@ -416,15 +415,25 @@ internal class OnboardingMultiWalletModelTest {
     private fun card2BackupInfo() = MultiWalletChildParams.Backup.BackupCardInfo(
         cardId = "card-id-2",
         cardPublicKey = byteArrayOf(4, 5, 6),
-        manufacturer = Card.Manufacturer(name = "Tangem2", manufactureDate = Date(0), signature = null),
-        firmwareVersion = SdkFirmwareVersion(major = 6, minor = 34),
+        manufacturer = CardDTO.Manufacturer(name = "Tangem2", manufactureDate = Date(0), signature = null),
+        firmwareVersion = CardDTO.FirmwareVersion(
+            major = 6,
+            minor = 34,
+            patch = 0,
+            type = SdkFirmwareVersion.FirmwareType.Release,
+        ),
     )
 
     private fun card3BackupInfo() = MultiWalletChildParams.Backup.BackupCardInfo(
         cardId = "card-id-3",
         cardPublicKey = byteArrayOf(7, 8, 9),
-        manufacturer = Card.Manufacturer(name = "Tangem3", manufactureDate = Date(0), signature = null),
-        firmwareVersion = SdkFirmwareVersion(major = 6, minor = 35),
+        manufacturer = CardDTO.Manufacturer(name = "Tangem3", manufactureDate = Date(0), signature = null),
+        firmwareVersion = CardDTO.FirmwareVersion(
+            major = 6,
+            minor = 35,
+            patch = 0,
+            type = SdkFirmwareVersion.FirmwareType.Release,
+        ),
     )
 
     private fun createModel(testScope: TestScope): OnboardingMultiWalletModel {

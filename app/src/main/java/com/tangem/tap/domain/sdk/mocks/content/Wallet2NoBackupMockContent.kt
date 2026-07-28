@@ -294,7 +294,7 @@ object Wallet2NoBackupMockContent : MockContent {
     )
 
     override val importWalletResponse: CreateProductWalletTaskResponse
-        get() = TODO("Not yet implemented")
+        get() = createProductWalletTaskResponse
 
     override val createFirstTwinResponse: CreateWalletResponse
         get() = error("Available only for Twin")

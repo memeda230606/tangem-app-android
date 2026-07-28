@@ -41,6 +41,7 @@ internal class Express(
             -> ApiEnvironment.STAGE
             MOCKED_BUILD_TYPE,
             -> ApiEnvironment.MOCK
+            HYBRID_BUILD_TYPE,
             EXTERNAL_BUILD_TYPE,
             RELEASE_BUILD_TYPE,
             -> ApiEnvironment.PROD

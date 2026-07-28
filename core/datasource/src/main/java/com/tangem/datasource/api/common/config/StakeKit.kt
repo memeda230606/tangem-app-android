@@ -28,6 +28,7 @@ internal class StakeKit(
             -> ApiEnvironment.MOCK
             DEBUG_BUILD_TYPE,
             INTERNAL_BUILD_TYPE,
+            HYBRID_BUILD_TYPE,
             EXTERNAL_BUILD_TYPE,
             RELEASE_BUILD_TYPE,
             -> ApiEnvironment.PROD

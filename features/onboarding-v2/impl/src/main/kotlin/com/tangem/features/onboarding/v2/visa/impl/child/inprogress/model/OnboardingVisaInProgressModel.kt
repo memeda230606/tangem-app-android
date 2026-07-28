@@ -21,6 +21,7 @@ import com.tangem.domain.visa.model.VisaAuthTokens
 import com.tangem.domain.visa.model.VisaCardActivationStatus
 import com.tangem.domain.visa.model.VisaCardId
 import com.tangem.domain.visa.repository.VisaActivationRepository
+import com.tangem.domain.visa.repository.VisaActivationStatusRepository
 import com.tangem.domain.wallets.builder.ColdUserWalletBuilder
 import com.tangem.domain.wallets.usecase.SaveWalletUseCase
 import com.tangem.features.onboarding.v2.visa.impl.child.inprogress.OnboardingVisaInProgressComponent.Config
@@ -30,8 +31,10 @@ import com.tangem.features.onboarding.v2.visa.impl.child.welcome.model.analytics
 import com.tangem.features.onboarding.v2.visa.impl.common.unexpectedErrorAlertBS
 import com.tangem.features.onboarding.v2.visa.impl.route.OnboardingVisaRoute
 import com.tangem.utils.coroutines.CoroutineDispatcherProvider
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -46,6 +49,7 @@ internal class OnboardingVisaInProgressModel @Inject constructor(
     private val visaAuthRemoteDataSource: VisaAuthRemoteDataSource,
     private val visaAuthTokenStorage: VisaAuthTokenStorage,
     private val otpStorage: VisaOTPStorage,
+    private val visaActivationStatusRepository: VisaActivationStatusRepository,
     private val coldUserWalletBuilderFactory: ColdUserWalletBuilder.Factory,
     private val saveWalletUseCase: SaveWalletUseCase,
     private val uiMessageSender: UiMessageSender,
@@ -59,7 +63,8 @@ internal class OnboardingVisaInProgressModel @Inject constructor(
             cardPublicKey = params.scanResponse.card.cardPublicKey.toHexString(),
         ),
     )
-    val onDone = MutableSharedFlow<Params.DoneEvent>()
+    private val onDoneChannel = Channel<Params.DoneEvent>(capacity = Channel.BUFFERED)
+    val onDone: Flow<Params.DoneEvent> = onDoneChannel.receiveAsFlow()
 
     init {
         analyticsEventHandler.send(OnboardingVisaAnalyticsEvent.ActivationInProgressScreen())
@@ -139,7 +144,7 @@ internal class OnboardingVisaInProgressModel @Inject constructor(
     ) {
         when (remoteState.status) {
             VisaActivationRemoteState.AwaitingPinCode.Status.WaitingForPinCode -> {
-                onDone.emit(
+                onDoneChannel.send(
                     Params.DoneEvent.NavigateTo(
                         OnboardingVisaRoute.PinCode(
                             activationOrderInfo = remoteState.activationOrderInfo,
@@ -150,7 +155,7 @@ internal class OnboardingVisaInProgressModel @Inject constructor(
                 complete()
             }
             VisaActivationRemoteState.AwaitingPinCode.Status.WasError -> {
-                onDone.emit(
+                onDoneChannel.send(
                     Params.DoneEvent.NavigateTo(
                         OnboardingVisaRoute.PinCode(
                             activationOrderInfo = remoteState.activationOrderInfo,
@@ -181,17 +186,17 @@ internal class OnboardingVisaInProgressModel @Inject constructor(
         visaAuthTokenStorage.remove(params.scanResponse.card.cardId)
         otpStorage.removeOTP(params.scanResponse.card.cardId)
 
-        onDone.emit(Params.DoneEvent.Activated)
+        onDoneChannel.send(Params.DoneEvent.Activated)
     }
 
     @Suppress("UnusedPrivateProperty")
     private suspend fun createUserWallet(scanResponse: ScanResponse, authTokens: VisaAuthTokens): UserWallet =
         withContext(dispatchers.io) {
             val newActivationStatus = VisaCardActivationStatus.Activated(visaAuthTokens = authTokens)
+            visaActivationStatusRepository.set(scanResponse.card.cardId, newActivationStatus)
 
             requireNotNull(
                 value = coldUserWalletBuilderFactory.create(
-                    // scanResponse = scanResponse.copy(visaCardActivationStatus = newActivationStatus),
                     scanResponse = scanResponse,
                 ).build(),
                 lazyMessage = { "User wallet not created" },

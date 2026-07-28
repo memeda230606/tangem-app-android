@@ -21,7 +21,8 @@ internal class FeeSpeedSelectorModel @Inject constructor(
     paramsContainer: ParamsContainer,
     override val dispatchers: CoroutineDispatcherProvider,
     private val urlOpener: UrlOpener,
-) : Model(), FeeSpeedSelectorIntents,
+) : Model(),
+    FeeSpeedSelectorIntents,
     FeeSelectorIntents by paramsContainer.require<FeeSelectorComponentParams>().intents {
 
     private val params = paramsContainer.require<FeeSelectorComponentParams>()

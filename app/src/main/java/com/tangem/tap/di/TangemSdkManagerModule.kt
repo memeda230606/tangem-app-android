@@ -6,10 +6,13 @@ import com.tangem.domain.card.BuildConfig
 import com.tangem.domain.card.repository.CardRepository
 import com.tangem.domain.card.repository.CardSdkConfigRepository
 import com.tangem.domain.dynamicaddresses.DynamicAddressesFeatureToggles
+import com.tangem.domain.visa.repository.VisaActivationStatusRepository
 import com.tangem.features.onboarding.v2.OnboardingV2FeatureToggles
 import com.tangem.sdk.api.TangemSdkManager
 import com.tangem.tap.domain.sdk.impl.DefaultTangemSdkManager
 import com.tangem.tap.domain.sdk.impl.MockTangemSdkManager
+import com.tangem.tap.domain.sdk.impl.AutoRoutingTangemSdkManager
+import com.tangem.tap.domain.sdk.mocks.NfcDemoHotWalletBridge
 import com.tangem.tap.domain.tasks.product.BlockchainToDeriveFinder
 import com.tangem.tap.domain.tasks.visa.TangemPayGenerateAddressAndSignChallengeTask
 import com.tangem.tap.domain.tasks.visa.VisaCardActivationTask
@@ -38,22 +41,33 @@ internal class TangemSdkManagerModule {
         blockchainToDeriveFinder: BlockchainToDeriveFinder,
         analyticsErrorHandler: AnalyticsErrorHandler,
         cardRepository: CardRepository,
+        visaActivationStatusRepository: VisaActivationStatusRepository,
+        nfcDemoHotWalletBridge: NfcDemoHotWalletBridge,
     ): TangemSdkManager {
-        return if (BuildConfig.MOCK_DATA_SOURCE) {
-            MockTangemSdkManager(resources = context.resources)
-        } else {
-            DefaultTangemSdkManager(
-                cardSdkConfigRepository = cardSdkConfigRepository,
-                resources = context.resources,
-                visaCardScanHandler = visaCardScanHandler,
-                visaCardActivationTaskFactory = visaCardActivationTaskFactory,
-                tangemPayChallengeTaskFactory = tangemPayChallengeTaskFactory,
-                onboardingV2FeatureToggles = onboardingV2FeatureToggles,
-                dynamicAddressesFeatureToggles = dynamicAddressesFeatureToggles,
-                blockchainToDeriveFinder = blockchainToDeriveFinder,
-                analyticsErrorHandler = analyticsErrorHandler,
-                cardRepository = cardRepository,
+        val realManager = DefaultTangemSdkManager(
+            cardSdkConfigRepository = cardSdkConfigRepository,
+            resources = context.resources,
+            visaCardScanHandler = visaCardScanHandler,
+            visaCardActivationTaskFactory = visaCardActivationTaskFactory,
+            tangemPayChallengeTaskFactory = tangemPayChallengeTaskFactory,
+            onboardingV2FeatureToggles = onboardingV2FeatureToggles,
+            dynamicAddressesFeatureToggles = dynamicAddressesFeatureToggles,
+            blockchainToDeriveFinder = blockchainToDeriveFinder,
+            analyticsErrorHandler = analyticsErrorHandler,
+            cardRepository = cardRepository,
+            visaActivationStatusRepository = visaActivationStatusRepository,
+        )
+        return if (BuildConfig.NFC_DEMO_ENABLED) {
+            AutoRoutingTangemSdkManager(
+                real = realManager,
+                demo = MockTangemSdkManager(
+                    resources = context.resources,
+                    hotWalletBridge = nfcDemoHotWalletBridge,
+                ),
+                hotWalletBridge = nfcDemoHotWalletBridge,
             )
+        } else {
+            realManager
         }
     }
 }

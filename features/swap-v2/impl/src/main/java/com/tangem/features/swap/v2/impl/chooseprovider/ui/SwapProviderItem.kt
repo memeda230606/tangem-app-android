@@ -38,7 +38,8 @@ internal fun SwapProviderItem(state: SwapProviderState, modifier: Modifier = Mod
             state = state,
             modifier = modifier,
         )
-        is SwapProviderState.Empty -> { /* no-op */
+        is SwapProviderState.Empty -> {
+            /* no-op */
         }
     }
 }

@@ -22,7 +22,8 @@ sealed class YieldSupplyAnalytics(
             TOKEN_PARAM to token,
             BLOCKCHAIN to blockchain,
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     data class StartEarningScreen(
         val token: String,
@@ -33,7 +34,8 @@ sealed class YieldSupplyAnalytics(
             TOKEN_PARAM to token,
             BLOCKCHAIN to blockchain,
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     data class StopEarningScreen(
         val token: String,
@@ -44,7 +46,8 @@ sealed class YieldSupplyAnalytics(
             TOKEN_PARAM to token,
             BLOCKCHAIN to blockchain,
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     data class ButtonStartEarning(
         val token: String,
@@ -99,7 +102,8 @@ sealed class YieldSupplyAnalytics(
             TOKEN_PARAM to token,
             BLOCKCHAIN to blockchain,
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     data class FundsEarned(
         val token: String,
@@ -112,7 +116,8 @@ sealed class YieldSupplyAnalytics(
             BLOCKCHAIN to blockchain,
             *getReferralParams(referralId).toTypedArray(),
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     data class FundsWithdrawn(
         val token: String,
@@ -125,7 +130,8 @@ sealed class YieldSupplyAnalytics(
             BLOCKCHAIN to blockchain,
             *getReferralParams(referralId).toTypedArray(),
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     data class EarnedFundsInfo(
         val token: String,

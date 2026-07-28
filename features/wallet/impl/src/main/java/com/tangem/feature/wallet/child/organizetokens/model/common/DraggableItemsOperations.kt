@@ -145,8 +145,10 @@ private fun applyRoundingModeToTokenLegacy(
     lastItemIndex: Int,
 ) = when {
     isAccountsMode && index + 1 < lastItemIndex &&
-        (items[index + 1] is DraggableItem.Portfolio ||
-            items[index + 1] is DraggableItem.Placeholder && items[index + 2] is DraggableItem.Portfolio) -> {
+        (
+            items[index + 1] is DraggableItem.Portfolio ||
+                items[index + 1] is DraggableItem.Placeholder && items[index + 2] is DraggableItem.Portfolio
+            ) -> {
         RoundingModeUM.Bottom(isShowGap = true)
     }
     (!isAccountsMode || index + 1 == lastItemIndex) && items[index + 1] is DraggableItem.Placeholder -> {
@@ -192,8 +194,10 @@ private fun applyRoundingModeToToken(
     lastItemIndex: Int,
 ) = when {
     isAccountsMode && index + 1 < lastItemIndex &&
-        (items[index + 1] is OrganizeRowItemUM.Portfolio ||
-            items[index + 1] is OrganizeRowItemUM.Placeholder && items[index + 2] is OrganizeRowItemUM.Portfolio) -> {
+        (
+            items[index + 1] is OrganizeRowItemUM.Portfolio ||
+                items[index + 1] is OrganizeRowItemUM.Placeholder && items[index + 2] is OrganizeRowItemUM.Portfolio
+            ) -> {
         RoundingModeUM.Bottom(isShowGap = true)
     }
     (!isAccountsMode || index + 1 == lastItemIndex) && items[index + 1] is OrganizeRowItemUM.Placeholder -> {

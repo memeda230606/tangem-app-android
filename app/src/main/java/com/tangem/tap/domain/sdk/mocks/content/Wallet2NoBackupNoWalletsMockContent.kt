@@ -177,7 +177,9 @@ object Wallet2NoBackupNoWalletsMockContent : MockContent {
     override val successResponse = SuccessResponse(cardId = "AF05888888880018")
 
     override val createProductWalletTaskResponse = CreateProductWalletTaskResponse(
-        card = cardDto,
+        // A successful CreateProductWallet call must return the card after wallet keys were created.
+        // The initial scan response above intentionally remains empty to drive the create-wallet screen.
+        card = Wallet2NoBackupMockContent.cardDto,
         derivedKeys = mapOf(
             ByteArrayKey(
                 byteArrayOf(3, 23, -112, -57, 109, 60, -82, -36, 45, -14, -34, -12, 10, -89, 14, 37, 38, 36, -102, 37, 93, 90, 69, -113, -117, 120, -29, 12, -125, 43, -40, -31, 5),
@@ -206,7 +208,7 @@ object Wallet2NoBackupNoWalletsMockContent : MockContent {
     )
 
     override val importWalletResponse: CreateProductWalletTaskResponse
-        get() = TODO("Not yet implemented")
+        get() = createProductWalletTaskResponse
 
     override val createFirstTwinResponse: CreateWalletResponse
         get() = error("Available only for Twin")

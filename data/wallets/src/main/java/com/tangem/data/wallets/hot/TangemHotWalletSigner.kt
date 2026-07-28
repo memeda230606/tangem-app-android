@@ -36,6 +36,7 @@ class TangemHotWalletSigner @AssistedInject constructor(
         val result = runSuspendCatching {
             hotWalletAccessor.signHashes(
                 hotWalletId = userWallet.hotWalletId,
+                userWalletId = userWallet.walletId,
                 dataToSign = listOf(
                     DataToSign(
                         curve = wallet.curve,
@@ -63,6 +64,7 @@ class TangemHotWalletSigner @AssistedInject constructor(
         val result = runSuspendCatching {
             hotWalletAccessor.signHashes(
                 hotWalletId = userWallet.hotWalletId,
+                userWalletId = userWallet.walletId,
                 dataToSign = dataToSign.map { signData ->
                     val wallet =
                         userWallet.wallets.orEmpty().firstOrNull { it.publicKey.contentEquals(publicKey.seedKey) }

@@ -41,7 +41,8 @@ internal sealed class NewsDetailsAnalyticsEvent(
         params = mapOf(
             "News Id" to newsId.toString(),
         ),
-    ), OneTimePerSessionEvent {
+    ),
+        OneTimePerSessionEvent {
         override val oneTimeEventId: String = event + newsId
     }
 
@@ -78,7 +79,8 @@ internal sealed class NewsDetailsAnalyticsEvent(
         params = mapOf(
             "News Id" to newsId.toString(),
         ),
-    ), OneTimePerSessionEvent {
+    ),
+        OneTimePerSessionEvent {
         override val oneTimeEventId: String = event
         override val throttleSeconds: Long = THROTTLE_SECONDS
     }

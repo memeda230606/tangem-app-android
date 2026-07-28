@@ -78,7 +78,10 @@ class SendTransactionUseCase(
         }
 
         val sendResult = try {
-            if (userWallet is UserWallet.Cold && demoConfig.isDemoCardId(cardId = userWallet.cardId)) {
+            if (userWallet is UserWallet.Cold &&
+                demoConfig.isDemoCardId(cardId = userWallet.cardId) &&
+                !demoConfig.isNfcDemoCardId(cardId = userWallet.cardId)
+            ) {
                 sendDemo(
                     userWallet = userWallet,
                     network = network,

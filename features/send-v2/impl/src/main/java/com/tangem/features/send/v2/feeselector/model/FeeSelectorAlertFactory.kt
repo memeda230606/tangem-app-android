@@ -110,7 +110,10 @@ internal class FeeSelectorAlertFactory @Inject constructor(
                     firstActionBuilder = {
                         EventMessageAction(
                             title = resourceReference(R.string.common_understand),
-                            onClick = { stopAction(); onDismissRequest() },
+                            onClick = {
+                                stopAction()
+                                onDismissRequest()
+                            },
                         )
                     },
                 ),

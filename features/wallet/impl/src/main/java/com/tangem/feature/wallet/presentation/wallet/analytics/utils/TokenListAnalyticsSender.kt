@@ -84,7 +84,8 @@ internal class TokenListAnalyticsSender @Inject constructor(
                 when (totalFiatBalance) {
                     is TotalFiatBalance.Loaded -> putAttribute(HAS_ERROR, "No")
                     is TotalFiatBalance.Failed -> putAttribute(HAS_ERROR, "Yes")
-                    else -> { /* Intentionally do nothing */
+                    else -> {
+                        /* Intentionally do nothing */
                     }
                 }
                 stop()

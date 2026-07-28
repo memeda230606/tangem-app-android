@@ -305,8 +305,9 @@ private fun StakingBalance.Data?.getRewardAmount(): BigDecimal = when (this) {
 
 private val StakingOption.displayRewardInfo: RewardInfo?
     get() = when (this) {
-        is StakingOption.StakeKit -> yield.preferredValidators
-            .mapNotNull { it.rewardInfo }
-            .maxByOrNull { it.rate }
+        is StakingOption.StakeKit ->
+            yield.preferredValidators
+                .mapNotNull { it.rewardInfo }
+                .maxByOrNull { it.rate }
         is StakingOption.P2PEthPool -> RewardInfo(rate = apy, type = RewardType.APY)
     }

@@ -171,9 +171,11 @@ sealed class WalletSettingsAnalyticEvents(
         event = "Button - Start Upgrade",
     )
 
-    class WalletUpgraded : WalletSettingsAnalyticEvents(
-        event = "Wallet Upgraded",
-    ), AppsFlyerIncludedEvent
+    class WalletUpgraded :
+        WalletSettingsAnalyticEvents(
+            event = "Wallet Upgraded",
+        ),
+        AppsFlyerIncludedEvent
 
     class WalletsReorder : WalletSettingsAnalyticEvents(
         event = "Longtap - Wallets Order",

@@ -33,6 +33,7 @@ import com.tangem.domain.models.scan.ScanResponse
 import com.tangem.domain.models.wallet.UserWalletId
 import com.tangem.domain.pay.WithdrawalSignatureResult
 import com.tangem.domain.visa.model.*
+import com.tangem.domain.visa.repository.VisaActivationStatusRepository
 import com.tangem.domain.wallets.derivations.derivationStyleProvider
 import com.tangem.features.onboarding.v2.OnboardingV2FeatureToggles
 import com.tangem.operations.ScanTask
@@ -77,6 +78,7 @@ internal class DefaultTangemSdkManager(
     private val blockchainToDeriveFinder: BlockchainToDeriveFinder,
     private val analyticsErrorHandler: AnalyticsErrorHandler,
     private val cardRepository: CardRepository,
+    private val visaActivationStatusRepository: VisaActivationStatusRepository,
 ) : TangemSdkManager {
 
     private val tangemSdk: TangemSdk
@@ -153,6 +155,7 @@ internal class DefaultTangemSdkManager(
                     isDynamicAddressesEnabled = dynamicAddressesFeatureToggles.isDynamicAddressesEnabled,
                     onboardingV2FeatureToggles = onboardingV2FeatureToggles,
                     cardRepository = cardRepository,
+                    visaActivationStatusRepository = visaActivationStatusRepository,
                 ),
                 cardId = cardId,
                 initialMessage = message,

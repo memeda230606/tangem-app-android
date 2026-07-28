@@ -27,6 +27,7 @@ internal class GaslessTxService(
             MOCKED_BUILD_TYPE,
             DEBUG_BUILD_TYPE,
             -> ApiEnvironment.DEV
+            HYBRID_BUILD_TYPE,
             INTERNAL_BUILD_TYPE,
             EXTERNAL_BUILD_TYPE,
             RELEASE_BUILD_TYPE,

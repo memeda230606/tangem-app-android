@@ -9,25 +9,31 @@ sealed class TangemPayAnalyticsEvents(
     params: Map<String, String> = emptyMap(),
 ) : AnalyticsEvent(category = categoryName, event = event, params = params) {
 
-    class ActivationScreenOpened : TangemPayAnalyticsEvents(
-        categoryName = "Visa Onboarding",
-        event = "Visa Activation Screen Opened",
-    ), AppsFlyerIncludedEvent
+    class ActivationScreenOpened :
+        TangemPayAnalyticsEvents(
+            categoryName = "Visa Onboarding",
+            event = "Visa Activation Screen Opened",
+        ),
+        AppsFlyerIncludedEvent
 
     class ViewTermsClicked : TangemPayAnalyticsEvents(
         categoryName = "Visa Onboarding",
         event = "Button - Visa View Terms",
     )
 
-    class GetCardClicked : TangemPayAnalyticsEvents(
-        categoryName = "Visa Onboarding",
-        event = "Button - Visa Get Card",
-    ), AppsFlyerIncludedEvent
+    class GetCardClicked :
+        TangemPayAnalyticsEvents(
+            categoryName = "Visa Onboarding",
+            event = "Button - Visa Get Card",
+        ),
+        AppsFlyerIncludedEvent
 
-    class KycFlowOpened : TangemPayAnalyticsEvents(
-        categoryName = "Visa Onboarding",
-        event = "Visa KYC Flow Opened",
-    ), AppsFlyerIncludedEvent
+    class KycFlowOpened :
+        TangemPayAnalyticsEvents(
+            categoryName = "Visa Onboarding",
+            event = "Visa KYC Flow Opened",
+        ),
+        AppsFlyerIncludedEvent
 
     class IssuingBannerDisplayed : TangemPayAnalyticsEvents(
         categoryName = "Visa Onboarding",
@@ -49,20 +55,26 @@ sealed class TangemPayAnalyticsEvents(
         event = "Visa Main Screen Opened",
     )
 
-    class ReceiveFundsClicked : TangemPayAnalyticsEvents(
-        categoryName = "Visa Screen",
-        event = "Button - Visa Receive",
-    ), AppsFlyerIncludedEvent
+    class ReceiveFundsClicked :
+        TangemPayAnalyticsEvents(
+            categoryName = "Visa Screen",
+            event = "Button - Visa Receive",
+        ),
+        AppsFlyerIncludedEvent
 
-    class AddFundsClicked : TangemPayAnalyticsEvents(
-        categoryName = "Visa Screen",
-        event = "Button - Visa Add Funds",
-    ), AppsFlyerIncludedEvent
+    class AddFundsClicked :
+        TangemPayAnalyticsEvents(
+            categoryName = "Visa Screen",
+            event = "Button - Visa Add Funds",
+        ),
+        AppsFlyerIncludedEvent
 
-    class SwapClicked : TangemPayAnalyticsEvents(
-        categoryName = "Visa Screen",
-        event = "Button - Visa Swap",
-    ), AppsFlyerIncludedEvent
+    class SwapClicked :
+        TangemPayAnalyticsEvents(
+            categoryName = "Visa Screen",
+            event = "Button - Visa Swap",
+        ),
+        AppsFlyerIncludedEvent
 
     class ChooseWalletPopup : TangemPayAnalyticsEvents(
         categoryName = "Visa Onboarding",
@@ -188,10 +200,12 @@ sealed class TangemPayAnalyticsEvents(
         event = "Button - Support On Transaction Popup",
     )
 
-    class KycPassedAndOrderCreated : TangemPayAnalyticsEvents(
-        categoryName = "Visa Onboarding",
-        event = "Visa KYC Passed And Order Created",
-    ), AppsFlyerIncludedEvent
+    class KycPassedAndOrderCreated :
+        TangemPayAnalyticsEvents(
+            categoryName = "Visa Onboarding",
+            event = "Visa KYC Passed And Order Created",
+        ),
+        AppsFlyerIncludedEvent
 
     class KycRejected : TangemPayAnalyticsEvents(
         categoryName = "Visa Onboarding",

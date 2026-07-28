@@ -12,12 +12,14 @@ sealed class SignIn(
     /**
      * Tracks the user landing on the app's sign-in screen when a saved card exists.
      */
-    class ScreenOpened(walletsCount: Int) : SignIn(
-        event = "Sign In Screen Opened",
-        params = mapOf(
-            AnalyticsParam.WALLETS_COUNT to walletsCount.toString(),
+    class ScreenOpened(walletsCount: Int) :
+        SignIn(
+            event = "Sign In Screen Opened",
+            params = mapOf(
+                AnalyticsParam.WALLETS_COUNT to walletsCount.toString(),
+            ),
         ),
-    ), CriticalEvent
+        CriticalEvent
 
     class ButtonBiometricSignIn : SignIn(event = "Button - Biometric Sign In")
 

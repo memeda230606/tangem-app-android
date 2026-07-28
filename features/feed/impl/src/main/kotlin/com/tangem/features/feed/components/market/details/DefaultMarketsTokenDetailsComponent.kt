@@ -237,12 +237,14 @@ internal class DefaultMarketsTokenDetailsComponent(
             backgroundColor = LocalMainBottomSheetColor.current.value,
             state = state,
             portfolioBlock = portfolioComponent?.let { component ->
-                { blockModifier ->
+                {
+                        blockModifier ->
                     component.Content(blockModifier)
                 }
             },
             portfolioFloatingBlock = portfolioBlockComponent?.let { component ->
-                { blockModifier ->
+                {
+                        blockModifier ->
                     component.Content(blockModifier)
                 }
             },

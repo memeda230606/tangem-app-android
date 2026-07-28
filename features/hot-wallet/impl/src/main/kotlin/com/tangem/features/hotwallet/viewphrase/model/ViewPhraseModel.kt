@@ -53,7 +53,10 @@ internal class ViewPhraseModel @Inject constructor(
 
         modelScope.launch {
             val words = exportSeedPhraseUseCase.invoke(userWallet.hotWalletId)
-                .getOrElse { error -> TangemLogger.e("Error", error); throw error }
+                .getOrElse { error ->
+                    TangemLogger.e("Error", error)
+                    throw error
+                }
                 .mnemonic.mnemonicComponents
 
             uiState.update {

@@ -59,8 +59,9 @@ internal class ChooseTokenListItemConverter(
             when {
                 isSearchingState -> FiatAmountState.Empty
                 !isExpanded -> FiatAmountState.Icon(R.drawable.ic_chewron_down_20, IconTint.Informative)
-                else -> AccountCryptoPortfolioItemStateConverter
-                    .createFiatAmountState(totalBalance, appCurrency)
+                else ->
+                    AccountCryptoPortfolioItemStateConverter
+                        .createFiatAmountState(totalBalance, appCurrency)
             }
         }
 

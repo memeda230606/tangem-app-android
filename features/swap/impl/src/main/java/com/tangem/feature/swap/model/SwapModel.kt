@@ -1833,10 +1833,14 @@ internal class SwapModel @Inject constructor(
                 val fromSwapCurrencyStatus = dataState.fromSwapCurrencyStatus
                 val toSwapCurrencyStatus = dataState.toSwapCurrencyStatus
 
-                (fromSwapCurrencyStatus?.account?.accountId != accountStatus.accountId ||
-                    fromSwapCurrencyStatus.currency.id != currencyStatus.currency.id) &&
-                    (toSwapCurrencyStatus?.account?.accountId != accountStatus.accountId ||
-                        toSwapCurrencyStatus.currency.id != currencyStatus.currency.id)
+                (
+                    fromSwapCurrencyStatus?.account?.accountId != accountStatus.accountId ||
+                        fromSwapCurrencyStatus.currency.id != currencyStatus.currency.id
+                    ) &&
+                    (
+                        toSwapCurrencyStatus?.account?.accountId != accountStatus.accountId ||
+                            toSwapCurrencyStatus.currency.id != currencyStatus.currency.id
+                        )
             }
         }
 

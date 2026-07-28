@@ -46,7 +46,9 @@ internal fun TesterActionsScreen(state: TesterActionsContentState, modifier: Mod
 
         item {
             val onClick = remember(state.hideAllCurrenciesUM) {
-                { (state.hideAllCurrenciesUM as? HideAllCurrenciesUM.Clickable)?.onClick?.invoke() ?: Unit }
+                {
+                    (state.hideAllCurrenciesUM as? HideAllCurrenciesUM.Clickable)?.onClick?.invoke() ?: Unit
+                }
             }
             TesterActionItem(
                 name = stringResourceSafe(R.string.hide_all_currencies),

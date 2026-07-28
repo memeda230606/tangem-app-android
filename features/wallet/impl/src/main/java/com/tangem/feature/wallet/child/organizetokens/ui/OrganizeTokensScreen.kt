@@ -106,7 +106,8 @@ private fun TokenList(
     val tokenList = tokensListUM.items
     Box(modifier = modifier) {
         val onDragEnd: (Int, Int) -> Unit = remember {
-            { _, _ ->
+            {
+                    _, _ ->
                 dndConfig.onItemDragEnd()
             }
         }

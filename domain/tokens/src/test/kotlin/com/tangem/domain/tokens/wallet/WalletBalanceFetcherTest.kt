@@ -124,6 +124,7 @@ internal class WalletBalanceFetcherTest {
             every { isMultiwalletAllowed() } returns false
             every { isSingleWalletWithToken() } returns false
             every { isSingleWallet() } returns false
+            every { isVisaWallet() } returns false
         }
 
         mockColdWallet(cardTypesResolver)
@@ -810,6 +811,39 @@ internal class WalletBalanceFetcherTest {
             singleWalletWithTokenBalanceFetcher.getCryptoCurrencies(userWallet = any())
             stakingIdFactory.create(userWalletId = any(), cryptoCurrency = any())
             multiStakingBalanceFetcher(params = any())
+        }
+    }
+
+    @Test
+    fun `fetch successfully for Visa wallet`() = runTest {
+        // Arrange
+        val cardTypesResolver = mockk<CardTypesResolver> {
+            every { isMultiwalletAllowed() } returns false
+            every { isSingleWalletWithToken() } returns false
+            every { isSingleWallet() } returns false
+            every { isVisaWallet() } returns true
+        }
+        val currencies = setOf(cryptoCurrencyFactory.ethereum)
+
+        mockColdWallet(cardTypesResolver)
+        coEvery { singleWalletBalanceFetcher.getCryptoCurrencies(userWallet = any()) } returns currencies
+        coEvery { expressServiceFetcher.fetch(userWallet = any(), assetIds = any()) } returns mockk()
+        every { singleWalletBalanceFetcher.fetchingSources } returns emptySet()
+
+        // Act
+        val actual = fetcher(params = WalletBalanceFetcher.Params(userWalletId = userWalletId))
+
+        // Assert
+        assertEitherRight(actual)
+        coVerifyOrder {
+            userWalletsListRepository.getSyncStrict(userWalletId)
+            singleWalletBalanceFetcher.getCryptoCurrencies(userWallet = any())
+            expressServiceFetcher.fetch(userWallet = any(), assetIds = any())
+            singleWalletBalanceFetcher.fetchingSources
+        }
+        coVerify(inverse = true) {
+            multiWalletBalanceFetcher.getCryptoCurrencies(userWallet = any())
+            singleWalletWithTokenBalanceFetcher.getCryptoCurrencies(userWallet = any())
         }
     }
 

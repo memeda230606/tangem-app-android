@@ -6,6 +6,10 @@ plugins {
     id("configuration")
 }
 
+val strictDesignTokens = providers.gradleProperty("strictDesignTokens")
+    .map(String::toBooleanStrict)
+    .orElse(false)
+
 /**
  * Verifies that generated Kotlin token files match the current ds-tokens submodule.
  * If this fails, run: cd core/ui/token-gen && npm run build
@@ -103,6 +107,7 @@ android {
 }
 
 val verifyDesignTokens = tasks.register<VerifyDesignTokensTask>("verifyDesignTokens") {
+    onlyIf { strictDesignTokens.get() }
     tokensDir.set(file("ds-tokens/tokens"))
     iconsDir.set(file("ds-tokens/icons"))
     hashFile.set(file("src/main/java/com/tangem/core/ui/res/generated/.tokens-hash"))

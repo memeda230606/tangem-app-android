@@ -155,9 +155,10 @@ private fun Modifier.backgroundModifier(
     shape: RoundedCornerShape,
 ): Modifier {
     return when (backgroundUM) {
-        is EarnBlockUM.BackgroundUM.Surface -> this
-            .background(TangemTheme.colors2.surface.level3)
-            .border(width = BorderWidth, color = TangemTheme.colors2.border.neutral.primary, shape = shape)
+        is EarnBlockUM.BackgroundUM.Surface ->
+            this
+                .background(TangemTheme.colors2.surface.level3)
+                .border(width = BorderWidth, color = TangemTheme.colors2.border.neutral.primary, shape = shape)
         is EarnBlockUM.BackgroundUM.AccentSoft -> tintedBackground(type.accentSoftTint(), shape)
         is EarnBlockUM.BackgroundUM.AccentStrong -> tintedBackground(type.accentStrongTint(), shape)
     }

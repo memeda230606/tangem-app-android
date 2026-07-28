@@ -14,7 +14,8 @@ internal sealed class EarnAnalyticsEvent(
 
     class EarnOpened : EarnAnalyticsEvent(event = "Page Opened")
 
-    class MostlyUsedCarouselScrolled : EarnAnalyticsEvent(event = "Mostly Used Carousel Scrolled"),
+    class MostlyUsedCarouselScrolled :
+        EarnAnalyticsEvent(event = "Mostly Used Carousel Scrolled"),
         OneTimePerSessionEvent {
         override val oneTimeEventId: String = event
     }

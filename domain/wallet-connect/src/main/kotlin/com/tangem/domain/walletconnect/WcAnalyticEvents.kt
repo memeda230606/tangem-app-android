@@ -93,7 +93,8 @@ sealed class WcAnalyticEvents(
             AnalyticsParam.BLOCKCHAIN to sessionForApprove.network.joinToString(",") { it.name },
             DOMAIN_VERIFICATION to securityStatus.toAnalyticVerificationStatus(),
         ),
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     class DAppConnectionFailed(
         errorCode: String,
@@ -171,7 +172,8 @@ sealed class WcAnalyticEvents(
             }
             put(AnalyticsParam.Key.FEE_ASSET_TYPE, feeAssetType.value)
         },
-    ), AppsFlyerIncludedEvent
+    ),
+        AppsFlyerIncludedEvent
 
     class SignatureRequestFailed(
         rawRequest: WcSdkSessionRequest,

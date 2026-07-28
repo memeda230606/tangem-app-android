@@ -12,6 +12,7 @@ import com.tangem.datasource.api.common.config.ApiEnvironmentConfig
 import com.tangem.datasource.api.common.config.managers.ApiConfigsManager
 import com.tangem.datasource.api.common.createNetworkLoggingInterceptor
 import com.tangem.datasource.api.common.response.ApiResponseCallAdapterFactory
+import com.tangem.datasource.api.common.withStandaloneMockFallback
 import com.tangem.datasource.api.utils.ConnectTimeout
 import com.tangem.datasource.api.utils.ReadTimeout
 import com.tangem.datasource.api.utils.WriteTimeout
@@ -74,7 +75,7 @@ internal class RetrofitApiBuilder @Inject constructor(
         return Retrofit.Builder()
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .addCallAdapterFactory(ApiResponseCallAdapterFactory.create(analyticsErrorHandler))
-            .baseUrl(environmentConfig.baseUrl)
+            .baseUrl(environmentConfig.baseUrl.withStandaloneMockFallback())
             .client(
                 OkHttpClient.Builder()
                     .applyApiConfig(apiConfigId = apiConfigId, environmentConfig = environmentConfig)
@@ -102,7 +103,9 @@ internal class RetrofitApiBuilder @Inject constructor(
 
     private fun getConfigsBaseUrls(): Map<ApiConfig.ID, Set<String>> {
         return apiConfigs.associate { config ->
-            val allBaseUrls = config.environmentConfigs.mapTo(hashSetOf(), ApiEnvironmentConfig::baseUrl)
+            val allBaseUrls = config.environmentConfigs.mapTo(hashSetOf()) {
+                it.baseUrl.withStandaloneMockFallback()
+            }
 
             config.id to allBaseUrls
         }

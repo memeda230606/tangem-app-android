@@ -34,7 +34,7 @@ internal class SwitchEnvironmentInterceptor(
         val environmentConfig = apiConfigsManager.getEnvironmentConfig(id)
 
         request = builder
-            .url(url = request.url.adjustBaseUrl(environmentConfig.baseUrl))
+            .url(url = request.url.adjustBaseUrl(environmentConfig.baseUrl.withStandaloneMockFallback()))
             .addHeaders(headers = environmentConfig.headers)
             .build()
 

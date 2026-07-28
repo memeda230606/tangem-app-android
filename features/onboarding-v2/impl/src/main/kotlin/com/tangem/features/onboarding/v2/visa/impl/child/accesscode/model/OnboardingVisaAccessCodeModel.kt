@@ -19,6 +19,8 @@ import com.tangem.domain.visa.model.VisaCustomerWalletDataToSignRequest
 import com.tangem.domain.visa.repository.VisaActivationRepository
 import com.tangem.domain.visa.datasource.VisaAuthRemoteDataSource
 import com.tangem.domain.visa.model.VisaActivationInput
+import com.tangem.domain.visa.model.VisaCardActivationStatus
+import com.tangem.domain.visa.repository.VisaActivationStatusRepository
 import com.tangem.features.onboarding.v2.visa.impl.child.accesscode.OnboardingVisaAccessCodeComponent
 import com.tangem.features.onboarding.v2.visa.impl.child.accesscode.ui.state.OnboardingVisaAccessCodeUM
 import com.tangem.features.onboarding.v2.visa.impl.child.welcome.model.analytics.OnboardingVisaAnalyticsEvent
@@ -45,6 +47,7 @@ internal class OnboardingVisaAccessCodeModel @Inject constructor(
     @Suppress("UnusedPrivateMember")
     private val tangemSdkManager: TangemSdkManager,
     private val visaAuthRemoteDataSource: VisaAuthRemoteDataSource,
+    private val visaActivationStatusRepository: VisaActivationStatusRepository,
     private val uiMessageSender: UiMessageSender,
     private val analyticsEventsHandler: AnalyticsEventHandler,
 ) : Model() {
@@ -57,12 +60,17 @@ internal class OnboardingVisaAccessCodeModel @Inject constructor(
         ),
     )
 
-    private val activationInput: VisaActivationInput = TODO("Fix visaCardActivationStatus retrieval")
-    //     when (val status = params.scanResponse.visaCardActivationStatus) {
-    //     is VisaCardActivationStatus.NotStartedActivation -> status.activationInput
-    //     is VisaCardActivationStatus.ActivationStarted -> status.activationInput
-    //     else -> error("Visa activation status is not set or incorrect for this step")
-    // }
+    private val activationInput: VisaActivationInput = when (
+        val status = visaActivationStatusRepository.get(params.scanResponse.card.cardId)
+    ) {
+        is VisaCardActivationStatus.NotStartedActivation -> status.activationInput
+        is VisaCardActivationStatus.ActivationStarted -> status.activationInput
+        else -> VisaActivationInput(
+            cardId = params.scanResponse.card.cardId,
+            cardPublicKey = params.scanResponse.card.cardPublicKey.toHexString(),
+            isAccessCodeSet = params.scanResponse.card.isAccessCodeSet,
+        )
+    }
 
     private val _uiState = MutableStateFlow(getInitialState())
 

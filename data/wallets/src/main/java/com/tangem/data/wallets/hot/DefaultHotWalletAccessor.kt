@@ -30,10 +30,13 @@ class DefaultHotWalletAccessor @Inject constructor(
 
     private val contextualUnlockHotWallet: ConcurrentHashMap<HotWalletId, UnlockHotWallet?> = ConcurrentHashMap()
 
-    override suspend fun signHashes(hotWalletId: HotWalletId, dataToSign: List<DataToSign>): List<SignedData> =
-        hotSdkRequest(hotWalletId) { unlock ->
-            tangemHotSdk.signHashes(unlockHotWallet = unlock, dataToSign = dataToSign)
-        }
+    override suspend fun signHashes(
+        hotWalletId: HotWalletId,
+        dataToSign: List<DataToSign>,
+        userWalletId: UserWalletId?,
+    ): List<SignedData> = hotSdkRequest(hotWalletId, userWalletId) { unlock ->
+        tangemHotSdk.signHashes(unlockHotWallet = unlock, dataToSign = dataToSign)
+    }
 
     override suspend fun derivePublicKeys(
         hotWalletId: HotWalletId,
@@ -81,7 +84,11 @@ class DefaultHotWalletAccessor @Inject constructor(
         }
     }
 
-    private suspend fun <T> hotSdkRequest(hotWalletId: HotWalletId, block: suspend (unlock: UnlockHotWallet) -> T): T {
+    private suspend fun <T> hotSdkRequest(
+        hotWalletId: HotWalletId,
+        userWalletId: UserWalletId? = null,
+        block: suspend (unlock: UnlockHotWallet) -> T,
+    ): T {
         val isAccessCodeRequired = isAccessCodeRequired()
 
         val auth = when (hotWalletId.authType) {
@@ -89,12 +96,14 @@ class DefaultHotWalletAccessor @Inject constructor(
             HotWalletId.AuthType.Password -> requestPassword(
                 hotWalletId = hotWalletId,
                 hasBiometry = false,
+                userWalletId = userWalletId,
             )
             HotWalletId.AuthType.Biometry -> {
                 if (isAccessCodeRequired) {
                     requestPassword(
                         hotWalletId = hotWalletId,
                         hasBiometry = false,
+                        userWalletId = userWalletId,
                     )
                 } else {
                     HotAuth.Biometry
@@ -102,7 +111,7 @@ class DefaultHotWalletAccessor @Inject constructor(
             }
         }
 
-        return runCatchingSdkErrors(hotWalletId, auth) {
+        return runCatchingSdkErrors(hotWalletId, auth, userWalletId) {
             block(UnlockHotWallet(hotWalletId, it)).also {
                 hotWalletPasswordRequester.successfulAuthentication()
                 hotWalletPasswordRequester.dismiss()
@@ -113,12 +122,14 @@ class DefaultHotWalletAccessor @Inject constructor(
     private suspend fun <T> runCatchingSdkErrors(
         hotWalletId: HotWalletId,
         auth: HotAuth,
+        userWalletId: UserWalletId?,
         block: suspend (auth: HotAuth) -> T,
     ): T {
         return runCatchingWrongPassInternal(
             hotWalletId = hotWalletId,
             originalAuth = auth,
             auth = auth,
+            userWalletId = userWalletId,
             block = { blockAuth ->
                 val result = block(blockAuth)
 
@@ -163,6 +174,7 @@ class DefaultHotWalletAccessor @Inject constructor(
         hotWalletId: HotWalletId,
         originalAuth: HotAuth,
         auth: HotAuth,
+        userWalletId: UserWalletId?,
         block: suspend (auth: HotAuth) -> T,
     ): T = runSuspendCatching {
         block(auth)
@@ -174,12 +186,14 @@ class DefaultHotWalletAccessor @Inject constructor(
             val passAuth = requestPassword(
                 hotWalletId = hotWalletId,
                 hasBiometry = shouldRetryBiometry,
+                userWalletId = userWalletId,
             )
 
             return@getOrElse runCatchingWrongPassInternal(
                 hotWalletId = hotWalletId,
                 originalAuth = originalAuth,
                 auth = passAuth,
+                userWalletId = userWalletId,
                 block = block,
             )
         }
@@ -194,21 +208,28 @@ class DefaultHotWalletAccessor @Inject constructor(
         val passResult = requestPassword(
             hotWalletId = hotWalletId,
             hasBiometry = originalAuth is HotAuth.Biometry,
+            userWalletId = userWalletId,
         )
 
         runCatchingWrongPassInternal(
             hotWalletId = hotWalletId,
             originalAuth = originalAuth,
             auth = passResult,
+            userWalletId = userWalletId,
             block = block,
         )
     }
 
-    private suspend fun requestPassword(hotWalletId: HotWalletId, hasBiometry: Boolean): HotAuth {
+    private suspend fun requestPassword(
+        hotWalletId: HotWalletId,
+        hasBiometry: Boolean,
+        userWalletId: UserWalletId? = null,
+    ): HotAuth {
         val attemptRequest = HotWalletPasswordRequester.AttemptRequest(
             hotWalletId = hotWalletId,
             authMode = false,
             hasBiometry = hasBiometry,
+            userWalletId = userWalletId,
         )
 
         return hotWalletPasswordRequester.requestPassword(attemptRequest).toAuth()

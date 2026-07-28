@@ -1,6 +1,7 @@
 plugins {
     alias(deps.plugins.android.library)
     alias(deps.plugins.kotlin.android)
+    alias(deps.plugins.kotlin.compose.compiler)
     alias(deps.plugins.kotlin.kapt)
     alias(deps.plugins.hilt.android)
     id("configuration")
@@ -8,6 +9,7 @@ plugins {
 
 android {
     namespace = "com.tangem.features.kyc.impl"
+    buildFeatures.compose = true
 }
 
 dependencies {
@@ -16,6 +18,8 @@ dependencies {
 
     implementation(projects.core.decompose)
     implementation(deps.compose.ui)
+    implementation(deps.compose.foundation)
+    implementation(deps.compose.material3)
     implementation(projects.core.ui)
 
     /** DI */

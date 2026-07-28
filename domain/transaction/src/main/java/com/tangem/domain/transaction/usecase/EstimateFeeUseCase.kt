@@ -30,7 +30,8 @@ class EstimateFeeUseCase(
     ): Either<GetFeeError, TransactionFee> {
         val amountData = amount.convertToSdkAmount(cryptoCurrencyStatus)
         val result = if (userWallet is UserWallet.Cold &&
-            demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId)
+            demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId) &&
+            !demoConfig.isNfcDemoCardId(userWallet.scanResponse.card.cardId)
         ) {
             demoTransactionSender(userWallet, cryptoCurrencyStatus.currency).estimateFee(
                 amount = amountData,

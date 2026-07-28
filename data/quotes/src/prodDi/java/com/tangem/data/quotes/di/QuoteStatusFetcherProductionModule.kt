@@ -12,7 +12,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-internal interface QuoteStatusFetcherModule {
+internal interface QuoteStatusFetcherProductionModule {
 
     @Binds
     @Singleton

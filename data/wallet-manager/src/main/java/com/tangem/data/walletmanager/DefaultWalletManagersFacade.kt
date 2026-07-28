@@ -66,6 +66,7 @@ internal class DefaultWalletManagersFacade @Inject constructor(
     private val assetLoader: AssetLoader,
     private val dispatchers: CoroutineDispatcherProvider,
     private val gaslessTransactionRepository: GaslessTransactionRepository,
+    private val nfcDemoEthereumTxHistoryProvider: NfcDemoEthereumTxHistoryProvider,
     blockchainSDKFactory: BlockchainSDKFactory,
 ) : WalletManagersFacade {
 
@@ -247,7 +248,18 @@ internal class DefaultWalletManagersFacade @Inject constructor(
             },
         )
 
-        return txHistoryStateConverter.convert(transactionHistoryState)
+        val state = txHistoryStateConverter.convert(transactionHistoryState)
+        if (state is TxHistoryState.Failed.FetchError &&
+            shouldUseNfcDemoEthereumTxHistory(userWalletId = userWalletId, currency = currency)
+        ) {
+            TangemLogger.w("[NfcDemo] Ethereum SDK transaction history failed; using RouteScan fallback")
+            return nfcDemoEthereumTxHistoryProvider.getState(
+                address = walletManager.wallet.address,
+                decimals = currency.decimals,
+            )
+        }
+
+        return state
     }
 
     override suspend fun getTxHistoryItems(
@@ -303,11 +315,31 @@ internal class DefaultWalletManagersFacade @Inject constructor(
                     gaslessFeeAddresses = gaslessFeeAddresses,
                 ).convertList(itemsResult.data.items),
             )
-            is Result.Failure -> error(itemsResult.error.message ?: itemsResult.error.customMessage)
+            is Result.Failure -> {
+                if (shouldUseNfcDemoEthereumTxHistory(userWalletId = userWalletId, currency = currency)) {
+                    TangemLogger.w("[NfcDemo] Ethereum SDK transaction items failed; using RouteScan fallback")
+                    nfcDemoEthereumTxHistoryProvider.getItems(
+                        address = walletManager.wallet.address,
+                        decimals = currency.decimals,
+                        page = page,
+                    )
+                } else {
+                    error(itemsResult.error.message ?: itemsResult.error.customMessage)
+                }
+            }
         }
     }
 
     private fun getUserWallet(userWalletId: UserWalletId) = userWalletsListRepository.getSyncStrict(userWalletId)
+
+    private fun shouldUseNfcDemoEthereumTxHistory(userWalletId: UserWalletId, currency: CryptoCurrency): Boolean {
+        val userWallet = getUserWallet(userWalletId)
+
+        return userWallet is UserWallet.Cold &&
+            demoConfig.isNfcDemoCardId(userWallet.scanResponse.card.cardId) &&
+            currency is CryptoCurrency.Coin &&
+            currency.network.rawId == ETHEREUM_NETWORK_ID
+    }
 
     private suspend fun getAndUpdateWalletManager(
         userWallet: UserWallet,
@@ -335,7 +367,10 @@ internal class DefaultWalletManagersFacade @Inject constructor(
         if (xpub != null) restoreXpubModeIfNeeded(walletManager, xpub)
 
         return try {
-            if (userWallet is UserWallet.Cold && demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId)) {
+            if (userWallet is UserWallet.Cold &&
+                demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId) &&
+                !demoConfig.isNfcDemoCardId(userWallet.scanResponse.card.cardId)
+            ) {
                 updateDemoWalletManager(walletManager)
             } else {
                 updateWalletManager(walletManager = walletManager, forceUpdate = isUpdated)
@@ -934,6 +969,7 @@ internal class DefaultWalletManagersFacade @Inject constructor(
     }
 
     private companion object {
+        const val ETHEREUM_NETWORK_ID = "ethereum"
         const val XPUB_PATH_MIN_NODES = 2
         const val RECEIVE_CHAIN_INDEX = 0L
     }

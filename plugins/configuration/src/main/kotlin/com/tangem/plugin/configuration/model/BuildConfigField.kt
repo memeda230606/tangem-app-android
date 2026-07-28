@@ -33,6 +33,12 @@ internal sealed class BuildConfigField(val type: String, val name: String, val v
         value = isEnabled.toString(),
     )
 
+    class NfcDemoEnabled(isEnabled: Boolean) : BuildConfigField(
+        type = "Boolean",
+        name = "NFC_DEMO_ENABLED",
+        value = isEnabled.toString(),
+    )
+
     class ABTestsEnabled(isEnabled: Boolean) : BuildConfigField(
         type = "Boolean",
         name = "AB_TESTS_ENABLED",

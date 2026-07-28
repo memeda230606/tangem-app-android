@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <meta-data
+            android:name="firebase_performance_collection_deactivated"
+            android:value="true" />
+        <meta-data
+            android:name="firebase_analytics_collection_deactivated"
+            android:value="true" />
+        <meta-data
+            android:name="firebase_messaging_auto_init_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_sessions_enabled"
+            android:value="false" />
+
+        <activity android:name="com.tangem.tap.MainActivity">
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="tangem-demo" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.nfc.action.TECH_DISCOVERED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.nfc.action.TECH_DISCOVERED"
+                android:resource="@xml/nfc_demo_tech_filter" />
+        </activity>
+
+        <!--
+            MagicOS emits this OEM broadcast instead of dispatching the standard NDEF intent
+            while the phone is on the launcher. Keep this bridge in the mocked variant only.
+        -->
+        <receiver
+            android:name="com.tangem.tap.domain.sdk.mocks.HonorNfcDemoReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.hihonor.nfc.action.NDEF_DISCOVERED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

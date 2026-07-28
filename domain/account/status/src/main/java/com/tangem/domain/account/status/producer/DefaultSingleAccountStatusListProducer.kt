@@ -300,12 +300,14 @@ internal class DefaultSingleAccountStatusListProducer @AssistedInject constructo
                     flow = networkStatusFlow,
                     flow2 = stakingBalanceFlow,
                     flow3 = quoteStatusFlow,
-                    transform = { b, c, d -> Box(
-                        flattenCurrencyMap = a,
-                        networkStatusMap = b,
-                        stakingBalanceMap = c,
-                        quoteStatusMap = d,
-                    ) },
+                    transform = { b, c, d ->
+                        Box(
+                            flattenCurrencyMap = a,
+                            networkStatusMap = b,
+                            stakingBalanceMap = c,
+                            quoteStatusMap = d,
+                        )
+                    },
                 )
             }
             .distinctUntilChanged()

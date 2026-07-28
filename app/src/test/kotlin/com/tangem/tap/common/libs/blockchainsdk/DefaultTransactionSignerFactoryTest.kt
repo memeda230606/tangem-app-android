@@ -8,7 +8,9 @@ import com.tangem.core.analytics.models.Basic.TransactionSent.WalletForm
 import com.tangem.core.analytics.store.LastSignedWalletFormStore
 import com.tangem.domain.common.wallets.UserWalletsListRepository
 import com.tangem.domain.models.wallet.UserWallet
+import com.tangem.data.wallets.hot.TangemHotWalletSigner
 import com.tangem.tap.domain.TangemSignerResponse
+import com.tangem.tap.domain.sdk.mocks.NfcDemoHotWalletBridge
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.every
@@ -30,6 +32,8 @@ internal class DefaultTransactionSignerFactoryTest {
         lastSignedWalletFormStore = lastSignedWalletFormStore,
         userWalletsListRepository = userWalletsListRepository,
         coroutineScope = TestAppCoroutineScope(),
+        nfcDemoHotWalletBridge = mockk<NfcDemoHotWalletBridge>(),
+        hotWalletSignerFactory = mockk<TangemHotWalletSigner.Factory>(),
     )
 
     private val baseWallet = MockUserWalletFactory.create()

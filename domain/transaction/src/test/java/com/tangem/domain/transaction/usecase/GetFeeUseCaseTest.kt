@@ -53,6 +53,7 @@ class GetFeeUseCaseTest {
         userWallet = mockk<UserWallet.Hot>()
 
         every { demoConfig.isDemoCardId(any()) } returns false
+        every { demoConfig.isNfcDemoCardId(any()) } returns false
         every { userWallet.walletId } returns userWalletId
         coEvery {
             walletManagersFacade.getOrCreateWalletManager(userWalletId, network)

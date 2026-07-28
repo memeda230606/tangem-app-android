@@ -75,10 +75,12 @@ internal class QrContentClassifierParser(
 
         val uriParser = QrSentUriParser()
         val uriParam = uriParser.extractParameters(qrCode)[PARAM_URI] ?: return false
-        val decodedUri = runCatching { URLDecoder.decode(
-            uriParam,
-            QrSentUriParser.CHARSET_UTF8,
-        ) }.getOrDefault(uriParam)
+        val decodedUri = runCatching {
+            URLDecoder.decode(
+                uriParam,
+                QrSentUriParser.CHARSET_UTF8,
+            )
+        }.getOrDefault(uriParam)
         return decodedUri.startsWith(WC_PREFIX)
     }
 

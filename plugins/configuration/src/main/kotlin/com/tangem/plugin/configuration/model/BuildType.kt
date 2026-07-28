@@ -28,6 +28,7 @@ enum class BuildType(
             BuildConfigField.LogEnabled(isEnabled = true),
             BuildConfigField.TesterMenuAvailability(isEnabled = true),
             BuildConfigField.MockDataSource(isEnabled = false),
+            BuildConfigField.NfcDemoEnabled(isEnabled = false),
             BuildConfigField.ABTestsEnabled(isEnabled = true),
         ),
     ),
@@ -50,6 +51,25 @@ enum class BuildType(
             BuildConfigField.LogEnabled(isEnabled = true),
             BuildConfigField.TesterMenuAvailability(isEnabled = true),
             BuildConfigField.MockDataSource(isEnabled = true),
+            BuildConfigField.NfcDemoEnabled(isEnabled = true),
+            BuildConfigField.ABTestsEnabled(isEnabled = false),
+        ),
+    ),
+
+    /**
+     * Ordinary-NFC demo UI combined with production blockchain data and hot-wallet signing.
+     * NFC is an interaction trigger only and is never treated as a cryptographic factor.
+     */
+    Hybrid(
+        id = "hybrid",
+        appIdSuffix = "hybrid",
+        versionSuffix = "hybrid",
+        configFields = listOf(
+            BuildConfigField.Environment(value = "prod"),
+            BuildConfigField.LogEnabled(isEnabled = true),
+            BuildConfigField.TesterMenuAvailability(isEnabled = true),
+            BuildConfigField.MockDataSource(isEnabled = false),
+            BuildConfigField.NfcDemoEnabled(isEnabled = true),
             BuildConfigField.ABTestsEnabled(isEnabled = false),
         ),
     ),
@@ -74,6 +94,7 @@ enum class BuildType(
             BuildConfigField.LogEnabled(isEnabled = true),
             BuildConfigField.TesterMenuAvailability(isEnabled = true),
             BuildConfigField.MockDataSource(isEnabled = false),
+            BuildConfigField.NfcDemoEnabled(isEnabled = false),
             BuildConfigField.ABTestsEnabled(isEnabled = true),
         ),
     ),
@@ -95,6 +116,7 @@ enum class BuildType(
             BuildConfigField.LogEnabled(isEnabled = false),
             BuildConfigField.TesterMenuAvailability(isEnabled = false),
             BuildConfigField.MockDataSource(isEnabled = false),
+            BuildConfigField.NfcDemoEnabled(isEnabled = false),
             BuildConfigField.ABTestsEnabled(isEnabled = false),
         ),
     ),
@@ -114,6 +136,7 @@ enum class BuildType(
             BuildConfigField.LogEnabled(isEnabled = false),
             BuildConfigField.TesterMenuAvailability(isEnabled = false),
             BuildConfigField.MockDataSource(isEnabled = false),
+            BuildConfigField.NfcDemoEnabled(isEnabled = false),
             BuildConfigField.ABTestsEnabled(isEnabled = true),
         ),
     ),

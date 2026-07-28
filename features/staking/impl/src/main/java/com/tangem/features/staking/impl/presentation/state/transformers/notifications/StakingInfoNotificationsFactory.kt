@@ -298,9 +298,11 @@ internal class StakingInfoNotificationsFactory(
 
             val stakesCountWithCertainTarget = stakingBalances.orEmpty()
                 .count { state ->
-                    (state.type == BalanceType.STAKED ||
-                        state.type == BalanceType.PREPARING ||
-                        state.type == BalanceType.UNSTAKED) &&
+                    (
+                        state.type == BalanceType.STAKED ||
+                            state.type == BalanceType.PREPARING ||
+                            state.type == BalanceType.UNSTAKED
+                        ) &&
                         state.target?.address == targetAddress
                 }
 

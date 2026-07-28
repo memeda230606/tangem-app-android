@@ -30,7 +30,6 @@ import com.tangem.domain.pay.usecase.*
 import com.tangem.domain.tangempay.GetTangemPayCurrencyStatusUseCase
 import com.tangem.domain.tangempay.GetTangemPayCustomerIdUseCase
 import com.tangem.domain.tangempay.TangemPayWithdrawUseCase
-import com.tangem.domain.tangempay.repository.TangemPayTxHistoryRepository
 import com.tangem.utils.coroutines.AppCoroutineScope
 import com.tangem.utils.coroutines.CoroutineDispatcherProvider
 import dagger.Binds
@@ -44,26 +43,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface TangemPayDataModule {
-
-    @Binds
-    @Singleton
-    fun bindKycRepository(repository: DefaultKycRepository): KycRepository
-
-    @Binds
-    @Singleton
-    fun bindTangemPayTxHistoryRepository(repository: DefaultTangemPayTxHistoryRepository): TangemPayTxHistoryRepository
-
-    @Binds
-    @Singleton
-    fun bindTangemPaySwapRepository(repository: DefaultTangemPayWithdrawRepository): TangemPayWithdrawRepository
-
-    @Binds
-    @Singleton
-    fun bindCustomerOrderRepository(repository: DefaultCustomerOrderRepository): CustomerOrderRepository
-
-    @Binds
-    @Singleton
-    fun bindReissueCardRepository(repository: DefaultReissueCardRepository): TangemPayReissueCardRepository
 
     @Binds
     @Singleton

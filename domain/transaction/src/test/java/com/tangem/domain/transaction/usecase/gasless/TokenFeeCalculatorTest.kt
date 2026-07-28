@@ -66,6 +66,7 @@ class TokenFeeCalculatorTest {
 
         // Default mock behavior
         every { demoConfig.isDemoCardId(any()) } returns false
+        every { demoConfig.isNfcDemoCardId(any()) } returns false
         every { mockUserWallet.walletId } returns mockUserWalletId
     }
 

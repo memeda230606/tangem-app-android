@@ -35,7 +35,8 @@ internal class FeeTokenSelectorModel @Inject constructor(
     override val dispatchers: CoroutineDispatcherProvider,
     private val urlOpener: UrlOpener,
     private val getSelectedAppCurrencyUseCase: GetSelectedAppCurrencyUseCase,
-) : Model(), FeeTokenSelectorIntents,
+) : Model(),
+    FeeTokenSelectorIntents,
     FeeSelectorIntents by paramsContainer.require<FeeSelectorComponentParams>().intents {
 
     private val params = paramsContainer.require<FeeSelectorComponentParams>()

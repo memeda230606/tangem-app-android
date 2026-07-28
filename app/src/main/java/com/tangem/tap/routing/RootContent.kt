@@ -40,6 +40,8 @@ import com.tangem.core.ui.res.TangemTheme
 import com.tangem.core.ui.security.ProvideSecureFlagController
 import com.tangem.tap.routing.component.RoutingComponent
 import com.tangem.tap.routing.transitions.RoutingTransitionAnimationFactory
+import com.tangem.tap.features.nfcdemo.NfcDemoTapOverlay
+import com.tangem.wallet.BuildConfig
 
 @Suppress("LongParameterList", "ReusedModifierInstance")
 @OptIn(ExperimentalDecomposeApi::class)
@@ -112,6 +114,10 @@ internal fun RootContent(
                             .padding(all = 16.dp),
                         hostState = LocalTopSnackbarHostState.current,
                     )
+                }
+
+                if (BuildConfig.NFC_DEMO_ENABLED) {
+                    NfcDemoTapOverlay()
                 }
             }
         }

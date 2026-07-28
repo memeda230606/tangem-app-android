@@ -56,6 +56,7 @@ sealed class ApiConfig {
         internal const val DEBUG_BUILD_TYPE = "debug"
         internal const val INTERNAL_BUILD_TYPE = "internal"
         internal const val MOCKED_BUILD_TYPE = "mocked"
+        internal const val HYBRID_BUILD_TYPE = "hybrid"
         internal const val EXTERNAL_BUILD_TYPE = "external"
         internal const val RELEASE_BUILD_TYPE = "release"
     }

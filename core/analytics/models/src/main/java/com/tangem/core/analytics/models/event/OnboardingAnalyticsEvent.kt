@@ -23,7 +23,8 @@ sealed class OnboardingAnalyticsEvent(
             params = buildMap {
                 source?.value?.let { put(AnalyticsParam.SOURCE, it) }
             },
-        ), CriticalEvent
+        ),
+            CriticalEvent
 
         /**
          * Tracks the completion of the onboarding process.
@@ -35,7 +36,8 @@ sealed class OnboardingAnalyticsEvent(
             params = buildMap {
                 source?.value?.let { put(AnalyticsParam.SOURCE, it) }
             },
-        ), CriticalEvent
+        ),
+            CriticalEvent
 
         class ButtonMobileWallet(
             source: String,
@@ -87,7 +89,9 @@ sealed class OnboardingAnalyticsEvent(
                 source?.value?.let { put(AnalyticsParam.SOURCE, it) }
                 putAll(getReferralParams(referralId))
             },
-        ), AppsFlyerIncludedEvent, CriticalEvent
+        ),
+            AppsFlyerIncludedEvent,
+            CriticalEvent
     }
 
     sealed class SeedPhrase(
@@ -102,7 +106,8 @@ sealed class OnboardingAnalyticsEvent(
             params = mapOf(
                 AnalyticsParam.SOURCE to source.value,
             ),
-        ), AppsFlyerIncludedEvent
+        ),
+            AppsFlyerIncludedEvent
 
         class ButtonImportWallet : SeedPhrase("Button - Import Wallet")
         /**

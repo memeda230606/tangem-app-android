@@ -39,6 +39,8 @@ sealed class AppRoute(val path: String) : Route {
     @Serializable
     data class Home(
         val launchMode: InitScreenLaunchMode = InitScreenLaunchMode.Standard,
+        /** Makes repeated external scan requests distinct so HomeModel is recreated for every NFC tap. */
+        val scanRequestId: Long? = null,
     ) : AppRoute(path = "/home")
 
     @Serializable

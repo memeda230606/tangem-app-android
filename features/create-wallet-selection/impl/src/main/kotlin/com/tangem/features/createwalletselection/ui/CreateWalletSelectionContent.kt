@@ -103,7 +103,9 @@ internal fun CreateWalletSelectionContent(state: CreateWalletSelectionUM, modifi
                     title = block.title.resolveReference(),
                     description = block.description.resolveReference(),
                     badge = block.titleLabel?.let {
-                        { Label(it) }
+                        {
+                            Label(it)
+                        }
                     },
                     onClick = block.onClick,
                 )

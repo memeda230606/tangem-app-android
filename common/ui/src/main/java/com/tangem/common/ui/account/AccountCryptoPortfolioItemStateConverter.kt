@@ -107,10 +107,14 @@ class AccountCryptoPortfolioItemStateConverter(
                 isAvailable = false,
             ),
             onItemClick = onItemClick?.let { onItemClick ->
-                { onItemClick(account) }
+                {
+                    onItemClick(account)
+                }
             },
             onItemLongClick = onItemLongClick?.let { onItemLongClick ->
-                { onItemLongClick(account) }
+                {
+                    onItemLongClick(account)
+                }
             },
         )
     }

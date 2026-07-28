@@ -39,7 +39,8 @@ class GetFeeUseCase(
         catch(
             block = {
                 val transactionSender = if (userWallet is UserWallet.Cold &&
-                    demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId)
+                    demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId) &&
+                    !demoConfig.isNfcDemoCardId(userWallet.scanResponse.card.cardId)
                 ) {
                     demoTransactionSender(userWallet, network)
                 } else {
@@ -74,7 +75,8 @@ class GetFeeUseCase(
                 val amountData = convertCryptoCurrencyToAmount(cryptoCurrency, amount)
 
                 val result = if (userWallet is UserWallet.Cold &&
-                    demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId)
+                    demoConfig.isDemoCardId(userWallet.scanResponse.card.cardId) &&
+                    !demoConfig.isNfcDemoCardId(userWallet.scanResponse.card.cardId)
                 ) {
                     demoTransactionSender(userWallet, cryptoCurrency.network).getFee(
                         amount = amountData,

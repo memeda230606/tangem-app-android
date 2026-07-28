@@ -11,10 +11,13 @@ plugins {
 android {
     namespace = "com.tangem.data.visa"
 
-    // `src/prodDi/` holds production DI bindings for TangemPay repos with a `mocked` counterpart.
-    // Wired into every build type EXCEPT `mocked`, which supplies its own bindings from `src/mocked/`.
+    // Hybrid shares Visa/Tangem Pay fixtures with mocked, while its blockchain data and signing stay real.
     buildTypes.configureEach {
-        if (name != "mocked") {
+        if (name == "hybrid") {
+            sourceSets.named(name) {
+                java.srcDir("src/mocked/kotlin")
+            }
+        } else if (name != "mocked") {
             sourceSets.named(name) {
                 java.srcDir("src/prodDi/kotlin")
             }

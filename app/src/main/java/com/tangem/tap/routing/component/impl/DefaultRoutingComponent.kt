@@ -58,6 +58,7 @@ import com.tangem.tap.features.hot.TangemHotSDKProxy
 import com.tangem.tap.features.root.RootDetectedWarningComponent
 import com.tangem.tap.features.scanfails.ScanFailsComponent
 import com.tangem.tap.features.scanfails.ScanFailsRequesterProxy
+import com.tangem.tap.domain.sdk.mocks.NfcRoutingBackupService
 import com.tangem.tap.routing.RootContent
 import com.tangem.tap.routing.component.RoutingComponent
 import com.tangem.tap.routing.component.RoutingComponent.Child
@@ -193,6 +194,7 @@ internal class DefaultRoutingComponent @AssistedInject constructor(
         val userWallets = userWalletsListRepository.userWalletsSync()
 
         return when {
+            launchMode == InitScreenLaunchMode.WithCardScan -> AppRoute.Home(launchMode = launchMode)
             userWallets.isEmpty() -> navigateForEmptyWallets()
             userWallets.any { it.isLocked } -> {
                 AppRoute.Welcome(
@@ -385,9 +387,12 @@ internal class DefaultRoutingComponent @AssistedInject constructor(
     )
 
     private fun resumeUnfinishedBackup(scanResponse: ScanResponse) {
+        val restoredScanResponse = (backupServiceHolder.backupService.get() as? NfcRoutingBackupService)
+            ?.prepareInterruptedBackup(scanResponse)
+            ?: scanResponse
         router.replaceAll(
             AppRoute.Onboarding(
-                scanResponse = scanResponse,
+                scanResponse = restoredScanResponse,
                 mode = AppRoute.Onboarding.Mode.ContinueFinalize,
             ),
         )

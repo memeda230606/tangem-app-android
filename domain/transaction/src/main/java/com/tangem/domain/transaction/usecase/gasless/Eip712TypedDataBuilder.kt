@@ -52,30 +52,42 @@ object Eip712TypedDataBuilder {
     @Suppress("NestedScopeFunctions")
     private fun buildTypes(): JSONObject {
         return JSONObject().apply {
-            put("EIP712Domain", JSONArray().apply {
-                put(typeProperty("name", "string"))
-                put(typeProperty("version", "string"))
-                put(typeProperty("chainId", "uint256"))
-                put(typeProperty("verifyingContract", "address"))
-            })
-            put("Transaction", JSONArray().apply {
-                put(typeProperty("to", "address"))
-                put(typeProperty("value", "uint256"))
-                put(typeProperty("data", "bytes"))
-            })
-            put("Fee", JSONArray().apply {
-                put(typeProperty("feeToken", "address"))
-                put(typeProperty("maxTokenFee", "uint256"))
-                put(typeProperty("coinPriceInToken", "uint256"))
-                put(typeProperty("feeTransferGasLimit", "uint256"))
-                put(typeProperty("baseGas", "uint256"))
-                put(typeProperty("feeReceiver", "address"))
-            })
-            put("GaslessTransaction", JSONArray().apply {
-                put(typeProperty("transaction", "Transaction"))
-                put(typeProperty("fee", "Fee"))
-                put(typeProperty("nonce", "uint256"))
-            })
+            put(
+                "EIP712Domain",
+                JSONArray().apply {
+                    put(typeProperty("name", "string"))
+                    put(typeProperty("version", "string"))
+                    put(typeProperty("chainId", "uint256"))
+                    put(typeProperty("verifyingContract", "address"))
+                },
+            )
+            put(
+                "Transaction",
+                JSONArray().apply {
+                    put(typeProperty("to", "address"))
+                    put(typeProperty("value", "uint256"))
+                    put(typeProperty("data", "bytes"))
+                },
+            )
+            put(
+                "Fee",
+                JSONArray().apply {
+                    put(typeProperty("feeToken", "address"))
+                    put(typeProperty("maxTokenFee", "uint256"))
+                    put(typeProperty("coinPriceInToken", "uint256"))
+                    put(typeProperty("feeTransferGasLimit", "uint256"))
+                    put(typeProperty("baseGas", "uint256"))
+                    put(typeProperty("feeReceiver", "address"))
+                },
+            )
+            put(
+                "GaslessTransaction",
+                JSONArray().apply {
+                    put(typeProperty("transaction", "Transaction"))
+                    put(typeProperty("fee", "Fee"))
+                    put(typeProperty("nonce", "uint256"))
+                },
+            )
         }
     }
 
@@ -107,19 +119,25 @@ object Eip712TypedDataBuilder {
     @Suppress("NestedScopeFunctions")
     private fun buildMessage(gaslessTransaction: GaslessTransactionData): JSONObject {
         return JSONObject().apply {
-            put("transaction", JSONObject().apply {
-                put("to", gaslessTransaction.transaction.to)
-                put("value", gaslessTransaction.transaction.value.toString())
-                put("data", gaslessTransaction.transaction.data.toHexString())
-            })
-            put("fee", JSONObject().apply {
-                put("feeToken", gaslessTransaction.fee.feeToken)
-                put("maxTokenFee", gaslessTransaction.fee.maxTokenFee.toString())
-                put("coinPriceInToken", gaslessTransaction.fee.coinPriceInToken.toString())
-                put("feeTransferGasLimit", gaslessTransaction.fee.feeTransferGasLimit.toString())
-                put("baseGas", gaslessTransaction.fee.baseGas.toString())
-                put("feeReceiver", gaslessTransaction.fee.feeReceiver)
-            })
+            put(
+                "transaction",
+                JSONObject().apply {
+                    put("to", gaslessTransaction.transaction.to)
+                    put("value", gaslessTransaction.transaction.value.toString())
+                    put("data", gaslessTransaction.transaction.data.toHexString())
+                },
+            )
+            put(
+                "fee",
+                JSONObject().apply {
+                    put("feeToken", gaslessTransaction.fee.feeToken)
+                    put("maxTokenFee", gaslessTransaction.fee.maxTokenFee.toString())
+                    put("coinPriceInToken", gaslessTransaction.fee.coinPriceInToken.toString())
+                    put("feeTransferGasLimit", gaslessTransaction.fee.feeTransferGasLimit.toString())
+                    put("baseGas", gaslessTransaction.fee.baseGas.toString())
+                    put("feeReceiver", gaslessTransaction.fee.feeReceiver)
+                },
+            )
             put("nonce", gaslessTransaction.nonce.toString())
         }
     }

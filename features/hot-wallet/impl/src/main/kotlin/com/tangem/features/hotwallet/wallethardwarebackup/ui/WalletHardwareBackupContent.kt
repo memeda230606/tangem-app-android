@@ -80,7 +80,9 @@ internal fun WalletHardwareBackupContent(state: WalletHardwareBackupUM, modifier
                     title = block.title.resolveReference(),
                     description = block.description.resolveReference(),
                     badge = block.titleLabel?.let {
-                        { Label(it) }
+                        {
+                            Label(it)
+                        }
                     },
                     enabled = true,
                     backgroundColor = TangemTheme.colors.background.primary,
