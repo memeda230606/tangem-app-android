@@ -63,6 +63,7 @@ internal class UseCaseScanProcessor @Inject constructor(
         cardId: String?,
         onProgressStateChange: suspend (showProgress: Boolean) -> Unit,
         onWalletNotCreated: suspend () -> Unit,
+        onCancel: suspend () -> Unit,
         onFailure: suspend (error: TangemError) -> Unit,
         onSuccess: suspend (scanResponse: ScanResponse) -> Unit,
     ) = progressScope(onProgressStateChange) {
@@ -77,9 +78,30 @@ internal class UseCaseScanProcessor @Inject constructor(
         }
 
         scanCardUseCase(cardId, afterScanChains = chains).fold(
-            ifLeft = { proceedWithException(it, onWalletNotCreated, onFailure) },
+            ifLeft = { proceedWithException(it, onWalletNotCreated, onCancel, onFailure) },
             ifRight = { onSuccess(it) },
         )
+    }
+
+    /** Continues the normal onboarding decision after the External build has accepted its NDEF test card. */
+    suspend fun proceedWithExternalScan(
+        scanResponse: ScanResponse,
+        onWalletNotCreated: suspend () -> Unit,
+        onSuccess: suspend (scanResponse: ScanResponse) -> Unit,
+    ) {
+        if (onboardingHelper.isOnboardingCase(scanResponse)) {
+            trackingContextProxy.addContext(scanResponse)
+            navigateTo(
+                AppRoute.Onboarding(
+                    scanResponse = scanResponse,
+                    mode = AppRoute.Onboarding.Mode.Onboarding,
+                ),
+            )
+            onWalletNotCreated()
+        } else {
+            trackingContextProxy.setContext(scanResponse)
+            onSuccess(scanResponse)
+        }
     }
 
     private fun showScanFailsDialog(source: AnalyticsParam.ScreensSources) {
@@ -91,6 +113,7 @@ internal class UseCaseScanProcessor @Inject constructor(
     private suspend fun proceedWithException(
         exception: ScanCardException,
         onWalletNotCreated: suspend () -> Unit,
+        onCancel: suspend () -> Unit,
         onFailure: suspend (error: TangemError) -> Unit,
     ) {
         when (exception) {
@@ -98,8 +121,8 @@ internal class UseCaseScanProcessor @Inject constructor(
                 exception,
                 onWalletNotCreated,
             )
+            is ScanCardException.UserCancelled -> onCancel()
             is ScanCardException.UnknownException,
-            is ScanCardException.UserCancelled,
             is ScanCardException.WrongAccessCode,
             is ScanCardException.WrongCardId,
             -> {

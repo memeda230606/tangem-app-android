@@ -66,12 +66,16 @@ internal class DefaultWalletManagersFacade @Inject constructor(
     private val assetLoader: AssetLoader,
     private val dispatchers: CoroutineDispatcherProvider,
     private val gaslessTransactionRepository: GaslessTransactionRepository,
+    private val keylessTxHistoryFallback: KeylessTxHistoryFallback,
+    private val externalNetworkBalanceFallback: ExternalNetworkBalanceFallback,
     blockchainSDKFactory: BlockchainSDKFactory,
 ) : WalletManagersFacade {
 
     private val demoConfig by lazy { DemoConfig }
     private val resultFactory by lazy { UpdateWalletManagerResultFactory() }
-    private val walletManagerFactory by lazy { WalletManagerFactory(blockchainSDKFactory) }
+    private val walletManagerFactory by lazy {
+        WalletManagerFactory(blockchainSDKFactory, externalNetworkBalanceFallback)
+    }
     private val sdkTokenConverter by lazy { SdkTokenConverter() }
     private val txHistoryStateConverter by lazy { SdkTransactionHistoryStateConverter() }
     private val sdkPageConverter by lazy { SdkPageConverter() }
@@ -247,7 +251,33 @@ internal class DefaultWalletManagersFacade @Inject constructor(
             },
         )
 
-        return txHistoryStateConverter.convert(transactionHistoryState)
+        val state = txHistoryStateConverter.convert(transactionHistoryState)
+
+        if (!keylessTxHistoryFallback.supports(currency) || state is TxHistoryState.Success) {
+            return state
+        }
+
+        return runCatching {
+            keylessTxHistoryFallback.getTransactionsCount(
+                address = walletManager.wallet.address,
+                currency = currency,
+            )
+        }.fold(
+            onSuccess = { count ->
+                if (count == 0) {
+                    TxHistoryState.Success.Empty
+                } else {
+                    TxHistoryState.Success.HasTransactions(count)
+                }
+            },
+            onFailure = { fallbackError ->
+                TangemLogger.e(
+                    "Unable to load transaction history state from the keyless fallback",
+                    fallbackError,
+                )
+                state
+            },
+        )
     }
 
     override suspend fun getTxHistoryItems(
@@ -303,8 +333,44 @@ internal class DefaultWalletManagersFacade @Inject constructor(
                     gaslessFeeAddresses = gaslessFeeAddresses,
                 ).convertList(itemsResult.data.items),
             )
-            is Result.Failure -> error(itemsResult.error.message ?: itemsResult.error.customMessage)
+            is Result.Failure -> getKeylessTxHistoryFallbackOrThrow(
+                currency = currency,
+                address = walletManager.wallet.address,
+                page = page,
+                pageSize = pageSize,
+                sdkErrorMessage = itemsResult.error.message ?: itemsResult.error.customMessage,
+            )
         }
+    }
+
+    private suspend fun getKeylessTxHistoryFallbackOrThrow(
+        currency: CryptoCurrency,
+        address: String,
+        page: Page,
+        pageSize: Int,
+        sdkErrorMessage: String,
+    ): PaginationWrapper<TxInfo> {
+        if (!keylessTxHistoryFallback.supports(currency)) {
+            error(sdkErrorMessage)
+        }
+
+        val result = runCatching {
+            keylessTxHistoryFallback.getTransactions(
+                address = address,
+                currency = currency,
+                page = sdkPageConverter.convert(page),
+                pageSize = pageSize,
+            )
+        }.getOrElse { fallbackError ->
+            TangemLogger.e("Unable to load transaction history from the keyless fallback", fallbackError)
+            error(sdkErrorMessage)
+        }
+
+        return PaginationWrapper(
+            currentPage = sdkPageConverter.convert(page),
+            nextPage = result.nextPage,
+            items = result.items,
+        )
     }
 
     private fun getUserWallet(userWalletId: UserWalletId) = userWalletsListRepository.getSyncStrict(userWalletId)
@@ -368,7 +434,32 @@ internal class DefaultWalletManagersFacade @Inject constructor(
             )
         } catch (e: Throwable) {
             TangemLogger.w("Unable to update a wallet manager for: ${walletManager.wallet.blockchain}", e)
+            updateWithExternalBalanceFallback(walletManager, e)
+        }
+    }
 
+    private suspend fun updateWithExternalBalanceFallback(
+        walletManager: WalletManager,
+        primaryError: Throwable,
+    ): UpdateWalletManagerResult {
+        val blockchain = walletManager.wallet.blockchain
+        if (!externalNetworkBalanceFallback.supports(blockchain)) {
+            return resultFactory.getUnreachableResult(walletManager)
+        }
+
+        return runCatching {
+            val balance = externalNetworkBalanceFallback.getBalance(
+                address = walletManager.wallet.address,
+                blockchain = blockchain,
+            )
+            walletManager.wallet.setAmount(Amount(value = balance, blockchain = blockchain))
+            resultFactory.getResult(walletManager)
+        }.getOrElse { fallbackError ->
+            TangemLogger.e(
+                "Unable to update $blockchain with both primary and external balance providers",
+                fallbackError,
+            )
+            primaryError.addSuppressed(fallbackError)
             resultFactory.getUnreachableResult(walletManager)
         }
     }

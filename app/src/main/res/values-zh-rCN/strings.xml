@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_ndef_scan_waiting">请将写入的 NFC 卡片贴近手机</string>
+    <string name="external_ndef_scan_success">NFC 卡片识别成功</string>
+    <string name="external_ndef_scan_unsupported">卡片错误</string>
+</resources>

@@ -1,13 +1,20 @@
+import com.tangem.plugin.configuration.configurations.extension.kaptForObfuscatingVariants
+
 plugins {
     alias(deps.plugins.android.library)
     alias(deps.plugins.kotlin.android)
     alias(deps.plugins.kotlin.kapt)
+    alias(deps.plugins.ksp)
     alias(deps.plugins.hilt.android)
     id("configuration")
 }
 
 android {
     namespace = "com.tangem.data.walletmanager"
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 dependencies {
@@ -43,6 +50,9 @@ dependencies {
     implementation(projects.libs.blockchainSdk)
     implementation(deps.androidx.datastore)
     implementation(deps.arrow.core)
+    implementation(deps.moshi.kotlin)
+    ksp(deps.moshi.kotlin.codegen)
+    kaptForObfuscatingVariants(deps.retrofit.response.type.keeper)
 
     /** Testing libraries */
     testRuntimeOnly(deps.test.junit5.engine)

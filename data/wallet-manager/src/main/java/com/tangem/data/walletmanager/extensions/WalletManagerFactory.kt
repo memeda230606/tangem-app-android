@@ -133,7 +133,7 @@ fun WalletManagerFactory.makePrimaryWalletManager(scanResponse: ScanResponse): W
     )
 }
 
-private fun selectWallet(
+internal fun selectWallet(
     wallets: List<CardDTO.Wallet>,
     cardConfig: CardConfig,
     blockchain: Blockchain,

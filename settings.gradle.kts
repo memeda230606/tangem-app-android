@@ -147,6 +147,8 @@ dependencyResolutionManagement {
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 include(":app")
+include(":nfc-writer")
+include(":secure-nfc")
 include(":plugins:detekt-rules")
 
 include(":test:core")

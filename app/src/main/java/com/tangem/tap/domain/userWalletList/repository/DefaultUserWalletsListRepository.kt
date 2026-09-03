@@ -1,5 +1,6 @@
 package com.tangem.tap.domain.userWalletList.repository
 
+import android.util.Log
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.raise.Raise
@@ -132,9 +133,22 @@ internal class DefaultUserWalletsListRepository(
         val isFirstWallet = userWallets.value?.isEmpty() == true
 
         if (savePersistentInformation()) {
-            publicInformationRepository.save(userWallet, canOverride)
+            when (val saveResult = publicInformationRepository.save(userWallet, canOverride)) {
+                is CompletionResult.Success -> Unit
+                is CompletionResult.Failure -> {
+                    Log.e(PERSISTENCE_LOG_TAG, "Unable to save public wallet information: ${saveResult.error}")
+                    raise(SaveWalletError.DataError(messageId = null))
+                }
+            }
+
             if (userWallet.isLocked.not()) {
-                sensitiveInformationRepository.save(userWallet, userWallet.encryptionKey)
+                when (val saveResult = sensitiveInformationRepository.save(userWallet, userWallet.encryptionKey)) {
+                    is CompletionResult.Success -> Unit
+                    is CompletionResult.Failure -> {
+                        Log.e(PERSISTENCE_LOG_TAG, "Unable to save sensitive wallet information: ${saveResult.error}")
+                        raise(SaveWalletError.DataError(messageId = null))
+                    }
+                }
             }
         }
 
@@ -466,7 +480,6 @@ internal class DefaultUserWalletsListRepository(
             userWalletEncryptionKeysRepository.removeUnsecuredKey(oldUserWallet.walletId)
         }
     }
-
     private suspend fun removeHotWalletsFromSDKAndRepos(walletIds: List<UserWalletId>) {
         val hotWalletsToDelete = userWalletsSync()
             .filterIsInstance<UserWallet.Hot>()
@@ -627,5 +640,9 @@ internal class DefaultUserWalletsListRepository(
     private suspend fun onAllWalletsDeleted() {
         // reset flag (that is set from AF deeplink) after removing the last wallet
         mobileWalletPromoRepository.setShouldShowMobileWalletPromo(false)
+    }
+
+    private companion object {
+        const val PERSISTENCE_LOG_TAG = "ExternalWalletStorage"
     }
 }

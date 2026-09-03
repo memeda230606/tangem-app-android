@@ -104,4 +104,5 @@ internal class DefaultUserWalletsPublicInformationRepository(
     private enum class StorageKey {
         UserWalletPublicInformation,
     }
+
 }

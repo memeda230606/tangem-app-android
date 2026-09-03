@@ -19,8 +19,27 @@ agcp {
     manifest = false
 }
 
+val secureCardProperties = Properties().apply {
+    rootProject.file("secure-card.properties")
+        .takeIf(File::isFile)
+        ?.inputStream()
+        ?.use(::load)
+}
+
+fun secureCardSecret(propertyName: String, environmentName: String): String =
+    secureCardProperties.getProperty(propertyName)
+        ?: System.getenv(environmentName)
+        ?: ""
+
 android {
     namespace = "com.tangem.wallet"
+    defaultConfig {
+        buildConfigField(
+            "String",
+            "SECURE_CARD_READ_ROOT",
+            "\"${secureCardSecret("readRoot", "SECURE_CARD_READ_ROOT")}\"",
+        )
+    }
     testOptions {
         animationsDisabled = true
         execution = "ANDROIDX_TEST_ORCHESTRATOR"
@@ -113,6 +132,7 @@ tasks.withType<Test>().configureEach {
 }
 
 dependencies {
+    implementation(projects.secureNfc)
     implementation(projects.domain.legacy)
     implementation(projects.libs.blockchainSdk)
     implementation(projects.domain.account)

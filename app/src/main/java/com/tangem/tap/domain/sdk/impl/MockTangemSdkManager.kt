@@ -3,6 +3,8 @@ package com.tangem.tap.domain.sdk.impl
 import android.content.res.Resources
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import arrow.core.Either
 import com.tangem.Message
 import com.tangem.common.CompletionResult
@@ -27,19 +29,29 @@ import com.tangem.domain.visa.model.VisaActivationInput
 import com.tangem.domain.visa.model.VisaDataForApprove
 import com.tangem.domain.visa.model.VisaSignedDataByCustomerWallet
 import com.tangem.operations.derivation.DerivationTaskResponse
+import com.tangem.operations.derivation.ExtendedPublicKeysMap
 import com.tangem.operations.preflightread.PreflightReadFilter
 import com.tangem.operations.wallet.CreateWalletResponse
 import com.tangem.sdk.api.CreateProductWalletTaskResponse
 import com.tangem.sdk.api.TangemSdkManager
 import com.tangem.sdk.api.visa.VisaCardActivationResponse
 import com.tangem.sdk.api.visa.VisaCardActivationTaskMode
+import com.tangem.tap.ForegroundActivityObserver
+import com.tangem.tap.domain.sdk.mocks.MockContent
 import com.tangem.tap.domain.sdk.mocks.MockProvider
-import com.tangem.tap.domain.sdk.mocks.showMockCardPicker
-import com.tangem.tap.foregroundActivityObserver
+import com.tangem.tap.domain.sdk.mocks.content.ExternalNdefWalletMockContent
+import com.tangem.tap.features.intentHandler.handlers.ExternalNdefScanController
+import com.tangem.wallet.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
 
 @Suppress("TooManyFunctions")
 class MockTangemSdkManager(
     private val resources: Resources,
+    private val returnOnlyRequestedDerivations: Boolean = false,
+    private val externalNdefScanController: ExternalNdefScanController? = null,
 ) : TangemSdkManager {
 
     private var userCodeRequestPolicyInternal: UserCodeRequestPolicy = UserCodeRequestPolicy.Default
@@ -67,9 +79,9 @@ class MockTangemSdkManager(
         source: AnalyticsParam.ScreensSources,
     ): CompletionResult<ScanResponse> {
         if (!MockProvider.isPreset) {
-            val activity = foregroundActivityObserver.foregroundActivity
+            val activity = ForegroundActivityObserver.foregroundActivity
             if (activity != null) {
-                val selectedMock = showMockCardPicker(activity)
+                val selectedMock = showMockCardPickerDialog(activity)
                 if (selectedMock != null) {
                     MockProvider.setMocksWithoutPresetFlag(selectedMock)
                 } else {
@@ -84,7 +96,11 @@ class MockTangemSdkManager(
         scanResponse: ScanResponse,
         shouldReset: Boolean,
     ): CompletionResult<CreateProductWalletTaskResponse> {
-        return MockProvider.getCreateProductWalletResponse()
+        val response = MockProvider.getCreateProductWalletResponse()
+        if (externalNdefScanController == null || response !is CompletionResult.Success) return response
+
+        val claimed = withContext(Dispatchers.IO) { ExternalNdefWalletMockContent.claimCurrentCard() }
+        return if (claimed) response else CompletionResult.Failure(TangemSdkError.UserCancelled())
     }
 
     override suspend fun importWallet(
@@ -101,7 +117,37 @@ class MockTangemSdkManager(
         derivations: Map<ByteArrayKey, List<DerivationPath>>,
         preflightReadFilter: PreflightReadFilter?,
     ): CompletionResult<DerivationTaskResponse> {
-        return MockProvider.getDerivationTaskResponse()
+        if (externalNdefScanController != null) {
+            when (externalNdefScanController.awaitScan()) {
+                ExternalNdefScanController.Result.Accepted -> Unit
+                ExternalNdefScanController.Result.Rejected -> {
+                    return CompletionResult.Failure(TangemSdkError.UserCancelled())
+                }
+            }
+        }
+
+        val result = MockProvider.getDerivationTaskResponse()
+        if (!returnOnlyRequestedDerivations || result !is CompletionResult.Success) return result
+
+        val requestedEntries = result.data.entries.mapNotNull { (walletPublicKey, availableKeys) ->
+            val requestedPaths = derivations[walletPublicKey].orEmpty().toSet()
+            val fallbackKey = availableKeys.values.firstOrNull()
+            val matchingKeys = requestedPaths.mapNotNull { path ->
+                val extendedPublicKey = availableKeys[path] ?: fallbackKey ?: return@mapNotNull null
+
+                path to extendedPublicKey
+            }.toMap()
+
+            if (matchingKeys.isEmpty()) {
+                null
+            } else {
+                walletPublicKey to ExtendedPublicKeysMap(matchingKeys)
+            }
+        }.toMap()
+
+        ExternalNdefWalletMockContent.rememberDerivations(derivations)
+
+        return CompletionResult.Success(DerivationTaskResponse(entries = requestedEntries))
     }
 
     override suspend fun deriveExtendedPublicKey(
@@ -250,3 +296,30 @@ class MockTangemSdkManager(
 
     // endregion
 }
+
+private suspend fun showMockCardPickerDialog(activity: AppCompatActivity): MockContent? =
+    withContext(Dispatchers.Main) {
+        val selected = suspendCancellableCoroutine { continuation ->
+            val mocks = MockProvider.availableMocks
+            val names = mocks.map { it.title }.toTypedArray()
+
+            val dialog = AlertDialog.Builder(activity)
+                .setTitle(R.string.mock_card_picker_title)
+                .setItems(names) { _, which ->
+                    if (continuation.isActive) {
+                        continuation.resume(mocks[which])
+                    }
+                }
+                .setOnCancelListener {
+                    if (continuation.isActive) {
+                        continuation.resume(null)
+                    }
+                }
+                .create()
+
+            continuation.invokeOnCancellation { activity.runOnUiThread(dialog::dismiss) }
+            dialog.show()
+        }
+
+        selected?.resolve?.invoke(activity)
+    }

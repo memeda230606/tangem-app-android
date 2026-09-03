@@ -8,6 +8,7 @@ import com.tangem.tap.domain.scanCard.CardScanningFeatureToggles
 import com.tangem.tap.domain.scanCard.DefaultScanCardProcessor
 import com.tangem.tap.domain.scanCard.LegacyScanProcessor
 import com.tangem.tap.domain.scanCard.UseCaseScanProcessor
+import com.tangem.tap.features.intentHandler.handlers.ExternalNdefScanController
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,11 +31,13 @@ internal object CardLegacyDomainModule {
         legacyScanProcessor: LegacyScanProcessor,
         useCaseScanProcessor: UseCaseScanProcessor,
         cardScanningFeatureToggles: CardScanningFeatureToggles,
+        externalNdefScanController: ExternalNdefScanController,
     ): ScanCardProcessor {
         return DefaultScanCardProcessor(
             legacyScanProcessor = legacyScanProcessor,
             useCaseScanProcessor = useCaseScanProcessor,
             cardScanningFeatureToggles = cardScanningFeatureToggles,
+            externalNdefScanController = externalNdefScanController,
         )
     }
 

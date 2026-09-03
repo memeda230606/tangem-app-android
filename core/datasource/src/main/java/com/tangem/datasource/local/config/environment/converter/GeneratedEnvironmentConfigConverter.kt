@@ -53,7 +53,7 @@ internal object GeneratedEnvironmentConfigConverter {
             bffStaticTokenDev = GeneratedEnvironmentConfig.bffStaticTokenDev,
             gaslessTxApiKeyDev = GeneratedEnvironmentConfig.gaslessTxApiKeyDev,
             gaslessTxApiKey = GeneratedEnvironmentConfig.gaslessTxApiKey,
-            customerIoCdpApiKey = GeneratedEnvironmentConfig.CustomerIO.androidApiKey,
+            customerIoCdpApiKey = GeneratedEnvironmentConfig.CustomerIO.androidApiKey.validCredentialOrNull(),
             surveySparrowToken = GeneratedEnvironmentConfig.SurveySparrow.apiKey,
             surveySparrowSwapRating = createSurveySparrowSwapRating(),
         )
@@ -79,10 +79,7 @@ internal object GeneratedEnvironmentConfigConverter {
 
     private fun createBlockchainSdkConfig(): BlockchainSdkConfig {
         return BlockchainSdkConfig(
-            blockchairCredentials = BlockchairCredentials(
-                apiKey = GeneratedEnvironmentConfig.blockchairApiKeys,
-                authToken = GeneratedEnvironmentConfig.blockchairAuthorizationToken,
-            ),
+            blockchairCredentials = createBlockchairCredentials(),
             blockcypherTokens = GeneratedEnvironmentConfig.blockcypherTokens.toSet(),
             quickNodeSolanaCredentials = QuickNodeCredentials(
                 apiKey = GeneratedEnvironmentConfig.quiknodeApiKey,
@@ -102,13 +99,11 @@ internal object GeneratedEnvironmentConfigConverter {
             ),
             infuraProjectId = GeneratedEnvironmentConfig.infuraProjectId,
             tronGridApiKey = GeneratedEnvironmentConfig.tronGridApiKey,
-            nowNodeCredentials = NowNodeCredentials(apiKey = GeneratedEnvironmentConfig.nowNodesApiKey),
+            nowNodeCredentials = GeneratedEnvironmentConfig.nowNodesApiKey.validCredentialOrNull()
+                ?.let(::NowNodeCredentials),
             getBlockCredentials = createGetBlockCredentials(),
             kaspaSecondaryApiUrl = GeneratedEnvironmentConfig.kaspaSecondaryApiUrl,
-            tonCenterCredentials = TonCenterCredentials(
-                mainnetApiKey = TonCenterApiKey.mainnet,
-                testnetApiKey = TonCenterApiKey.testnet,
-            ),
+            tonCenterCredentials = createTonCenterCredentials(),
             chiaFireAcademyApiKey = GeneratedEnvironmentConfig.chiaFireAcademyApiKey,
             chiaTangemApiKey = GeneratedEnvironmentConfig.chiaTangemApiKey,
             hederaArkhiaApiKey = GeneratedEnvironmentConfig.hederaArkhiaKey,
@@ -126,10 +121,29 @@ internal object GeneratedEnvironmentConfigConverter {
         )
     }
 
+    private fun createBlockchairCredentials(): BlockchairCredentials? {
+        val keys = GeneratedEnvironmentConfig.blockchairApiKeys.mapNotNull { it.validCredentialOrNull() }
+        if (keys.isEmpty()) return null
+
+        return BlockchairCredentials(
+            apiKey = keys,
+            authToken = GeneratedEnvironmentConfig.blockchairAuthorizationToken.validCredentialOrNull(),
+        )
+    }
+
+    private fun createTonCenterCredentials(): TonCenterCredentials? {
+        val mainnet = TonCenterApiKey.mainnet.validCredentialOrNull()
+        val testnet = TonCenterApiKey.testnet.validCredentialOrNull()
+        if (mainnet == null || testnet == null) return null
+
+        return TonCenterCredentials(mainnetApiKey = mainnet, testnetApiKey = testnet)
+    }
+
     private fun createGetBlockCredentials(): GetBlockCredentials {
         return GetBlockCredentials(
             xrp = GetBlockAccessToken(jsonRpc = GetBlockAccessTokens.Xrp.jsonRpc),
-            cardano = GetBlockAccessToken(rosetta = GetBlockAccessTokens.Cardano.rosetta),
+            cardano = GetBlockAccessTokens.Cardano.rosetta.validCredentialOrNull()
+                ?.let { GetBlockAccessToken(rosetta = it) },
             avalanche = GetBlockAccessToken(jsonRpc = GetBlockAccessTokens.Avalanche.jsonRpc),
             eth = GetBlockAccessToken(jsonRpc = GetBlockAccessTokens.Ethereum.jsonRpc),
             etc = GetBlockAccessToken(jsonRpc = GetBlockAccessTokens.EthereumClassic.jsonRpc),
@@ -140,7 +154,8 @@ internal object GeneratedEnvironmentConfigConverter {
             gnosis = GetBlockAccessToken(jsonRpc = GetBlockAccessTokens.Xdai.jsonRpc),
             cronos = GetBlockAccessToken(jsonRpc = GetBlockAccessTokens.Cronos.jsonRpc),
             solana = GetBlockAccessToken(jsonRpc = GetBlockAccessTokens.Solana.jsonRpc),
-            ton = GetBlockAccessToken(jsonRpc = GetBlockAccessTokens.Ton.jsonRpc),
+            ton = GetBlockAccessTokens.Ton.jsonRpc.validCredentialOrNull()
+                ?.let { GetBlockAccessToken(jsonRpc = it) },
             tron = GetBlockAccessToken(rest = GetBlockAccessTokens.Tron.rest),
             cosmos = GetBlockAccessToken(rest = GetBlockAccessTokens.CosmosHub.rest),
             near = GetBlockAccessToken(jsonRpc = GetBlockAccessTokens.Near.jsonRpc),
@@ -168,7 +183,7 @@ internal object GeneratedEnvironmentConfigConverter {
             blast = GetBlockAccessToken(jsonRpc = GetBlockAccessTokens.Blast.jsonRpc),
             filecoin = GetBlockAccessToken(jsonRpc = GetBlockAccessTokens.Filecoin.jsonRpc),
             arbitrum = GetBlockAccessToken(jsonRpc = GetBlockAccessTokens.ArbitrumOne.jsonRpc),
-            bitcoinCash = GetBlockAccessToken(
+            bitcoinCash = createGetBlockAccessToken(
                 jsonRpc = GetBlockAccessTokens.BitcoinCash.jsonRpc,
                 blockBookRest = GetBlockAccessTokens.BitcoinCash.blockBookRest,
             ),
@@ -185,6 +200,18 @@ internal object GeneratedEnvironmentConfigConverter {
         )
     }
 
+    private fun createGetBlockAccessToken(jsonRpc: String?, blockBookRest: String?): GetBlockAccessToken? {
+        val validJsonRpc = jsonRpc.validCredentialOrNull()
+        val validBlockBookRest = blockBookRest.validCredentialOrNull()
+        if (validJsonRpc == null || validBlockBookRest == null) return null
+
+        return GetBlockAccessToken(jsonRpc = validJsonRpc, blockBookRest = validBlockBookRest)
+    }
+
+    private fun String?.validCredentialOrNull(): String? = this
+        ?.trim()
+        ?.takeUnless { it.isEmpty() || it.equals(PLACEHOLDER, ignoreCase = true) }
+
     private fun createSurveySparrowSwapRating(): SurveySparrowSwapRatingConfig? {
         val surveyId = GeneratedEnvironmentConfig.SurveySparrow.SwapRating.surveyId.toLongOrNull()
         val ratingQuestionId = GeneratedEnvironmentConfig.SurveySparrow.SwapRating.ratingQuestionId.toLongOrNull()
@@ -195,4 +222,6 @@ internal object GeneratedEnvironmentConfigConverter {
             null
         }
     }
+
+    private const val PLACEHOLDER = "PLACEHOLDER"
 }

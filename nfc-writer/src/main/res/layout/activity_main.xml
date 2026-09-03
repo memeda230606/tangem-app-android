@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipToPadding="false"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="36dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="32dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/title"
+            android:textColor="@color/text_primary"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/subtitle"
+            android:textColor="@color/text_secondary"
+            android:textSize="15sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/panel_background"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/target_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <EditText
+                android:id="@+id/urlInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/target_hint"
+                android:importantForAutofill="no"
+                android:inputType="textUri"
+                android:maxLines="2"
+                android:paddingStart="0dp"
+                android:paddingEnd="0dp"
+                android:selectAllOnFocus="true"
+                android:text="@string/target_url"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/target_help"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/statusPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/panel_background"
+            android:gravity="center_horizontal"
+            android:minHeight="220dp"
+            android:orientation="vertical"
+            android:padding="28dp">
+
+            <TextView
+                android:id="@+id/statusIcon"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:gravity="center"
+                android:text="@string/nfc_mark"
+                android:textColor="@color/accent"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <ProgressBar
+                android:id="@+id/progress"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:indeterminateTint="@color/accent"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/statusTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:gravity="center"
+                android:text="@string/ready_title"
+                android:textColor="@color/text_primary"
+                android:textSize="21sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/statusMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:lineSpacingExtra="3dp"
+                android:text="@string/ready_message"
+                android:textColor="@color/text_secondary"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/cardId"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="center"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/actionButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/button_background"
+            android:text="@string/start_write"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/inspectButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="12dp"
+            android:text="@string/inspect_card"
+            android:textAllCaps="false"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/logButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/export_diagnostic_log"
+            android:textAllCaps="false"
+            android:textSize="15sp" />
+    </LinearLayout>
+</ScrollView>

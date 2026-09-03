@@ -4,11 +4,14 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.nfc.NfcAdapter
+import android.nfc.Tag
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -25,6 +28,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import arrow.core.getOrElse
@@ -55,10 +59,13 @@ import com.tangem.operations.backup.BackupService
 import com.tangem.sdk.api.BackupServiceHolder
 import com.tangem.sdk.api.TangemSdkManager
 import com.tangem.tap.common.ActivityResultCallbackHolder
-import com.tangem.tap.common.OnActivityResultCallback
 import com.tangem.tap.common.analytics.events.Push
 import com.tangem.tap.common.apptheme.MutableAppThemeModeHolder
 import com.tangem.tap.features.intentHandler.handlers.BackgroundScanIntentHandler
+import com.tangem.tap.features.intentHandler.handlers.BackgroundScanIntentHandler.NdefOnlyIntentResult
+import com.tangem.tap.features.intentHandler.handlers.ExternalNdefScanController
+import com.tangem.tap.features.intentHandler.handlers.ExternalNdefScanUi
+import com.tangem.tap.features.intentHandler.handlers.ExternalNdefTagReader
 import com.tangem.tap.features.main.MainViewModel
 import com.tangem.tap.routing.component.RoutingComponent
 import com.tangem.tap.routing.configurator.AppRouterConfig
@@ -68,6 +75,7 @@ import com.tangem.utils.coroutines.FeatureCoroutineExceptionHandler
 import com.tangem.utils.extensions.uriValidate
 import com.tangem.utils.logging.TangemLogger
 import com.tangem.wallet.BuildConfig
+import com.tangem.wallet.R
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -155,6 +163,9 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
     internal lateinit var backgroundScanIntentHandler: BackgroundScanIntentHandler
 
     @Inject
+    internal lateinit var externalNdefScanController: ExternalNdefScanController
+
+    @Inject
     internal lateinit var userWalletsListRepository: UserWalletsListRepository
 
     @Inject
@@ -167,7 +178,13 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
 
     private lateinit var appThemeModeFlow: SharedFlow<AppThemeMode>
 
-    private val onActivityResultCallbacks = mutableListOf<OnActivityResultCallback>()
+    private val onActivityResultCallbacks = mutableListOf<(Int, Int, Intent?) -> Unit>()
+
+    private val externalNdefTagReader = ExternalNdefTagReader()
+    private val externalNdefReaderCallback = NfcAdapter.ReaderCallback(::onExternalNdefTagDiscovered)
+    private val externalNdefScanUi by lazy(LazyThreadSafetyMode.NONE) { ExternalNdefScanUi(this) }
+    private var isExternalNdefReaderModeEnabled = false
+    private var wasExternalNdefScanUiVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         TangemLogger.i("onCreate: data=${intent?.data}, extras=${intent?.extras?.keySet()}")
@@ -202,6 +219,8 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
         splashScreen.setKeepOnScreenCondition { viewModel.isSplashScreenShown }
 
         installActivityDependencies()
+        observeCardSdkVisibility()
+        observeExternalNdefScan()
         observeAppThemeModeUpdates()
 
         setRootContent()
@@ -268,6 +287,105 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
         )
     }
 
+    private fun observeCardSdkVisibility() {
+        cardSdkConfigRepository.sdk.uiVisibility()
+            .onEach(backgroundScanIntentHandler::onCardSdkVisibilityChanged)
+            .launchIn(lifecycleScope)
+    }
+
+    private fun observeExternalNdefScan() {
+        if (!externalNdefScanController.isEnabled) return
+
+        externalNdefScanUi.isVisible
+            .onEach { isVisible ->
+                if (isVisible) {
+                    wasExternalNdefScanUiVisible = true
+                } else if (wasExternalNdefScanUiVisible) {
+                    wasExternalNdefScanUiVisible = false
+                    if (externalNdefScanController.isWaitingForTag.value) {
+                        externalNdefScanController.onNfcIntentResult(ExternalNdefScanController.Result.Rejected)
+                    }
+                }
+            }
+            .launchIn(lifecycleScope)
+
+        externalNdefScanController.isWaitingForTag
+            .onEach { isWaitingForTag ->
+                if (isWaitingForTag) {
+                    externalNdefScanUi.show(getString(R.string.initial_message_scan_header))
+                    externalNdefScanUi.isVisible.filter { it }.first()
+                    delay(EXTERNAL_NDEF_READER_ENABLE_DELAY_MS)
+
+                    if (
+                        externalNdefScanController.isWaitingForTag.value &&
+                        lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+                    ) {
+                        enableExternalNdefReaderMode()
+                    }
+                } else {
+                    disableExternalNdefReaderMode()
+                    externalNdefScanUi.dismiss()
+                }
+            }
+            .launchIn(lifecycleScope)
+    }
+
+    private fun enableExternalNdefReaderMode() {
+        if (isExternalNdefReaderModeEnabled || !externalNdefScanController.isEnabled) return
+
+        val nfcAdapter = NfcAdapter.getDefaultAdapter(this)
+        if (nfcAdapter == null || !nfcAdapter.isEnabled) {
+            externalNdefScanController.onNfcIntentResult(ExternalNdefScanController.Result.Rejected)
+            showExternalNdefScanResult(ExternalNdefScanController.Result.Rejected)
+            return
+        }
+
+        runCatching {
+            nfcAdapter.enableReaderMode(
+                this,
+                externalNdefReaderCallback,
+                NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_NFC_B,
+                null,
+            )
+            isExternalNdefReaderModeEnabled = true
+            TangemLogger.i("External NDEF reader mode enabled")
+        }.onFailure {
+            TangemLogger.e("Unable to enable External NDEF reader mode: ${it.message}")
+            externalNdefScanController.onNfcIntentResult(ExternalNdefScanController.Result.Rejected)
+            showExternalNdefScanResult(ExternalNdefScanController.Result.Rejected)
+        }
+    }
+
+    private fun disableExternalNdefReaderMode() {
+        if (!isExternalNdefReaderModeEnabled) return
+
+        runCatching { NfcAdapter.getDefaultAdapter(this)?.disableReaderMode(this) }
+            .onFailure { TangemLogger.e("Unable to disable External NDEF reader mode: ${it.message}") }
+        isExternalNdefReaderModeEnabled = false
+        TangemLogger.i("External NDEF reader mode disabled")
+    }
+
+    private fun onExternalNdefTagDiscovered(tag: Tag) {
+        lifecycleScope.launch(dispatchers.io) {
+            val result = externalNdefTagReader.read(tag)
+            TangemLogger.i("External NDEF reader completed: $result")
+
+            if (externalNdefScanController.onNfcIntentResult(result, externalNdefTagReader.lastIdentity)) {
+                withContext(dispatchers.mainImmediate) {
+                    showExternalNdefScanResult(result)
+                }
+            }
+        }
+    }
+
+    private fun showExternalNdefScanResult(result: ExternalNdefScanController.Result) {
+        val message = when (result) {
+            ExternalNdefScanController.Result.Accepted -> R.string.external_ndef_scan_success
+            ExternalNdefScanController.Result.Rejected -> R.string.external_ndef_scan_unsupported
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
     private fun installAppTheme() {
         appThemeModeFlow = createAppThemeModeFlow()
         val mode = runBlocking {
@@ -316,6 +434,18 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
     override fun onStart() {
         super.onStart()
         TangemLogger.i("onStart")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (externalNdefScanController.isEnabled && externalNdefScanController.isWaitingForTag.value) {
+            enableExternalNdefReaderMode()
+        }
+    }
+
+    override fun onPause() {
+        disableExternalNdefReaderMode()
+        super.onPause()
     }
 
     override fun onStop() {
@@ -373,12 +503,12 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
         onActivityResultCallbacks.forEach { it(requestCode, resultCode, data) }
     }
 
-    override fun addOnActivityResultCallback(callback: OnActivityResultCallback) {
+    override fun addOnActivityResultCallback(callback: (Int, Int, Intent?) -> Unit) {
         onActivityResultCallbacks.remove(callback)
         onActivityResultCallbacks.add(callback)
     }
 
-    override fun removeOnActivityResultCallback(callback: OnActivityResultCallback) {
+    override fun removeOnActivityResultCallback(callback: (Int, Int, Intent?) -> Unit) {
         onActivityResultCallbacks.remove(callback)
     }
 
@@ -402,6 +532,25 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
     }
 
     private fun handleDeepLink(intent: Intent, isFromOnNewIntent: Boolean) {
+        when (backgroundScanIntentHandler.consumeNfcIntentInNdefOnlyMode(intent)) {
+            NdefOnlyIntentResult.Accepted -> {
+                TangemLogger.i("Accepted supported NDEF tag without starting a real card scan")
+                showExternalNdefScanResult(ExternalNdefScanController.Result.Accepted)
+                return
+            }
+            NdefOnlyIntentResult.Rejected -> {
+                TangemLogger.i("Ignored unsupported NFC tag in NDEF-only mode")
+                showExternalNdefScanResult(ExternalNdefScanController.Result.Rejected)
+                return
+            }
+            NdefOnlyIntentResult.NotHandled -> Unit
+        }
+
+        if (backgroundScanIntentHandler.consumeIfDuplicateNfcDeeplink(intent)) {
+            TangemLogger.i("Ignoring duplicate NFC deeplink received during or right after card scan")
+            return
+        }
+
         val deepLinkExtras = PayloadToDeeplinkConverter.convertBundle(intent.extras)?.toUri()
         val webLink = intent.getStringExtra(WEBLINK_KEY)
 
@@ -447,6 +596,7 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
 
     companion object {
         private const val APP_THEME_LOAD_TIMEOUT = 2
+        private const val EXTERNAL_NDEF_READER_ENABLE_DELAY_MS = 300L
         private const val MOCKED_BUILD_TYPE = "mocked"
         private const val OPENED_FROM_GCM_PUSH = "google.sent_time" // every bundle from FCM contains this key
     }
