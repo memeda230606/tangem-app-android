@@ -13,8 +13,11 @@ import javax.crypto.spec.SecretKeySpec;
 /** Minimal NTAG 424 DNA AES secure-messaging implementation based on NXP AN12196. */
 public final class Ntag424Dna {
     public static final byte NDEF_FILE = 0x02;
+    public static final byte RECOVERY_FILE = 0x03;
+    public static final int RECOVERY_FILE_SIZE = 128;
     public static final byte COMMUNICATION_FULL = 0x03;
     public static final byte[] NDEF_SECURE_ACCESS_RIGHTS = new byte[]{(byte) 0xF0, 0x12};
+    public static final byte[] RECOVERY_SECURE_ACCESS_RIGHTS = new byte[]{(byte) 0xF0, 0x11};
     public static final byte[] DEFAULT_KEY = new byte[16];
 
     private static final byte STATUS_PREFIX = (byte) 0x91;
@@ -106,10 +109,16 @@ public final class Ntag424Dna {
     public byte[] readFull(Session session, byte fileNumber) throws IOException, GeneralSecurityException {
         // A zero length requests the entire 256-byte NDEF file. With Full secure messaging,
         // the encrypted response and MAC exceed the card's short-Le 256-byte response limit.
+        return readFull(session, fileNumber, SecureCardPayload.MAX_ENCODED_BYTES);
+    }
+
+    public byte[] readFull(Session session, byte fileNumber, int length)
+        throws IOException, GeneralSecurityException {
+        if (length <= 0 || length > 240) throw new IllegalArgumentException("Invalid read length");
         return secureCommand(
             session,
             (byte) 0xAD,
-            fileHeader(fileNumber, 0, SecureCardPayload.MAX_ENCODED_BYTES),
+            fileHeader(fileNumber, 0, length),
             new byte[0],
             true,
             true

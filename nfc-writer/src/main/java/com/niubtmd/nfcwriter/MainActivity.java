@@ -399,6 +399,12 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
                     Ntag424Dna.COMMUNICATION_FULL,
                     Ntag424Dna.NDEF_SECURE_ACCESS_RIGHTS
                 );
+                card.changeFileSettings(
+                    admin,
+                    Ntag424Dna.RECOVERY_FILE,
+                    Ntag424Dna.COMMUNICATION_FULL,
+                    Ntag424Dna.RECOVERY_SECURE_ACCESS_RIGHTS
+                );
                 card.changeKey(admin, SecureCardKeys.ADMIN_KEY, Ntag424Dna.DEFAULT_KEY, keys[0], 1);
                 return null;
             });
@@ -406,7 +412,13 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
             if (error.getStatus() != 0xAE) throw error;
             DiagnosticLogger.info("WRITE_STAGE", "card already initialized; verify admin authentication");
             withCard(tag, card -> {
-                card.authenticate(SecureCardKeys.ADMIN_KEY, keys[0]);
+                Ntag424Dna.Session admin = card.authenticate(SecureCardKeys.ADMIN_KEY, keys[0]);
+                card.changeFileSettings(
+                    admin,
+                    Ntag424Dna.RECOVERY_FILE,
+                    Ntag424Dna.COMMUNICATION_FULL,
+                    Ntag424Dna.RECOVERY_SECURE_ACCESS_RIGHTS
+                );
                 return null;
             });
         }
