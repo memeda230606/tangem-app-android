@@ -3,4 +3,11 @@
     <string name="external_ndef_scan_waiting">请将写入的 NFC 卡片贴近手机</string>
     <string name="external_ndef_scan_success">NFC 卡片识别成功</string>
     <string name="external_ndef_scan_unsupported">卡片错误</string>
+    <string name="external_ndef_scan_reading">正在读取卡片，请保持贴紧手机。</string>
+    <string name="external_ndef_scan_retry_title">请再试一次</string>
+    <string name="external_ndef_scan_retry">先移开卡片，再贴紧手机，直到扫描完成。</string>
+    <string name="external_ndef_scan_network_retry">暂时无法完成卡片校验。请检查网络，移开卡片后再贴一次。</string>
+    <string name="external_ndef_scan_verification_rejected">卡片校验未通过，请检查卡片状态或联系客服。</string>
+    <string name="external_ndef_scan_nfc_unavailable">NFC 暂不可用，请开启 NFC 后重新扫描。</string>
+    <string name="external_card_bound_to_another_wallet">此卡片已绑定到另一个钱包。请使用与此设备钱包匹配的卡片。</string>
 </resources>

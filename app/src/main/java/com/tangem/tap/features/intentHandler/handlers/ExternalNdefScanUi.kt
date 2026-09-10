@@ -34,4 +34,8 @@ class ExternalNdefScanUi(
     fun dismiss() {
         viewDelegate.dismiss()
     }
+
+    fun updateMessage(header: String, body: String? = null) {
+        if (isVisible.value) viewDelegate.setMessage(Message(header, body))
+    }
 }

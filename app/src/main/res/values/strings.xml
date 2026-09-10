@@ -11,5 +11,12 @@
     <string name="external_ndef_scan_waiting">Hold the written NFC card near your phone</string>
     <string name="external_ndef_scan_success">NFC card recognized</string>
     <string name="external_ndef_scan_unsupported">Card error</string>
+    <string name="external_ndef_scan_reading">Reading your card. Keep it against the phone.</string>
+    <string name="external_ndef_scan_retry_title">Please try again</string>
+    <string name="external_ndef_scan_retry">Remove the card, then hold it against the phone until scanning finishes.</string>
+    <string name="external_ndef_scan_network_retry">Card verification is temporarily unavailable. Check your connection, remove the card and tap again.</string>
+    <string name="external_ndef_scan_verification_rejected">Card verification was not approved. Check the card status or contact support.</string>
+    <string name="external_ndef_scan_nfc_unavailable">NFC is unavailable. Enable NFC and start scanning again.</string>
+    <string name="external_card_bound_to_another_wallet">This card is linked to another wallet. Use the card linked to the wallet on this device.</string>
 
 </resources>

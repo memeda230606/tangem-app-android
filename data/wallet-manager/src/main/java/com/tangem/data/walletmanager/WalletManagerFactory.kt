@@ -61,6 +61,11 @@ internal class WalletManagerFactory(
         blockchain: Blockchain,
         derivationPath: DerivationPath?,
     ): WalletManager? {
+        val environmentBlockchain = if (hotWallet.isTestnetOnly) {
+            blockchain.getTestnetVersion() ?: return null
+        } else {
+            blockchain
+        }
         val curve = hotWallet.curvesConfig.primaryCurve(blockchain)
         val selectedWallet = hotWallet.wallets.orEmpty().firstOrNull { it.curve == curve }
             ?: return null
@@ -73,7 +78,7 @@ internal class WalletManagerFactory(
         } else {
             makePublicKey(
                 seedKey = selectedWallet.publicKey,
-                blockchain = blockchain,
+                blockchain = environmentBlockchain,
                 derivationPath = derivationPath,
                 derivedWalletKeys = selectedWallet.derivedKeys,
                 isWallet2 = true,
@@ -82,7 +87,7 @@ internal class WalletManagerFactory(
 
         fallbackPublicKey?.let { publicKey ->
             createReadOnlyWalletManager(
-                blockchain = blockchain,
+                blockchain = environmentBlockchain,
                 publicKey = publicKey,
                 curve = selectedWallet.curve,
             )?.let { return it }
@@ -93,16 +98,16 @@ internal class WalletManagerFactory(
 
             if (derivationPath == null) {
                 factory.createLegacyWalletManager(
-                    blockchain = blockchain,
+                    blockchain = environmentBlockchain,
                     walletPublicKey = selectedWallet.publicKey,
                     curve = selectedWallet.curve,
                 )
             } else {
                 factory.createWalletManager(
-                    blockchain = blockchain,
+                    blockchain = environmentBlockchain,
                     publicKey = makePublicKey(
                         seedKey = selectedWallet.publicKey,
-                        blockchain = blockchain,
+                        blockchain = environmentBlockchain,
                         derivationPath = derivationPath,
                         derivedWalletKeys = selectedWallet.derivedKeys,
                         isWallet2 = true,
@@ -119,7 +124,7 @@ internal class WalletManagerFactory(
 
         if (derivationPath == null) {
             return createReadOnlyWalletManager(
-                blockchain = blockchain,
+                blockchain = environmentBlockchain,
                 publicKey = Wallet.PublicKey(
                     seedKey = selectedWallet.publicKey,
                     derivationType = null,
@@ -130,14 +135,14 @@ internal class WalletManagerFactory(
 
         val publicKey = makePublicKey(
             seedKey = selectedWallet.publicKey,
-            blockchain = blockchain,
+            blockchain = environmentBlockchain,
             derivationPath = derivationPath,
             derivedWalletKeys = selectedWallet.derivedKeys,
             isWallet2 = true,
         ) ?: return null
 
         return createReadOnlyWalletManager(
-            blockchain = blockchain,
+            blockchain = environmentBlockchain,
             publicKey = publicKey,
             curve = selectedWallet.curve,
         )

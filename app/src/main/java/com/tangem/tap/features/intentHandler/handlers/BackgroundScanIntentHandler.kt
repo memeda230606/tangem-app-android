@@ -2,10 +2,13 @@ package com.tangem.tap.features.intentHandler.handlers
 
 import android.content.Intent
 import android.nfc.NfcAdapter
+import android.nfc.NdefMessage
 import android.nfc.Tag
 import android.os.Build
 import android.os.SystemClock
 import com.tangem.common.routing.entity.InitScreenLaunchMode
+import com.niubtmd.securenfc.WalletLaunchNdef
+import java.nio.ByteBuffer
 
 /**
 [REDACTED_AUTHOR]
@@ -46,23 +49,30 @@ class BackgroundScanIntentHandler(
             return NdefOnlyIntentResult.NotHandled
         }
 
-        // Secure cards expose no readable NDEF payload. They are accepted only by the authenticated
-        // reader mode shown after the user taps the scan button.
-        val result = NdefOnlyIntentResult.Rejected
-
-        externalNdefScanController?.onNfcIntentResult(
-            when (result) {
-                NdefOnlyIntentResult.Accepted -> ExternalNdefScanController.Result.Accepted
-                NdefOnlyIntentResult.Rejected -> ExternalNdefScanController.Result.Rejected
-                NdefOnlyIntentResult.NotHandled -> error("NDEF-only intent unexpectedly not handled")
-            },
-        )
+        // Public MIME + package metadata may open the app, but must not satisfy OR cancel a pending scan.
+        // Only the authenticated ReaderMode path can accept a card identity.
+        val result = if (isWalletLaunchMarker(intent)) NdefOnlyIntentResult.LaunchOnly else NdefOnlyIntentResult.Rejected
+        // Unrecognized background metadata is not a physical card verdict either. Leave any pending
+        // foreground scan intact so a quick tap during activity startup can be retried.
 
         // The NFC intent has been fully handled. Do not route its URL or start a real card scan afterwards.
         intent.action = null
         intent.data = null
 
         return result
+    }
+
+    private fun isWalletLaunchMarker(intent: Intent): Boolean {
+        if (intent.action != NfcAdapter.ACTION_NDEF_DISCOVERED || intent.type != WalletLaunchNdef.MIME_TYPE) return false
+        return runCatching {
+            @Suppress("DEPRECATION")
+            val message = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
+                ?.singleOrNull() as? NdefMessage ?: return false
+            val bytes = message.toByteArray()
+            if (bytes.size + 2 > WalletLaunchNdef.MAX_FILE_BYTES) return false
+            WalletLaunchNdef.decodeTargetUrl(ByteBuffer.allocate(bytes.size + 2).putShort(bytes.size.toShort()).put(bytes).array())
+            true
+        }.getOrDefault(false)
     }
 
     /**
@@ -127,6 +137,7 @@ class BackgroundScanIntentHandler(
 
     enum class NdefOnlyIntentResult {
         NotHandled,
+        LaunchOnly,
         Accepted,
         Rejected,
     }

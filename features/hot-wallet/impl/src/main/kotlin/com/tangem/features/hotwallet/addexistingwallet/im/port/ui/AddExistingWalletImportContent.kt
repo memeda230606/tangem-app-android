@@ -60,7 +60,13 @@ internal fun AddExistingWalletImportContent(state: AddExistingWalletImportUM, mo
                     .weight(1f),
             ) {
                 Text(
-                    text = stringResourceSafe(id = R.string.onboarding_seed_import_message),
+                    text = when {
+                        state.isNfcRecovery -> stringResourceSafe(id = R.string.nfc_wallet_recovery_message)
+                        state.isRecoveryCodeSupported -> stringResourceSafe(
+                            id = R.string.nfc_wallet_import_or_recovery_message,
+                        )
+                        else -> stringResourceSafe(id = R.string.onboarding_seed_import_message)
+                    },
                     style = TangemTheme.typography.body1,
                     color = TangemTheme.colors.text.secondary,
                     textAlign = TextAlign.Center,
@@ -74,30 +80,34 @@ internal fun AddExistingWalletImportContent(state: AddExistingWalletImportUM, mo
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
 
-                OutlineTextFieldWithIcon(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .fillMaxWidth()
-                        .testTag(ImportWalletScreenTestTags.PASSPHRASE_TEXT_FIELD),
-                    value = state.passPhrase,
-                    onValueChange = state.passPhraseChange,
-                    iconResId = R.drawable.ic_information_24,
-                    iconColor = TangemTheme.colors.icon.informative,
-                    label = stringResourceSafe(id = R.string.common_passphrase),
-                    placeholder = stringResourceSafe(id = R.string.send_optional_field),
-                    onIconClick = state.onPassphraseInfoClick,
-                    keyboardOptions = KeyboardOptions(
-                        autoCorrectEnabled = false,
-                        keyboardType = KeyboardType.Password,
-                    ),
-                )
+                if (!state.isNfcRecovery) {
+                    OutlineTextFieldWithIcon(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .fillMaxWidth()
+                            .testTag(ImportWalletScreenTestTags.PASSPHRASE_TEXT_FIELD),
+                        value = state.passPhrase,
+                        onValueChange = state.passPhraseChange,
+                        iconResId = R.drawable.ic_information_24,
+                        iconColor = TangemTheme.colors.icon.informative,
+                        label = stringResourceSafe(id = R.string.common_passphrase),
+                        placeholder = stringResourceSafe(id = R.string.send_optional_field),
+                        onIconClick = state.onPassphraseInfoClick,
+                        keyboardOptions = KeyboardOptions(
+                            autoCorrectEnabled = false,
+                            keyboardType = KeyboardType.Password,
+                        ),
+                    )
+                }
             }
 
             PrimaryButton(
                 modifier = Modifier
                     .padding(16.dp)
                     .fillMaxWidth(),
-                text = stringResourceSafe(id = R.string.common_import),
+                text = stringResourceSafe(
+                    id = if (state.isNfcRecovery) R.string.nfc_wallet_recovery_action else R.string.common_import,
+                ),
                 enabled = state.importWalletEnabled,
                 showProgress = state.importWalletProgress,
                 onClick = state.importWalletClick,
@@ -105,7 +115,7 @@ internal fun AddExistingWalletImportContent(state: AddExistingWalletImportUM, mo
         }
 
         val keyboard by keyboardAsState()
-        if (keyboard is Keyboard.Opened) {
+        if (keyboard is Keyboard.Opened && !state.isNfcRecovery) {
             SuggestionsBlock(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -145,6 +155,15 @@ private fun PhraseBlock(state: AddExistingWalletImportUM, modifier: Modifier = M
                 autoCorrectEnabled = false,
                 keyboardType = KeyboardType.Password,
             ),
+            placeholder = when {
+                state.isNfcRecovery -> {
+                    { Text(stringResourceSafe(id = R.string.nfc_wallet_recovery_code_placeholder)) }
+                }
+                state.isRecoveryCodeSupported -> {
+                    { Text(stringResourceSafe(id = R.string.nfc_wallet_import_or_recovery_placeholder)) }
+                }
+                else -> null
+            },
         )
 
         Box(
@@ -222,6 +241,8 @@ private fun PreviewAddExistingWalletImportContent() {
     TangemThemePreview {
         AddExistingWalletImportContent(
             state = AddExistingWalletImportUM(
+                isRecoveryCodeSupported = true,
+                isNfcRecovery = true,
                 words = TextFieldValue(""),
                 wordsChange = {},
                 passPhrase = TextFieldValue(""),

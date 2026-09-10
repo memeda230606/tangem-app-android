@@ -36,5 +36,6 @@ internal class AddExistingWalletImportComponent @AssistedInject constructor(
 
     data class Params(
         val callbacks: ModelCallbacks,
+        val isNfcRecovery: Boolean = false,
     )
 }

@@ -5,6 +5,8 @@ import com.tangem.core.ui.extensions.TextReference
 import kotlinx.collections.immutable.ImmutableList
 
 internal data class AddExistingWalletImportUM(
+    val isRecoveryCodeSupported: Boolean,
+    val isNfcRecovery: Boolean,
     val words: TextFieldValue,
     val wordsChange: (TextFieldValue) -> Unit,
     val passPhrase: TextFieldValue,

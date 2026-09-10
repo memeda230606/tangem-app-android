@@ -326,6 +326,20 @@
     <item quantity="other">小时之前</item>
   </plurals>
   <string name="common_import">导入</string>
+  <string name="nfc_wallet_recovery_title">恢复钱包</string>
+  <string name="nfc_wallet_recovery_message">请输入备份钱包时保存的 NBRC1 恢复码。继续后，需要再次扫描已绑定的 NFC 卡片来授权恢复。</string>
+  <string name="nfc_wallet_recovery_code_placeholder">NBRC1 恢复码</string>
+  <string name="nfc_wallet_recovery_action">恢复</string>
+  <string name="nfc_wallet_import_or_recovery_message">输入 12/24 个单词的恢复短语，或粘贴 NBRC1 恢复码。使用恢复码时还需要扫描已绑定的 NFC 卡片。</string>
+  <string name="nfc_wallet_import_or_recovery_placeholder">恢复短语或 NBRC1 恢复码</string>
+  <string name="nfc_wallet_bound_title">钱包已存在</string>
+  <string name="nfc_wallet_bound_message">这张 NFC 卡片已经关联钱包。请选择“导入现有钱包”，并使用备份时保存的恢复码。</string>
+  <string name="nfc_wallet_save_recovery_code_title">保存恢复码</string>
+  <string name="nfc_wallet_save_recovery_code_message">请离线保存此恢复码。恢复钱包时必须同时提供恢复码、NFC 卡片和受保护的服务器分片。\n\n%1$s</string>
+  <string name="nfc_wallet_recovery_setup_failed_title">恢复设置失败</string>
+  <string name="nfc_wallet_recovery_setup_failed_message">恢复包未完成，备份尚未激活。请将卡片贴近手机后重试。支持代码：%1$s</string>
+  <string name="nfc_wallet_creation_failed_title">钱包创建失败</string>
+  <string name="nfc_wallet_creation_failed_message">TESTNET 钱包未创建。请将卡片贴近手机后重试。</string>
   <string name="common_in">在</string>
   <string name="common_in_progress">进行中</string>
   <string name="common_insufficient_balance">余额不足</string>

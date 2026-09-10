@@ -3,27 +3,28 @@
     <string name="app_name">NFC 写卡工具</string>
     <string name="title">自有卡写入工具</string>
     <string name="subtitle">内部使用 · 写入后自动校验</string>
-    <string name="target_label">跳转网址</string>
+    <string name="target_label">公开应用标记网址</string>
     <string name="target_url" translatable="false" tools:ignore="TypographyDashes">https://xn--6qqv7i2xdt95b.com/download</string>
     <string name="target_hint">请输入完整网址，例如 https://example.com/download</string>
-    <string name="target_help">安全卡模式下，网址通过 AES 加密通信保存，只能由我们的钱包读取。</string>
+    <string name="target_help">公开标记指定打开我们的钱包（需先安装新版）。此网址不是浏览器跳转链接，请勿填入秘密信息；卡片身份和恢复分片仍受 AES 保护。</string>
     <string name="invalid_url">请输入正确的 http 或 https 网址。</string>
     <string name="nfc_mark" translatable="false">NFC</string>
     <string name="success_mark" translatable="false">✓</string>
     <string name="error_mark" translatable="false">!</string>
     <string name="ready_title">准备就绪</string>
-    <string name="ready_message">点击下方按钮后，将卡片贴近手机 NFC 感应区。</string>
+    <string name="ready_message">保持本工具在前台，再将卡片贴近手机 NFC 感应区；前台期间由本工具独占 NFC，避免其它应用响应。</string>
     <string name="start_write">开始写卡</string>
     <string name="inspect_card">检测卡片安全能力</string>
     <string name="inspect_waiting_title">请贴近待检测卡片</string>
     <string name="inspect_waiting_message">仅读取芯片型号和安全能力，不会修改卡片。</string>
     <string name="inspect_success_title">检测完成</string>
     <string name="waiting_title">请贴近卡片</string>
-    <string name="waiting_message">保持卡片不动，初始化密钥、加密写入和回读校验会连续完成。</string>
+    <string name="waiting_message">本工具正在独占 NFC。保持卡片不动，初始化密钥、加密写入和回读校验会连续完成。</string>
     <string name="writing_title">正在初始化安全卡</string>
     <string name="writing_message">正在设置卡片密钥和加密权限，请勿移开卡片…</string>
     <string name="success_title">写入成功</string>
-    <string name="success_message">网址已加密写入并通过身份认证回读；普通 NFC 工具无法读取或覆盖。</string>
+    <string name="success_message">已写入并校验钱包打开标记，原卡片身份和恢复数据已保留。请先移开卡片，再返回桌面贴卡测试；打开提示由手机系统控制。</string>
+    <string name="remove_card_before_exit">请先移开卡片，再退出本工具，避免系统把仍贴近的卡片交给其它应用。</string>
     <string name="write_another">继续写下一张</string>
     <string name="failed_title">写入失败</string>
     <string name="retry">重新写入</string>
@@ -31,7 +32,7 @@
     <string name="nfc_unavailable">这台手机不支持 NFC。</string>
     <string name="nfc_disabled">请先打开手机 NFC，然后重新尝试。</string>
     <string name="secure_confirm_title">初始化安全卡</string>
-    <string name="secure_confirm_message">首次写入会更改 NTAG 424 DNA 的 AES 密钥并关闭普通 NDEF 读写。完成后只能使用我们的写卡工具和钱包访问。请保持卡片贴紧，直到显示成功。</string>
+    <string name="secure_confirm_message">请先安装支持应用唤起的新版钱包。首次写入会设置 NTAG 424 DNA 的 AES 密钥；旧卡升级会保留身份和恢复分片。公开区域仅保存打开我们钱包的标记和网址，不允许普通工具改写。请保持贴卡直到成功。</string>
     <string name="secure_confirm_action">确认并开始</string>
     <string name="export_diagnostic_log">导出诊断日志</string>
     <string name="error_log_title">是否导出错误日志？</string>

@@ -335,6 +335,20 @@
     <item quantity="other">%dh ago</item>
   </plurals>
   <string name="common_import">Import</string>
+  <string name="nfc_wallet_recovery_title">Restore wallet</string>
+  <string name="nfc_wallet_recovery_message">Enter the NBRC1 recovery code saved when this wallet was backed up. After you continue, scan the bound NFC card again to authorize recovery.</string>
+  <string name="nfc_wallet_recovery_code_placeholder">NBRC1 recovery code</string>
+  <string name="nfc_wallet_recovery_action">Restore</string>
+  <string name="nfc_wallet_import_or_recovery_message">Enter a 12/24-word recovery phrase or paste an NBRC1 recovery code. Recovery codes also require the bound NFC card.</string>
+  <string name="nfc_wallet_import_or_recovery_placeholder">Recovery phrase or NBRC1 code</string>
+  <string name="nfc_wallet_bound_title">Wallet already exists</string>
+  <string name="nfc_wallet_bound_message">This NFC card is already linked to a wallet. Choose Import existing wallet and use the recovery code saved during backup.</string>
+  <string name="nfc_wallet_save_recovery_code_title">Save your recovery code</string>
+  <string name="nfc_wallet_save_recovery_code_message">Keep this code offline. Restoring the wallet requires this code, your NFC card, and the protected server share.\n\n%1$s</string>
+  <string name="nfc_wallet_recovery_setup_failed_title">Recovery setup failed</string>
+  <string name="nfc_wallet_recovery_setup_failed_message">The recovery package was not completed. No backup was marked as active. Keep the card against the phone and try again. Support code: %1$s</string>
+  <string name="nfc_wallet_creation_failed_title">Wallet creation failed</string>
+  <string name="nfc_wallet_creation_failed_message">The TESTNET wallet was not created. Keep the card against the phone and try again.</string>
   <string name="common_in">in</string>
   <string name="common_in_progress">In progress</string>
   <string name="common_insufficient_balance">Insufficient balance</string>

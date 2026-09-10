@@ -5,6 +5,7 @@ import android.net.Uri
 import android.nfc.NfcAdapter
 import android.nfc.NdefMessage
 import android.nfc.NdefRecord
+import com.niubtmd.securenfc.WalletLaunchNdef
 import com.tangem.common.routing.entity.InitScreenLaunchMode
 import com.tangem.tap.features.intentHandler.handlers.BackgroundScanIntentHandler.NdefOnlyIntentResult
 import io.mockk.every
@@ -20,6 +21,61 @@ internal class BackgroundScanIntentHandlerTest {
 
     private var elapsedRealtime = 0L
     private val handler = BackgroundScanIntentHandler { elapsedRealtime }
+
+    @Test
+    fun `unrecognized background intent cannot label or cancel a pending physical scan`() {
+        val controller = mockk<ExternalNdefScanController>(relaxed = true)
+        val intent = nfcIntent(NfcAdapter.ACTION_TAG_DISCOVERED, "/unknown")
+        assertEquals(NdefOnlyIntentResult.Rejected,
+            BackgroundScanIntentHandler(true, controller).consumeNfcIntentInNdefOnlyMode(intent))
+        verify(exactly = 0) { controller.onNfcIntentResult(any()) }
+    }
+
+    @Test
+    fun `our launch marker opens app but cannot complete or cancel a pending scan`() {
+        val controller = mockk<ExternalNdefScanController>(relaxed = true)
+        val ndefHandler = BackgroundScanIntentHandler(true, controller)
+        val intent = walletLaunchIntent()
+        assertEquals(NdefOnlyIntentResult.LaunchOnly, ndefHandler.consumeNfcIntentInNdefOnlyMode(intent))
+        verify(exactly = 0) { controller.onNfcIntentResult(any()) }
+        verify { intent.action = null; intent.data = null }
+    }
+
+    @Test
+    fun `cold launch marker uses standard entry without official Card SDK`() {
+        assertEquals(InitScreenLaunchMode.Standard, BackgroundScanIntentHandler(true).getInitScreenLaunchMode(walletLaunchIntent()))
+    }
+
+    @Test
+    fun `mime alone without the expected package record is not a valid launch marker`() {
+        val intent = walletLaunchIntent()
+        @Suppress("DEPRECATION")
+        every { intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES) } returns emptyArray()
+        assertEquals(NdefOnlyIntentResult.Rejected, BackgroundScanIntentHandler(true).consumeNfcIntentInNdefOnlyMode(intent))
+    }
+
+    @Test
+    fun `another mime or package cannot be treated as our launch marker`() {
+        val intent = walletLaunchIntent()
+        every { intent.type } returns "application/vnd.other.wallet"
+        assertEquals(NdefOnlyIntentResult.Rejected, BackgroundScanIntentHandler(true).consumeNfcIntentInNdefOnlyMode(intent))
+        val wrongPackage = WalletLaunchNdef.encode("https://example.com/download").drop(2).toByteArray()
+        wrongPackage[wrongPackage.lastIndex] = 0
+        assertEquals(NdefOnlyIntentResult.Rejected,
+            BackgroundScanIntentHandler(true).consumeNfcIntentInNdefOnlyMode(walletLaunchIntent(wrongPackage)))
+    }
+
+    private fun walletLaunchIntent(
+        bytes: ByteArray = WalletLaunchNdef.encode("https://example.com/download").drop(2).toByteArray(),
+    ): Intent {
+        val message = mockk<NdefMessage> { every { toByteArray() } returns bytes }
+        return mockk(relaxed = true) {
+            every { action } returns NfcAdapter.ACTION_NDEF_DISCOVERED
+            every { type } returns WalletLaunchNdef.MIME_TYPE
+            @Suppress("DEPRECATION")
+            every { getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES) } returns arrayOf(message)
+        }
+    }
 
     @Test
     fun `Tangem NDEF deeplink is consumed while Card SDK is visible`() {

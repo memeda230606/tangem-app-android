@@ -6,6 +6,7 @@ import com.tangem.common.core.TangemSdkError
 import com.tangem.core.analytics.models.AnalyticsParam
 import com.tangem.domain.card.ScanCardProcessor
 import com.tangem.domain.models.scan.ScanResponse
+import com.tangem.tap.domain.TapSdkError
 import com.tangem.tap.domain.sdk.mocks.content.ExternalNdefWalletMockContent
 import com.tangem.tap.features.intentHandler.handlers.ExternalNdefScanController
 
@@ -28,7 +29,13 @@ internal class DefaultScanCardProcessor(
         if (externalNdefScanController.isEnabled) {
             return when (externalNdefScanController.awaitScan()) {
                 ExternalNdefScanController.Result.Accepted -> {
-                    ExternalNdefWalletMockContent.selectCard(externalNdefScanController.requireAcceptedIdentity())
+                    val identity = externalNdefScanController.requireAcceptedIdentity()
+                    if (useCaseScanProcessor.isExternalCardBoundToDifferentLocalWallet()) {
+                        return CompletionResult.Failure(
+                            TapSdkError.ExternalCardBoundToAnotherWallet(),
+                        )
+                    }
+                    ExternalNdefWalletMockContent.selectCard(identity)
                     CompletionResult.Success(ExternalNdefWalletMockContent.scanResponse)
                 }
                 ExternalNdefScanController.Result.Rejected -> CompletionResult.Failure(TangemSdkError.UserCancelled())
@@ -67,6 +74,7 @@ internal class DefaultScanCardProcessor(
                         useCaseScanProcessor.proceedWithExternalScan(
                             scanResponse = ExternalNdefWalletMockContent.scanResponse,
                             onWalletNotCreated = onWalletNotCreated,
+                            onFailure = onFailure,
                             onSuccess = onSuccess,
                         )
                     }

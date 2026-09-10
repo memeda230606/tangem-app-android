@@ -7,6 +7,7 @@ import com.tangem.common.core.TangemSdkError
 import com.tangem.common.map
 import com.tangem.domain.models.wallet.UserWallet
 import com.tangem.domain.wallets.hot.HotWalletAccessor
+import com.tangem.domain.wallets.hot.HotWalletNfcSecurity
 import com.tangem.hot.sdk.model.DataToSign
 import com.tangem.operations.sign.SignData
 import com.tangem.utils.coroutines.runSuspendCatching
@@ -18,6 +19,7 @@ import dagger.assisted.AssistedInject
 class TangemHotWalletSigner @AssistedInject constructor(
     @Assisted private val userWallet: UserWallet.Hot,
     private val hotWalletAccessor: HotWalletAccessor,
+    private val hotWalletNfcSecurity: HotWalletNfcSecurity,
 ) : TransactionSigner {
 
     override suspend fun sign(hash: ByteArray, publicKey: Wallet.PublicKey): CompletionResult<ByteArray> {
@@ -32,6 +34,12 @@ class TangemHotWalletSigner @AssistedInject constructor(
             ?: return CompletionResult.Failure(
                 TangemSdkError.ExceptionError(IllegalStateException("wallet is locked")),
             )
+
+        runSuspendCatching {
+            hotWalletNfcSecurity.authorizeSigning(userWallet, hashes)
+        }.getOrElse { throwable ->
+            return CompletionResult.Failure(TangemSdkError.ExceptionError(throwable))
+        }
 
         val result = runSuspendCatching {
             hotWalletAccessor.signHashes(
@@ -60,16 +68,21 @@ class TangemHotWalletSigner @AssistedInject constructor(
         dataToSign: List<SignData>,
         publicKey: Wallet.PublicKey,
     ): CompletionResult<Map<ByteArray, ByteArray>> {
+        val wallet = userWallet.wallets.orEmpty().firstOrNull { it.publicKey.contentEquals(publicKey.seedKey) }
+            ?: return CompletionResult.Failure(
+                TangemSdkError.ExceptionError(IllegalStateException("wallet is locked")),
+            )
+
+        runSuspendCatching {
+            hotWalletNfcSecurity.authorizeSigning(userWallet, dataToSign.map(SignData::hash))
+        }.getOrElse { throwable ->
+            return CompletionResult.Failure(TangemSdkError.ExceptionError(throwable))
+        }
+
         val result = runSuspendCatching {
             hotWalletAccessor.signHashes(
                 hotWalletId = userWallet.hotWalletId,
                 dataToSign = dataToSign.map { signData ->
-                    val wallet =
-                        userWallet.wallets.orEmpty().firstOrNull { it.publicKey.contentEquals(publicKey.seedKey) }
-                            ?: return CompletionResult.Failure(
-                                TangemSdkError.ExceptionError(IllegalStateException("wallet is locked")),
-                            )
-
                     DataToSign(
                         curve = wallet.curve,
                         hashes = listOf(signData.hash),

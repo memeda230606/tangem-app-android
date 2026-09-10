@@ -66,6 +66,7 @@ import com.tangem.tap.features.intentHandler.handlers.BackgroundScanIntentHandle
 import com.tangem.tap.features.intentHandler.handlers.ExternalNdefScanController
 import com.tangem.tap.features.intentHandler.handlers.ExternalNdefScanUi
 import com.tangem.tap.features.intentHandler.handlers.ExternalNdefTagReader
+import com.tangem.tap.features.intentHandler.handlers.ExternalNdefTagReader.ReadResult
 import com.tangem.tap.features.main.MainViewModel
 import com.tangem.tap.routing.component.RoutingComponent
 import com.tangem.tap.routing.configurator.AppRouterConfig
@@ -323,7 +324,9 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
                         enableExternalNdefReaderMode()
                     }
                 } else {
-                    disableExternalNdefReaderMode()
+                    // Keep reader mode until the activity leaves the foreground. Recovery setup reuses the accepted
+                    // Tag to write and verify the card share after this scan completes. Disabling reader mode here
+                    // invalidates that session on some devices and lets another foreground NFC service claim the card.
                     externalNdefScanUi.dismiss()
                 }
             }
@@ -331,12 +334,12 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
     }
 
     private fun enableExternalNdefReaderMode() {
-        if (isExternalNdefReaderModeEnabled || !externalNdefScanController.isEnabled) return
+        if (!externalNdefScanController.isEnabled) return
 
         val nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         if (nfcAdapter == null || !nfcAdapter.isEnabled) {
             externalNdefScanController.onNfcIntentResult(ExternalNdefScanController.Result.Rejected)
-            showExternalNdefScanResult(ExternalNdefScanController.Result.Rejected)
+            Toast.makeText(this, R.string.external_ndef_scan_nfc_unavailable, Toast.LENGTH_LONG).show()
             return
         }
 
@@ -344,7 +347,9 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
             nfcAdapter.enableReaderMode(
                 this,
                 externalNdefReaderCallback,
-                NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_NFC_B,
+                NfcAdapter.FLAG_READER_NFC_A or
+                    NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK or
+                    NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS,
                 null,
             )
             isExternalNdefReaderModeEnabled = true
@@ -352,7 +357,7 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
         }.onFailure {
             TangemLogger.e("Unable to enable External NDEF reader mode: ${it.message}")
             externalNdefScanController.onNfcIntentResult(ExternalNdefScanController.Result.Rejected)
-            showExternalNdefScanResult(ExternalNdefScanController.Result.Rejected)
+            Toast.makeText(this, R.string.external_ndef_scan_nfc_unavailable, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -366,16 +371,37 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
     }
 
     private fun onExternalNdefTagDiscovered(tag: Tag) {
-        lifecycleScope.launch(dispatchers.io) {
-            val result = externalNdefTagReader.read(tag)
-            TangemLogger.i("External NDEF reader completed: $result")
+        // Reader mode deliberately remains active for the rest of the foreground recovery operation. Ignore
+        // additional discoveries unless a wallet flow is explicitly waiting for a card.
+        val attempt = externalNdefScanController.beginRead() ?: return
 
-            if (externalNdefScanController.onNfcIntentResult(result, externalNdefTagReader.lastIdentity)) {
-                withContext(dispatchers.mainImmediate) {
-                    showExternalNdefScanResult(result)
+        lifecycleScope.launch(dispatchers.mainImmediate) {
+            externalNdefScanUi.updateMessage(
+                getString(R.string.initial_message_scan_header), getString(R.string.external_ndef_scan_reading),
+            )
+            val result = withContext(dispatchers.io) { externalNdefTagReader.read(tag) }
+            // Do not log Accepted.toString(): it contains private card metadata and a verification token.
+            TangemLogger.i("External NDEF reader completed: ${result::class.simpleName}")
+
+            if (externalNdefScanController.finishRead(attempt, result, tag)) {
+                when (result) {
+                    is ReadResult.Accepted -> showExternalNdefScanResult(ExternalNdefScanController.Result.Accepted)
+                    ReadResult.Unsupported -> showExternalNdefScanResult(ExternalNdefScanController.Result.Rejected)
+                    ReadResult.RetryTap -> showExternalNdefRetry(R.string.external_ndef_scan_retry)
+                    ReadResult.VerificationUnavailable -> showExternalNdefRetry(R.string.external_ndef_scan_network_retry)
+                    ReadResult.VerificationRejected -> Toast.makeText(
+                        this@MainActivity, R.string.external_ndef_scan_verification_rejected, Toast.LENGTH_LONG,
+                    ).show()
                 }
             }
-        }
+        }.invokeOnCompletion { externalNdefScanController.abandonRead(attempt) }
+    }
+
+    private fun showExternalNdefRetry(message: Int) {
+        val title = getString(R.string.external_ndef_scan_retry_title)
+        val instructions = getString(message)
+        externalNdefScanUi.updateMessage(title, instructions)
+        Toast.makeText(this, "$title\n$instructions", Toast.LENGTH_LONG).show()
     }
 
     private fun showExternalNdefScanResult(result: ExternalNdefScanController.Result) {
@@ -533,6 +559,10 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
 
     private fun handleDeepLink(intent: Intent, isFromOnNewIntent: Boolean) {
         when (backgroundScanIntentHandler.consumeNfcIntentInNdefOnlyMode(intent)) {
+            NdefOnlyIntentResult.LaunchOnly -> {
+                TangemLogger.i("Wallet NFC launch marker consumed; no card authentication implied")
+                return
+            }
             NdefOnlyIntentResult.Accepted -> {
                 TangemLogger.i("Accepted supported NDEF tag without starting a real card scan")
                 showExternalNdefScanResult(ExternalNdefScanController.Result.Accepted)
@@ -540,7 +570,8 @@ class MainActivity : AppCompatActivity(), ActivityResultCallbackHolder {
             }
             NdefOnlyIntentResult.Rejected -> {
                 TangemLogger.i("Ignored unsupported NFC tag in NDEF-only mode")
-                showExternalNdefScanResult(ExternalNdefScanController.Result.Rejected)
+                // A background intent is not an authenticated physical read and cannot prove a wrong card.
+                showExternalNdefRetry(R.string.external_ndef_scan_retry)
                 return
             }
             NdefOnlyIntentResult.NotHandled -> Unit

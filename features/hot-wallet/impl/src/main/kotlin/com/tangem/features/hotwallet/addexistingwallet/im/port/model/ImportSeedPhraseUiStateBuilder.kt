@@ -19,20 +19,26 @@ import kotlinx.coroutines.launch
 
 @Suppress("LongParameterList")
 internal class ImportSeedPhraseUiStateBuilder(
+    private val isRecoveryCodeSupported: Boolean,
+    private val isNfcRecovery: Boolean,
     private val modelScope: CoroutineScope,
     private val mnemonicRepository: MnemonicRepository,
     private val readyToImport: (Boolean) -> Unit,
     private val updateUiState: ((AddExistingWalletImportUM) -> AddExistingWalletImportUM) -> Unit,
     private val importWallet: (mnemonic: Mnemonic, passphrase: String?) -> Unit,
+    private val recoverWallet: (customerRecoveryCode: String) -> Unit,
     private val onPassphraseInfoClick: () -> Unit,
     private val onImportClick: () -> Unit,
 ) {
     private val wordsCheckJobHolder = JobHolder()
     private var importedMnemonic: Mnemonic? = null
+    private var recoveryCode: String? = null
     private var passphrase: String? = null
 
     fun getState(): AddExistingWalletImportUM {
         return AddExistingWalletImportUM(
+            isRecoveryCodeSupported = isRecoveryCodeSupported,
+            isNfcRecovery = isNfcRecovery,
             words = TextFieldValue(""),
             passPhrase = TextFieldValue(""),
             wordsErrorText = null,
@@ -42,7 +48,7 @@ internal class ImportSeedPhraseUiStateBuilder(
             suggestionsList = persistentListOf(),
             wordsChange = {
                 launchInterceptWords(wordsField = it)
-                suggestNextWord(it)
+                if (!isNfcRecovery) suggestNextWord(it)
                 updateUiState { state ->
                     state.copy(words = it)
                 }
@@ -60,6 +66,10 @@ internal class ImportSeedPhraseUiStateBuilder(
 
     private fun onCreateWallet() {
         onImportClick()
+        recoveryCode?.let {
+            recoverWallet(it)
+            return
+        }
         val mnemonic = importedMnemonic ?: return
         val passphrase = passphrase?.takeIf { it.isNotEmpty() }
         importWallet(mnemonic, passphrase)
@@ -127,8 +137,23 @@ internal class ImportSeedPhraseUiStateBuilder(
         }
 
         importedMnemonic = null
+        recoveryCode = null
 
         val text = wordsField.text
+        if (isRecoveryCodeSupported && text.trim().startsWith(RECOVERY_CODE_PREFIX, ignoreCase = true)) {
+            recoveryCode = text.trim()
+            updateUiState {
+                it.copy(
+                    invalidWords = emptyList<String>().toImmutableList(),
+                    wordsErrorText = null,
+                    importWalletEnabled = true,
+                )
+            }
+            readyToImport(true)
+            return
+        }
+        if (isNfcRecovery) return
+
         val wordsFromText = text.split(" ").filter { it.isNotBlank() }.map { it.trim() }
         val invalidWords = wordsFromText.filterNot { it in mnemonicRepository.words }
         if (invalidWords.isNotEmpty()) {
@@ -177,5 +202,6 @@ internal class ImportSeedPhraseUiStateBuilder(
     companion object {
         private const val MINIMUM_WORD_LENGTH = 2
         private const val WORDS_INTERCEPT_DELAY_MS = 500L
+        private const val RECOVERY_CODE_PREFIX = "NBRC1-"
     }
 }

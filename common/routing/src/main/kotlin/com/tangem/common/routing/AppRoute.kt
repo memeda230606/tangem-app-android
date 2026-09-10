@@ -385,6 +385,7 @@ sealed class AppRoute(val path: String) : Route {
     @Serializable
     data class CreateMobileWallet(
         val source: AnalyticsParam.ScreensSources,
+        val isNfcRecovery: Boolean = false,
     ) : AppRoute(path = "/create_mobile_wallet")
 
     @Serializable
@@ -393,7 +394,9 @@ sealed class AppRoute(val path: String) : Route {
     ) : AppRoute(path = "/upgrade_wallet/${userWalletId.stringValue}")
 
     @Serializable
-    object AddExistingWallet : AppRoute(path = "/add_existing_wallet")
+    data class AddExistingWallet(
+        val isNfcRecovery: Boolean = false,
+    ) : AppRoute(path = "/add_existing_wallet/${if (isNfcRecovery) "nfc_recovery" else "seed_import"}")
 
     @Serializable
     data class WalletActivation(

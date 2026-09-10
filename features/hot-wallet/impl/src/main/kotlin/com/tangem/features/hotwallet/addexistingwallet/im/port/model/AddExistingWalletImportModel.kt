@@ -19,6 +19,7 @@ import com.tangem.datasource.local.appsflyer.AppsFlyerStore
 import com.tangem.domain.common.wallets.error.SaveWalletError
 import com.tangem.domain.assetsdiscovery.usecase.StartAssetsDiscoveryUseCase
 import com.tangem.domain.wallets.builder.HotUserWalletBuilder
+import com.tangem.domain.wallets.hot.HotWalletNfcSecurity
 import com.tangem.domain.wallets.models.WalletSyncResult
 import com.tangem.domain.wallets.usecase.SaveWalletUseCase
 import com.tangem.domain.wallets.usecase.SyncWalletWithRemoteUseCase
@@ -44,6 +45,7 @@ internal class AddExistingWalletImportModel @Inject constructor(
     private val mnemonicRepository: MnemonicRepository,
     private val tangemHotSdk: TangemHotSdk,
     private val hotUserWalletBuilderFactory: HotUserWalletBuilder.Factory,
+    private val hotWalletNfcSecurity: HotWalletNfcSecurity,
     private val saveUserWalletUseCase: SaveWalletUseCase,
     private val syncWalletWithRemoteUseCase: SyncWalletWithRemoteUseCase,
     private val startAssetsDiscoveryUseCase: StartAssetsDiscoveryUseCase,
@@ -76,6 +78,8 @@ internal class AddExistingWalletImportModel @Inject constructor(
     init {
         analyticsEventHandler.send(OnboardingAnalyticsEvent.SeedPhrase.ImportSeedPhraseScreenOpened())
         importSeedPhraseUiStateBuilder = ImportSeedPhraseUiStateBuilder(
+            isRecoveryCodeSupported = hotWalletNfcSecurity.isEnabled,
+            isNfcRecovery = params.isNfcRecovery,
             modelScope = modelScope,
             mnemonicRepository = mnemonicRepository,
             updateUiState = { block -> uiState.update { block(it) } },
@@ -86,6 +90,7 @@ internal class AddExistingWalletImportModel @Inject constructor(
                     passphrase = passphrase,
                 )
             },
+            recoverWallet = ::recoverWallet,
             onPassphraseInfoClick = ::onPassphraseInfoClick,
             onImportClick = { analyticsEventHandler.send(OnboardingAnalyticsEvent.SeedPhrase.ButtonImport()) },
         )
@@ -96,13 +101,49 @@ internal class AddExistingWalletImportModel @Inject constructor(
 
     @Suppress("UnusedPrivateMember")
     private fun importWallet(mnemonic: Mnemonic, passphrase: String?) {
+        importWallet(mnemonic, passphrase, recoveryMaterial = null)
+    }
+
+    private fun recoverWallet(customerRecoveryCode: String) {
+        modelScope.launch {
+            setImportProgress(true)
+            runCatching {
+                val material = hotWalletNfcSecurity.recoverWallet(customerRecoveryCode)
+                val mnemonic = mnemonicRepository.generateMnemonic(material.mnemonicWords.joinToString(" "))
+                importWallet(mnemonic, passphrase = null, recoveryMaterial = material)
+            }.onFailure { throwable ->
+                TangemLogger.e("Unable to recover external-card wallet", throwable)
+                setImportProgress(false)
+                uiMessageSender.send(
+                    SnackbarMessage(resourceReference(R.string.common_error)),
+                )
+            }
+        }
+    }
+
+    private fun importWallet(
+        mnemonic: Mnemonic,
+        passphrase: String?,
+        recoveryMaterial: com.tangem.domain.wallets.hot.RecoveredWalletMaterial?,
+    ) {
         modelScope.launch {
             setImportProgress(true)
 
             runCatching {
                 val hotWalletId = tangemHotSdk.importWallet(mnemonic, passphrase?.toCharArray(), HotAuth.NoAuth)
                 val hotUserWalletBuilder = hotUserWalletBuilderFactory.create(hotWalletId)
-                val userWallet = hotUserWalletBuilder.build()
+                val userWallet = hotUserWalletBuilder.build().copy(
+                    isTestnetOnly = hotWalletNfcSecurity.isEnabled,
+                )
+                try {
+                    if (recoveryMaterial != null) {
+                        hotWalletNfcSecurity.verifyRecoveredWallet(userWallet, recoveryMaterial)
+                    }
+                    hotWalletNfcSecurity.bindWallet(userWallet)
+                } catch (throwable: Throwable) {
+                    runCatching { tangemHotSdk.delete(hotWalletId) }
+                    throw throwable
+                }
                 saveUserWalletUseCase.invoke(userWallet.copy(backedUp = true))
                     .onLeft { error ->
                         setImportProgress(false)

@@ -60,6 +60,8 @@ sealed interface UserWallet {
         val hotWalletId: HotWalletId,
         val wallets: List<MobileWallet>?,
         val backedUp: Boolean,
+        /** Restricts wallet managers to testnet variants. Used by the L0 external-card integration. */
+        val isTestnetOnly: Boolean = false,
     ) : UserWallet {
 
         val isLocked: Boolean get() = wallets == null

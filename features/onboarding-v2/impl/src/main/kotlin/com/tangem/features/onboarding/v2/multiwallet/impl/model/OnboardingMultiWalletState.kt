@@ -10,6 +10,8 @@ data class OnboardingMultiWalletState(
     val currentScanResponse: ScanResponse,
     val startFromFinalize: FinalizeStage?,
     val resultUserWallet: UserWallet.Cold?,
+    /** Mobile wallet used only by the external TESTNET card adapter while the official UI flow is displayed. */
+    val externalUserWallet: UserWallet.Hot? = null,
 ) {
     enum class FinalizeStage {
         ScanPrimaryCard, ScanBackupFirstCard, ScanBackupSecondCard

@@ -9,6 +9,10 @@ import com.tangem.domain.hotwallet.IsAccessCodeSimpleUseCase
 import com.tangem.domain.hotwallet.SetAccessCodeSkippedUseCase
 import com.tangem.domain.hotwallet.ShouldShowUpgradeHotWalletBannerUseCase
 import com.tangem.domain.hotwallet.repository.HotWalletRepository
+import com.tangem.domain.wallets.hot.HotWalletAccessor
+import com.tangem.domain.wallets.hot.HotWalletNfcSecurity
+import com.tangem.tap.features.intentHandler.handlers.DefaultHotWalletNfcSecurity
+import com.tangem.tap.features.intentHandler.handlers.ExternalNdefScanController
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,6 +22,16 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 internal object HotWalletDomainModule {
+
+    @Provides
+    @Singleton
+    fun provideHotWalletNfcSecurity(
+        externalNdefScanController: ExternalNdefScanController,
+        hotWalletAccessor: HotWalletAccessor,
+    ): HotWalletNfcSecurity = DefaultHotWalletNfcSecurity(
+        scanController = externalNdefScanController,
+        hotWalletAccessor = hotWalletAccessor,
+    )
 
     @Provides
     @Singleton

@@ -50,7 +50,9 @@ class Wallet1ChooseOptionComponent(
         Wallet1ChooseOption(
             canSkipBackup = model.canSkipBackup,
             onBackupClick = {
-                onNextStep(OnboardingMultiWalletState.Step.AddBackupDevice)
+                model.onBackupClick {
+                    onNextStep(OnboardingMultiWalletState.Step.AddBackupDevice)
+                }
             },
             onSkipClick = remember(model) {
                 {

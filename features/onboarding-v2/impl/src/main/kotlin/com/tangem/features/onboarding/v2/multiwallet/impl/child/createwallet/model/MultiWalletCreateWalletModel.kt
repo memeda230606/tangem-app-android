@@ -1,6 +1,7 @@
 package com.tangem.features.onboarding.v2.multiwallet.impl.child.createwallet.model
 
 import androidx.compose.runtime.Stable
+import arrow.core.getOrElse
 import com.tangem.common.CompletionResult
 import com.tangem.common.core.TangemSdkError
 import com.tangem.common.routing.AppRoute
@@ -9,9 +10,12 @@ import com.tangem.core.analytics.models.AnalyticsParam
 import com.tangem.core.analytics.models.Basic
 import com.tangem.core.analytics.models.event.OnboardingAnalyticsEvent
 import com.tangem.core.decompose.di.ModelScoped
+import com.tangem.core.decompose.di.GlobalUiMessageSender
 import com.tangem.core.decompose.model.Model
 import com.tangem.core.decompose.model.ParamsContainer
 import com.tangem.core.decompose.navigation.Router
+import com.tangem.core.decompose.ui.UiMessageSender
+import com.tangem.core.ui.message.DialogMessage
 import com.tangem.core.ui.extensions.resourceReference
 import com.tangem.datasource.local.appsflyer.AppsFlyerStore
 import com.tangem.domain.card.repository.CardRepository
@@ -21,14 +25,23 @@ import com.tangem.domain.feedback.models.FeedbackEmailType
 import com.tangem.domain.models.scan.ScanResponse
 import com.tangem.domain.models.wallet.UserWallet
 import com.tangem.domain.wallets.builder.ColdUserWalletBuilder
+import com.tangem.domain.wallets.builder.HotUserWalletBuilder
+import com.tangem.domain.wallets.hot.HotWalletNfcSecurity
 import com.tangem.domain.wallets.usecase.SaveWalletUseCase
+import com.tangem.domain.wallets.usecase.SyncWalletWithRemoteUseCase
 import com.tangem.features.onboarding.v2.impl.R
 import com.tangem.features.onboarding.v2.multiwallet.impl.child.MultiWalletChildParams
 import com.tangem.features.onboarding.v2.multiwallet.impl.child.createwallet.ui.state.MultiWalletCreateWalletUM
 import com.tangem.features.onboarding.v2.multiwallet.impl.common.ui.resetCardDialog
 import com.tangem.features.onboarding.v2.multiwallet.impl.model.OnboardingMultiWalletState.Step
 import com.tangem.sdk.api.TangemSdkManager
+import com.tangem.hot.sdk.TangemHotSdk
+import com.tangem.hot.sdk.model.HotAuth
+import com.tangem.hot.sdk.model.MnemonicType
 import com.tangem.utils.coroutines.CoroutineDispatcherProvider
+import com.tangem.utils.coroutines.runSuspendCatching
+import com.tangem.utils.logging.TangemLogger
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,7 +62,12 @@ internal class MultiWalletCreateWalletModel @Inject constructor(
     private val cardRepository: CardRepository,
     private val analyticsHandler: AnalyticsEventHandler,
     private val coldUserWalletBuilderFactory: ColdUserWalletBuilder.Factory,
+    private val hotUserWalletBuilderFactory: HotUserWalletBuilder.Factory,
     private val saveWalletUseCase: SaveWalletUseCase,
+    private val syncWalletWithRemoteUseCase: SyncWalletWithRemoteUseCase,
+    private val tangemHotSdk: TangemHotSdk,
+    private val hotWalletNfcSecurity: HotWalletNfcSecurity,
+    @GlobalUiMessageSender private val uiMessageSender: UiMessageSender,
     private val appsFlyerStore: AppsFlyerStore,
 ) : Model() {
 
@@ -87,13 +105,22 @@ internal class MultiWalletCreateWalletModel @Inject constructor(
 
     val uiState: StateFlow<MultiWalletCreateWalletUM> = _uiState
     val onDone = MutableSharedFlow<Step>()
+    private var createClicked = false
 
     init {
         analyticsHandler.send(OnboardingAnalyticsEvent.CreateWallet.ScreenOpened())
     }
 
     private fun createWallet(shouldReset: Boolean) {
+        if (createClicked) return
+        createClicked = true
+
         modelScope.launch {
+            if (hotWalletNfcSecurity.supportsCard(multiWalletState.value.currentScanResponse)) {
+                createExternalWallet()
+                return@launch
+            }
+
             val result = tangemSdkManager.createProductWallet(
                 scanResponse = multiWalletState.value.currentScanResponse,
                 shouldReset = shouldReset,
@@ -129,12 +156,57 @@ internal class MultiWalletCreateWalletModel @Inject constructor(
                 }
 
                 is CompletionResult.Failure -> {
+                    createClicked = false
                     if (result.error is TangemSdkError.WalletAlreadyCreated) {
                         // show should reset dialog
                         handleActivationError()
                     }
                 }
             }
+        }
+    }
+
+    /** Uses the real mobile signer while keeping the official Tangem card-onboarding presentation. */
+    private suspend fun createExternalWallet() {
+        var generatedWalletId: com.tangem.hot.sdk.model.HotWalletId? = null
+
+        runSuspendCatching {
+            val hotWalletId = tangemHotSdk.generateWallet(HotAuth.NoAuth, mnemonicType = MnemonicType.Words12)
+            generatedWalletId = hotWalletId
+            val userWallet = hotUserWalletBuilderFactory.create(hotWalletId).build().copy(isTestnetOnly = true)
+
+            hotWalletNfcSecurity.bindWallet(userWallet)
+            saveWalletUseCase(
+                userWallet = userWallet,
+                canOverride = true,
+                analyticsSource = AnalyticsParam.ScreensSources.Onboarding,
+            ).getOrElse { error("Unable to save external TESTNET wallet: $it") }
+
+            cardRepository.startCardActivation(multiWalletState.value.currentScanResponse.card.cardId)
+            multiWalletState.update { it.copy(externalUserWallet = userWallet) }
+
+            analyticsHandler.send(
+                event = OnboardingAnalyticsEvent.CreateWallet.WalletCreatedSuccessfully(
+                    passPhraseState = AnalyticsParam.EmptyFull.Empty,
+                    referralId = appsFlyerStore.get()?.refcode,
+                ),
+            )
+
+            modelScope.launch(dispatchers.main + NonCancellable) {
+                syncWalletWithRemoteUseCase(userWalletId = userWallet.walletId)
+            }
+
+            onDone.emit(Step.ChooseBackupOption)
+        }.onFailure { throwable ->
+            generatedWalletId?.let { walletId -> runCatching { tangemHotSdk.delete(walletId) } }
+            createClicked = false
+            TangemLogger.e("Unable to create external TESTNET wallet", throwable)
+            uiMessageSender.send(
+                DialogMessage(
+                    message = resourceReference(com.tangem.core.ui.R.string.nfc_wallet_creation_failed_message),
+                    title = resourceReference(com.tangem.core.ui.R.string.nfc_wallet_creation_failed_title),
+                ),
+            )
         }
     }
 

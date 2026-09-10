@@ -12,7 +12,9 @@ internal class AddExistingWalletStepperStateManager {
             is AddExistingWalletRoute.Import -> HotWalletStepperComponent.StepperUM(
                 currentStep = STEP_IMPORT,
                 steps = STEPS_COUNT,
-                title = resourceReference(R.string.wallet_import_seed_navtitle),
+                title = resourceReference(
+                    if (route.isNfcRecovery) R.string.nfc_wallet_recovery_title else R.string.wallet_import_seed_navtitle,
+                ),
                 showBackButton = true,
                 showSkipButton = false,
             )

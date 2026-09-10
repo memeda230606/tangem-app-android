@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity android:name="com.tangem.tap.MainActivity">
+            <!-- Public entry point only; identity still requires foreground AES card authentication. -->
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/vnd.niubtmd.wallet" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

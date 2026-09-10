@@ -2,6 +2,7 @@ package com.niubtmd.securenfc;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -11,6 +12,32 @@ import java.util.UUID;
 import org.junit.Test;
 
 public class Ntag424DnaTest {
+
+    @Test
+    public void incompleteChipVersionIsReadFailureNotUnsupportedCard() {
+        ScriptedTransceiver transport = new ScriptedTransceiver();
+        transport.add("9060000000", "04040101001A059100");
+        assertThrows(IOException.class, () -> new Ntag424Dna(transport).isNtag424Dna());
+    }
+
+    @Test
+    public void plainReadUsesOffsetAndRejectsTruncatedResponse() throws Exception {
+        ScriptedTransceiver transport = new ScriptedTransceiver();
+        transport.add("90AD0000070280000002000000", "12349100");
+        transport.add("90AD0000070200000002000000", "129100");
+        Ntag424Dna card = new Ntag424Dna(transport);
+        assertArrayEquals(hex("1234"), card.readPlain(Ntag424Dna.NDEF_FILE, 128, 2));
+        assertThrows(IOException.class, () -> card.readPlain(Ntag424Dna.NDEF_FILE, 0, 2));
+        assertEquals(0, transport.remaining());
+    }
+
+    @Test
+    public void fileBoundsAreCheckedBeforeTransmission() {
+        Ntag424Dna card = new Ntag424Dna(command -> { throw new AssertionError("Must not send invalid command"); });
+        assertThrows(IllegalArgumentException.class, () -> card.readPlain(Ntag424Dna.NDEF_FILE, 240, 17));
+        assertThrows(IllegalArgumentException.class, () -> card.readFull(null, Ntag424Dna.RECOVERY_FILE, 64, 65));
+        assertThrows(IllegalArgumentException.class, () -> card.writeFull(null, Ntag424Dna.RECOVERY_FILE, 64, new byte[65]));
+    }
 
     @Test
     public void aesCmacMatchesNxpDiversificationVector() throws Exception {

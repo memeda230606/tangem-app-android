@@ -11,9 +11,13 @@ import com.tangem.core.decompose.model.ParamsContainer
 import com.tangem.core.decompose.navigation.Router
 import com.tangem.core.decompose.ui.UiMessageSender
 import com.tangem.core.ui.message.dialog.Dialogs.hotWalletCreationNotSupportedDialog
+import com.tangem.core.ui.R
+import com.tangem.core.ui.extensions.resourceReference
+import com.tangem.core.ui.message.DialogMessage
 import com.tangem.datasource.local.appsflyer.AppsFlyerStore
 import com.tangem.domain.hotwallet.IsHotWalletCreationSupported
 import com.tangem.domain.wallets.builder.HotUserWalletBuilder
+import com.tangem.domain.wallets.hot.HotWalletNfcSecurity
 import com.tangem.domain.wallets.usecase.SaveWalletUseCase
 import com.tangem.domain.wallets.usecase.SyncWalletWithRemoteUseCase
 import com.tangem.features.hotwallet.CreateMobileWalletComponent
@@ -41,6 +45,7 @@ internal class CreateMobileWalletModel @Inject constructor(
     private val syncWalletWithRemoteUseCase: SyncWalletWithRemoteUseCase,
     private val router: Router,
     private val tangemHotSdk: TangemHotSdk,
+    private val hotWalletNfcSecurity: HotWalletNfcSecurity,
     private val trackingContextProxy: TrackingContextProxy,
     private val isHotWalletCreationSupported: IsHotWalletCreationSupported,
     private val uiMessageSender: UiMessageSender,
@@ -79,11 +84,20 @@ internal class CreateMobileWalletModel @Inject constructor(
     private fun onImportClick() {
         analyticsEventHandler.send(OnboardingAnalyticsEvent.SeedPhrase.ButtonImportWallet())
         checkHotWalletCreationSupported(notSupported = { return })
-        router.push(AppRoute.AddExistingWallet)
+        router.push(AppRoute.AddExistingWallet(isNfcRecovery = params.isNfcRecovery))
     }
 
     private fun onCreateClick() {
         analyticsEventHandler.send(OnboardingAnalyticsEvent.CreateWallet.ButtonCreateWallet())
+        if (params.isNfcRecovery) {
+            uiMessageSender.send(
+                DialogMessage(
+                    title = resourceReference(R.string.nfc_wallet_bound_title),
+                    message = resourceReference(R.string.nfc_wallet_bound_message),
+                ),
+            )
+            return
+        }
         checkHotWalletCreationSupported(notSupported = { return })
 
         modelScope.launch {
@@ -94,9 +108,17 @@ internal class CreateMobileWalletModel @Inject constructor(
             runSuspendCatching {
                 val hotWalletId = tangemHotSdk.generateWallet(HotAuth.NoAuth, mnemonicType = MnemonicType.Words12)
                 val hotUserWalletBuilder = hotUserWalletBuilderFactory.create(hotWalletId)
-                val userWallet = hotUserWalletBuilder.build()
+                val userWallet = hotUserWalletBuilder.build().copy(
+                    isTestnetOnly = hotWalletNfcSecurity.isEnabled,
+                )
 
-                saveUserWalletUseCase(userWallet)
+                try {
+                    hotWalletNfcSecurity.bindWallet(userWallet)
+                    saveUserWalletUseCase(userWallet)
+                } catch (throwable: Throwable) {
+                    runCatching { tangemHotSdk.delete(hotWalletId) }
+                    throw throwable
+                }
 
                 analyticsEventHandler.send(
                     OnboardingAnalyticsEvent.Onboarding.Finished(source = params.source),
@@ -115,7 +137,14 @@ internal class CreateMobileWalletModel @Inject constructor(
                     syncWalletWithRemoteUseCase(userWalletId = userWallet.walletId)
                 }
 
-                router.replaceAll(AppRoute.Wallet)
+                if (hotWalletNfcSecurity.isEnabled) {
+                    router.replaceAll(
+                        AppRoute.Wallet,
+                        AppRoute.WalletActivation(userWalletId = userWallet.walletId, isBackupExists = false),
+                    )
+                } else {
+                    router.replaceAll(AppRoute.Wallet)
+                }
             }.onFailure { throwable ->
                 TangemLogger.e("Error", throwable)
 

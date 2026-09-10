@@ -13,10 +13,13 @@ import javax.crypto.spec.SecretKeySpec;
 /** Minimal NTAG 424 DNA AES secure-messaging implementation based on NXP AN12196. */
 public final class Ntag424Dna {
     public static final byte NDEF_FILE = 0x02;
+    public static final int NDEF_FILE_SIZE = 256;
     public static final byte RECOVERY_FILE = 0x03;
     public static final int RECOVERY_FILE_SIZE = 128;
     public static final byte COMMUNICATION_FULL = 0x03;
     public static final byte[] NDEF_SECURE_ACCESS_RIGHTS = new byte[]{(byte) 0xF0, 0x12};
+    // Public launch marker: free read, key 2 write, key 0 configuration. No public write access.
+    public static final byte[] NDEF_LAUNCH_ACCESS_RIGHTS = new byte[]{(byte) 0xF0, (byte) 0xE2};
     public static final byte[] RECOVERY_SECURE_ACCESS_RIGHTS = new byte[]{(byte) 0xF0, 0x11};
     public static final byte[] DEFAULT_KEY = new byte[16];
 
@@ -50,7 +53,8 @@ public final class Ntag424Dna {
 
     public boolean isNtag424Dna() throws IOException {
         byte[] version = readChained((byte) 0x60);
-        return version.length >= 14 && (version[0] & 0xFF) == 0x04 &&
+        if (version.length < 14) throw new IOException("Incomplete chip version response");
+        return (version[0] & 0xFF) == 0x04 &&
             (version[1] & 0xFF) == 0x04 && (version[7] & 0xFF) == 0x04 &&
             (version[8] & 0xFF) == 0x04 && (version[9] & 0xFF) == 0x02;
     }
@@ -114,21 +118,64 @@ public final class Ntag424Dna {
 
     public byte[] readFull(Session session, byte fileNumber, int length)
         throws IOException, GeneralSecurityException {
+        return readFull(session, fileNumber, 0, length);
+    }
+
+    public byte[] readFull(Session session, byte fileNumber, int offset, int length)
+        throws IOException, GeneralSecurityException {
         if (length <= 0 || length > 240) throw new IllegalArgumentException("Invalid read length");
-        return secureCommand(
+        validateRange(fileNumber, offset, length);
+        byte[] result = secureCommand(
             session,
             (byte) 0xAD,
-            fileHeader(fileNumber, 0, length),
+            fileHeader(fileNumber, offset, length),
             new byte[0],
             true,
             true
         );
+        if (result.length != length) throw new IOException("Incomplete protected read");
+        return result;
     }
 
     public void writeFull(Session session, byte fileNumber, byte[] data)
         throws IOException, GeneralSecurityException {
+        writeFull(session, fileNumber, 0, data);
+    }
+
+    public void writeFull(Session session, byte fileNumber, int offset, byte[] data)
+        throws IOException, GeneralSecurityException {
         if (data.length == 0 || data.length > 220) throw new IllegalArgumentException("Invalid write length");
-        secureCommand(session, (byte) 0x8D, fileHeader(fileNumber, 0, data.length), data, true, false);
+        validateRange(fileNumber, offset, data.length);
+        secureCommand(session, (byte) 0x8D, fileHeader(fileNumber, offset, data.length), data, true, false);
+    }
+
+    /** Use only for files with free Read access. Does not authenticate the data. */
+    public byte[] readPlain(byte fileNumber, int offset, int length) throws IOException {
+        return readPlain(null, fileNumber, offset, length);
+    }
+
+    /** An active EV2 session counts plain commands too (NXP datasheet section 9.1.2). */
+    public byte[] readPlain(Session session, byte fileNumber, int offset, int length) throws IOException {
+        if (session != null && !session.valid) throw new IllegalStateException("Authentication session is no longer valid");
+        if (length <= 0 || length > 240) throw new IllegalArgumentException("Invalid read length");
+        validateRange(fileNumber, offset, length);
+        Response response = parseResponse(transceiver.transceive(wrap((byte) 0xAD, fileHeader(fileNumber, offset, length))));
+        if (response.status != STATUS_OK) throw new CardException("Plain read failed", response.status);
+        if (session != null) session.commandCounter++;
+        if (response.data.length != length) throw new IOException("Incomplete plain read");
+        return response.data;
+    }
+
+    private static void validateRange(byte fileNumber, int offset, int length) {
+        int size = switch (fileNumber) {
+            case 0x01 -> 32;
+            case NDEF_FILE -> NDEF_FILE_SIZE;
+            case RECOVERY_FILE -> RECOVERY_FILE_SIZE;
+            default -> throw new IllegalArgumentException("Unknown file");
+        };
+        if (offset < 0 || length <= 0 || offset > size - length) {
+            throw new IllegalArgumentException("Operation exceeds file bounds");
+        }
     }
 
     public int getKeyVersion(Session session, int keyNumber) throws IOException, GeneralSecurityException {

@@ -4,6 +4,7 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.router.stack.replaceAll
+import arrow.core.getOrElse
 import com.tangem.core.analytics.api.AnalyticsEventHandler
 import com.tangem.core.analytics.models.AnalyticsParam
 import com.tangem.core.analytics.utils.TrackingContextProxy
@@ -15,12 +16,18 @@ import com.tangem.core.decompose.navigation.Router
 import com.tangem.core.decompose.ui.UiMessageSender
 import com.tangem.core.ui.R
 import com.tangem.core.ui.extensions.resourceReference
+import com.tangem.core.ui.extensions.toWrappedList
 import com.tangem.core.ui.message.DialogMessage
 import com.tangem.core.ui.message.EventMessageAction
 import com.tangem.domain.models.wallet.UserWalletId
+import com.tangem.domain.models.wallet.UserWallet
 import com.tangem.domain.settings.ShouldAskPermissionUseCase
 import com.tangem.domain.hotwallet.SetAccessCodeSkippedUseCase
 import com.tangem.domain.wallets.analytics.WalletSettingsAnalyticEvents
+import com.tangem.domain.wallets.hot.HotWalletNfcSecurity
+import com.tangem.domain.wallets.hot.HotWalletNfcRecoveryException
+import com.tangem.domain.wallets.usecase.GetUserWalletUseCase
+import com.tangem.domain.wallets.usecase.UpdateWalletUseCase
 import com.tangem.features.hotwallet.manualbackup.check.ManualBackupCheckComponent
 import com.tangem.features.hotwallet.manualbackup.completed.ManualBackupCompletedComponent
 import com.tangem.features.hotwallet.manualbackup.phrase.ManualBackupPhraseComponent
@@ -36,6 +43,7 @@ import com.tangem.utils.coroutines.CoroutineDispatcherProvider
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import com.tangem.utils.logging.TangemLogger
 import javax.inject.Inject
 
 @Suppress("LongParameterList")
@@ -49,6 +57,9 @@ internal class WalletActivationModel @Inject constructor(
     @GlobalUiMessageSender private val uiMessageSender: UiMessageSender,
     private val trackingContextProxy: TrackingContextProxy,
     private val analyticsEventHandler: AnalyticsEventHandler,
+    private val getUserWalletUseCase: GetUserWalletUseCase,
+    private val updateWalletUseCase: UpdateWalletUseCase,
+    private val hotWalletNfcSecurity: HotWalletNfcSecurity,
 ) : Model() {
 
     val params = paramsContainer.require<WalletActivationComponent.Params>()
@@ -131,6 +142,64 @@ internal class WalletActivationModel @Inject constructor(
         stackNavigation.replaceAll(WalletActivationRoute.SetupFinished)
     }
 
+    private fun createExternalRecoveryPackage() {
+        hotWalletStepperComponentModelCallback.canSkip = false
+        modelScope.launch {
+            runCatching {
+                val userWallet = getUserWalletUseCase(params.userWalletId)
+                    .getOrElse { error("User wallet ${params.userWalletId.stringValue} was not found") }
+                require(userWallet is UserWallet.Hot) { "External-card recovery requires a mobile wallet" }
+
+                val recoveryCode = hotWalletNfcSecurity.createRecoveryPackage(userWallet)
+                uiMessageSender.send(
+                    DialogMessage(
+                        title = resourceReference(R.string.nfc_wallet_save_recovery_code_title),
+                        message = resourceReference(
+                            R.string.nfc_wallet_save_recovery_code_message,
+                            listOf(recoveryCode).toWrappedList(),
+                        ),
+                        firstAction = EventMessageAction(
+                            title = resourceReference(R.string.common_done),
+                            onClick = {
+                                modelScope.launch {
+                                    updateWalletUseCase(userWallet.walletId) { current ->
+                                        require(current is UserWallet.Hot)
+                                        current.copy(backedUp = true)
+                                    }.getOrElse { error("Unable to mark the recovery package as complete: $it") }
+                                    analyticsEventHandler.send(
+                                        event = WalletSettingsAnalyticEvents.AccessCodeScreenOpened(
+                                            source = analyticsSource.value,
+                                        ),
+                                    )
+                                    stackNavigation.replaceAll(WalletActivationRoute.SetAccessCode)
+                                }
+                            },
+                        ),
+                        shouldDismissOnFirstAction = true,
+                    ),
+                )
+            }.onFailure { throwable ->
+                TangemLogger.e("Unable to create external-card recovery package", throwable)
+                hotWalletStepperComponentModelCallback.canSkip = true
+                val supportCode = (throwable as? HotWalletNfcRecoveryException)?.supportCode ?: "RCV-200"
+                uiMessageSender.send(
+                    DialogMessage(
+                        title = resourceReference(R.string.nfc_wallet_recovery_setup_failed_title),
+                        message = resourceReference(
+                            R.string.nfc_wallet_recovery_setup_failed_message,
+                            listOf(supportCode).toWrappedList(),
+                        ),
+                        firstAction = EventMessageAction(
+                            title = resourceReference(R.string.common_ok),
+                            onClick = {},
+                        ),
+                        shouldDismissOnFirstAction = true,
+                    ),
+                )
+            }
+        }
+    }
+
     private fun showSkipAccessCodeWarningDialog() {
         val userWalletId = params.userWalletId
 
@@ -172,6 +241,10 @@ internal class WalletActivationModel @Inject constructor(
 
     inner class ManualBackupStartModelCallbacks : ManualBackupStartComponent.ModelCallbacks {
         override fun onContinueClick() {
+            if (hotWalletNfcSecurity.isEnabled) {
+                createExternalRecoveryPackage()
+                return
+            }
             stackNavigation.push(WalletActivationRoute.ManualBackupPhrase)
             analyticsEventHandler.send(
                 event = WalletSettingsAnalyticEvents.RecoveryPhraseScreen(

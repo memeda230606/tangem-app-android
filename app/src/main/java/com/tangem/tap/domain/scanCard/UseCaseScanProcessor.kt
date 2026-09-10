@@ -13,14 +13,19 @@ import com.tangem.core.analytics.utils.TrackingContextProxy
 import com.tangem.domain.card.ScanCardException
 import com.tangem.domain.card.ScanCardUseCase
 import com.tangem.domain.card.ScanFailsRequester
+import com.tangem.domain.common.wallets.UserWalletsListRepository
 import com.tangem.domain.models.scan.ScanResponse
+import com.tangem.domain.models.wallet.UserWallet
 import com.tangem.domain.onboarding.WasTwinsOnboardingShownUseCase
+import com.tangem.domain.wallets.hot.HotWalletNfcSecurity
 import com.tangem.tap.common.analytics.events.TangemSdkErrorEvent
+import com.tangem.tap.domain.TapSdkError
 import com.tangem.tap.domain.scanCard.chains.AnalyticsChain
 import com.tangem.tap.domain.scanCard.chains.CheckForOnboardingChain
 import com.tangem.tap.domain.scanCard.chains.FailedScansCounterChain
 import com.tangem.tap.domain.scanCard.chains.ScanChainException
 import com.tangem.tap.domain.scanCard.utils.ScanCardExceptionConverter
+import com.tangem.tap.features.intentHandler.handlers.ExternalNdefScanController
 import com.tangem.tap.features.onboarding.OnboardingHelper
 import com.tangem.tap.scope
 import com.tangem.utils.extensions.DELAY_SDK_DIALOG_CLOSE
@@ -38,6 +43,9 @@ internal class UseCaseScanProcessor @Inject constructor(
     private val trackingContextProxy: TrackingContextProxy,
     private val wasTwinsOnboardingShownUseCase: WasTwinsOnboardingShownUseCase,
     private val onboardingHelper: OnboardingHelper,
+    private val externalNdefScanController: ExternalNdefScanController,
+    private val hotWalletNfcSecurity: HotWalletNfcSecurity,
+    private val userWalletsListRepository: UserWalletsListRepository,
 ) {
     private val scanCardExceptionConverter = ScanCardExceptionConverter()
 
@@ -87,9 +95,12 @@ internal class UseCaseScanProcessor @Inject constructor(
     suspend fun proceedWithExternalScan(
         scanResponse: ScanResponse,
         onWalletNotCreated: suspend () -> Unit,
+        onFailure: suspend (error: TangemError) -> Unit,
         onSuccess: suspend (scanResponse: ScanResponse) -> Unit,
     ) {
-        if (onboardingHelper.isOnboardingCase(scanResponse)) {
+        val identity = externalNdefScanController.requireAcceptedIdentity()
+        val boundWalletId = identity.boundWalletId
+        if (boundWalletId == null) {
             trackingContextProxy.addContext(scanResponse)
             navigateTo(
                 AppRoute.Onboarding(
@@ -98,10 +109,46 @@ internal class UseCaseScanProcessor @Inject constructor(
                 ),
             )
             onWalletNotCreated()
-        } else {
-            trackingContextProxy.setContext(scanResponse)
-            onSuccess(scanResponse)
+            return
         }
+
+        val localHotWallets = userWalletsListRepository.userWalletsSync().filterIsInstance<UserWallet.Hot>()
+        val localWallet = localHotWallets
+            .firstOrNull { hotWalletNfcSecurity.matchesBinding(it, boundWalletId) }
+        if (localWallet != null) {
+            userWalletsListRepository.select(localWallet.walletId)
+            appRouter.replaceAll(AppRoute.Wallet)
+            return
+        }
+
+        if (localHotWallets.isNotEmpty()) {
+            onFailure(TapSdkError.ExternalCardBoundToAnotherWallet())
+            return
+        }
+
+        // Keep the official create/import choice visible. Import is mapped to the three-share NFC recovery flow.
+        navigateTo(
+            AppRoute.CreateMobileWallet(
+                source = AnalyticsParam.ScreensSources.Onboarding,
+                isNfcRecovery = true,
+            ),
+        )
+        onWalletNotCreated()
+    }
+
+    /**
+     * Rejects a verified External card when this device already contains a mobile wallet and the card is bound
+     * to another wallet. Some legacy scan entry points consume only a [ScanResponse], so without this guard the
+     * shared External mock card keys could make a foreign card look like the currently selected local wallet.
+     *
+     * A device with no local mobile wallet is deliberately allowed so it can enter the official recovery flow.
+     */
+    suspend fun isExternalCardBoundToDifferentLocalWallet(): Boolean {
+        val boundWalletId = externalNdefScanController.requireAcceptedIdentity().boundWalletId ?: return false
+        val localHotWallets = userWalletsListRepository.userWalletsSync().filterIsInstance<UserWallet.Hot>()
+
+        return localHotWallets.isNotEmpty() &&
+            localHotWallets.none { hotWalletNfcSecurity.matchesBinding(it, boundWalletId) }
     }
 
     private fun showScanFailsDialog(source: AnalyticsParam.ScreensSources) {

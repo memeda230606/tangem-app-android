@@ -8,6 +8,7 @@ import com.tangem.core.analytics.utils.TrackingContextProxy
 import com.tangem.core.decompose.di.GlobalUiMessageSender
 import com.tangem.core.decompose.di.ModelScoped
 import com.tangem.core.decompose.model.Model
+import com.tangem.core.decompose.model.ParamsContainer
 import com.tangem.core.decompose.navigation.Router
 import com.tangem.core.decompose.ui.UiMessageSender
 import com.tangem.core.ui.R
@@ -35,6 +36,7 @@ import javax.inject.Inject
 @Suppress("LongParameterList")
 @ModelScoped
 internal class AddExistingWalletModel @Inject constructor(
+    paramsContainer: ParamsContainer,
     override val dispatchers: CoroutineDispatcherProvider,
     private val router: Router,
     private val shouldAskPermissionUseCase: ShouldAskPermissionUseCase,
@@ -44,6 +46,8 @@ internal class AddExistingWalletModel @Inject constructor(
     private val analyticsEventHandler: AnalyticsEventHandler,
 ) : Model() {
 
+    private val params: com.tangem.features.hotwallet.AddExistingWalletComponent.Params = paramsContainer.require()
+
     val hotWalletStepperComponentModelCallback = HotWalletStepperComponentModelCallback()
     val addExistingWalletImportModelCallbacks = AddExistingWalletImportModelCallbacks()
     val manualBackupCompletedModelCallbacks = ManualBackupCompletedModelCallbacks()
@@ -52,7 +56,7 @@ internal class AddExistingWalletModel @Inject constructor(
     val mobileWalletSetupFinishedModelCallbacks = MobileWalletSetupFinishedModelCallbacks()
 
     val stackNavigation = StackNavigation<AddExistingWalletRoute>()
-    val startRoute = AddExistingWalletRoute.Import
+    val startRoute = AddExistingWalletRoute.Import(isNfcRecovery = params.isNfcRecovery)
     val currentRoute: MutableStateFlow<AddExistingWalletRoute> = MutableStateFlow(startRoute)
 
     private val analyticsSource = AnalyticsParam.ScreensSources.ImportWallet

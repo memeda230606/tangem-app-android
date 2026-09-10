@@ -33,7 +33,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.niubtmd.securenfc.Hex;
 import com.niubtmd.securenfc.Ntag424Dna;
 import com.niubtmd.securenfc.SecureCardKeys;
-import com.niubtmd.securenfc.SecureCardPayload;
+import com.niubtmd.securenfc.SecureCardIdentityStore;
+import com.niubtmd.securenfc.WalletLaunchNdef;
+import com.niubtmd.securenfc.WalletLaunchProvisioner;
 
 public final class MainActivity extends Activity implements NfcAdapter.ReaderCallback {
 
@@ -42,9 +44,8 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
     private static final String PREFERENCES_NAME = "nfc_writer";
     private static final String PREFERENCE_TARGET_URL = "target_url";
     private static final int READER_FLAGS = NfcAdapter.FLAG_READER_NFC_A
-        | NfcAdapter.FLAG_READER_NFC_B
-        | NfcAdapter.FLAG_READER_NFC_F
-        | NfcAdapter.FLAG_READER_NFC_V;
+        | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK
+        | NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS;
 
     private NfcAdapter nfcAdapter;
     private EditText urlInput;
@@ -119,9 +120,10 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
     protected void onResume() {
         super.onResume();
         DiagnosticLogger.info("ACTIVITY_RESUME", "writeArmed=" + writeArmed + " inspectArmed=" + inspectArmed);
-        if (writeArmed || inspectArmed) {
-            enableReaderMode();
-        }
+        // Own NFC for the entire foreground session. If a card is already near the phone while
+        // the operator confirms an action, Android must not fall back to NDEF/tag dispatch and
+        // hand the same discovery event to WeChat or another wallet/transit application.
+        enableReaderMode();
     }
 
     @Override
@@ -138,6 +140,12 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
             DiagnosticLogger.warning("URL_REJECTED", "invalid target URL");
             urlInput.setError(getString(R.string.invalid_url));
             showFailure(getString(R.string.invalid_url), null);
+            return;
+        }
+        try {
+            WalletLaunchNdef.encode(normalizedUrl);
+        } catch (IllegalArgumentException error) {
+            urlInput.setError("网址无效或过长，请缩短后重试。");
             return;
         }
         if (nfcAdapter == null) {
@@ -260,7 +268,6 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
             runOnUiThread(() -> showWriting(uid));
             final String result = inspectSecurityCapabilities(tag);
             runOnUiThread(() -> {
-                disableReaderMode();
                 showInspectionResult(result, uid);
             });
             return;
@@ -273,7 +280,6 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
             DiagnosticLogger.info("WRITE_COMPLETED", "uid=" + maskUid(uid));
             writeArmed = false;
             runOnUiThread(() -> {
-                disableReaderMode();
                 showSuccess(uid);
             });
         } catch (TagLostException error) {
@@ -282,7 +288,6 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
             writeArmed = false;
             writeInProgress.set(false);
             runOnUiThread(() -> {
-                disableReaderMode();
                 showFailure("卡片移开得太早，请贴紧后重试。", uid);
                 offerDiagnosticExport(getString(R.string.error_log_title), getString(R.string.error_log_message));
             });
@@ -292,7 +297,6 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
             writeArmed = false;
             writeInProgress.set(false);
             runOnUiThread(() -> {
-                disableReaderMode();
                 showFailure(toFriendlyMessage(error), uid);
                 offerDiagnosticExport(getString(R.string.error_log_title), getString(R.string.error_log_message));
             });
@@ -369,6 +373,7 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
     }
 
     private void personalizeWriteAndVerify(Tag tag, String expectedUrl, UUID requestedCardInstanceId) throws Exception {
+        WalletLaunchNdef.encode(expectedUrl); // validate before any card changes
         byte[] uid = tag.getId();
         if (uid == null || uid.length != 7) throw new IOException("UNSUPPORTED_CARD");
 
@@ -423,41 +428,65 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
             });
         }
 
-        UUID cardInstanceId = requestedCardInstanceId;
-        try {
-            SecureCardPayload.CardIdentity existing = withCard(tag, card -> {
-                Ntag424Dna.Session reader = card.authenticate(SecureCardKeys.READ_KEY, keys[1]);
-                return SecureCardPayload.decodeV2(card.readFull(reader, Ntag424Dna.NDEF_FILE));
-            });
-            cardInstanceId = existing.getCardInstanceId();
-            DiagnosticLogger.info("WRITE_STAGE", "reuse existing v2 card identity");
-        } catch (Exception ignored) {
-            DiagnosticLogger.info("WRITE_STAGE", "assign new v2 card identity");
-        }
+        WalletLaunchProvisioner.provision(new WalletLaunchProvisioner.CardIo() {
+            public byte[] readPrivateFile() throws Exception {
+                return withCard(tag, card -> card.readFull(card.authenticate(SecureCardKeys.READ_KEY, keys[1]),
+                    Ntag424Dna.RECOVERY_FILE, Ntag424Dna.RECOVERY_FILE_SIZE));
+            }
 
-        byte[] payload = SecureCardPayload.encodeV2(
-            cardInstanceId,
-            1,
-            System.currentTimeMillis() / 1000L,
-            expectedUrl
-        );
-        DiagnosticLogger.info("WRITE_STAGE", "write encrypted payload bytes=" + payload.length);
-        withCard(tag, card -> {
-            Ntag424Dna.Session writer = card.authenticate(SecureCardKeys.WRITE_KEY, keys[2]);
-            card.writeFull(writer, Ntag424Dna.NDEF_FILE, payload);
-            return null;
-        });
-        DiagnosticLogger.info("WRITE_STAGE", "read back and verify encrypted payload");
-        SecureCardPayload.CardIdentity verifiedIdentity = withCard(tag, card -> {
-            Ntag424Dna.Session reader = card.authenticate(SecureCardKeys.READ_KEY, keys[1]);
-            return SecureCardPayload.decodeV2(card.readFull(reader, Ntag424Dna.NDEF_FILE));
-        });
-        if (!expectedUrl.equals(verifiedIdentity.getTargetUrl()) ||
-            !cardInstanceId.equals(verifiedIdentity.getCardInstanceId()) ||
-            verifiedIdentity.getKeyVersion() != 1) {
-            throw new IOException("VERIFY_FAILED");
-        }
-        DiagnosticLogger.info("WRITE_STAGE", "verification passed");
+            public byte[] readLegacyIdentity() throws Exception {
+                return withCard(tag, card -> card.readFull(card.authenticate(SecureCardKeys.READ_KEY, keys[1]),
+                    Ntag424Dna.NDEF_FILE));
+            }
+
+            public void setLaunchPublic(boolean enabled) throws Exception {
+                DiagnosticLogger.info("WRITE_STAGE", enabled ? "publish verified wallet launch marker" : "lock launch file");
+                withCard(tag, card -> {
+                    card.changeFileSettings(card.authenticate(SecureCardKeys.ADMIN_KEY, keys[0]),
+                        Ntag424Dna.NDEF_FILE, Ntag424Dna.COMMUNICATION_FULL,
+                        enabled ? Ntag424Dna.NDEF_LAUNCH_ACCESS_RIGHTS : Ntag424Dna.NDEF_SECURE_ACCESS_RIGHTS);
+                    return null;
+                });
+            }
+
+            public void writeIdentity(byte[] data) throws Exception {
+                DiagnosticLogger.info("WRITE_STAGE", "preserve identity in protected storage");
+                withCard(tag, card -> {
+                    card.writeFull(card.authenticate(SecureCardKeys.READ_KEY, keys[1]), Ntag424Dna.RECOVERY_FILE,
+                        SecureCardIdentityStore.OFFSET, data);
+                    return null;
+                });
+            }
+
+            public void writeLockedLaunchFile(byte[] data) throws Exception {
+                withCard(tag, card -> {
+                    Ntag424Dna.Session session = card.authenticate(SecureCardKeys.WRITE_KEY, keys[2]);
+                    card.writeFull(session, Ntag424Dna.NDEF_FILE, 0, Arrays.copyOfRange(data, 0, 128));
+                    card.writeFull(session, Ntag424Dna.NDEF_FILE, 128, Arrays.copyOfRange(data, 128, 256));
+                    return null;
+                });
+            }
+
+            public byte[] readLockedLaunchFile() throws Exception {
+                return withCard(tag, card -> {
+                    Ntag424Dna.Session session = card.authenticate(SecureCardKeys.READ_KEY, keys[1]);
+                    byte[] result = new byte[Ntag424Dna.NDEF_FILE_SIZE];
+                    System.arraycopy(card.readFull(session, Ntag424Dna.NDEF_FILE, 0, 128), 0, result, 0, 128);
+                    System.arraycopy(card.readFull(session, Ntag424Dna.NDEF_FILE, 128, 128), 0, result, 128, 128);
+                    return result;
+                });
+            }
+
+            public byte[] readPublicLaunchFile() throws Exception {
+                return withCard(tag, card -> {
+                    byte[] result = new byte[Ntag424Dna.NDEF_FILE_SIZE];
+                    System.arraycopy(card.readPlain(Ntag424Dna.NDEF_FILE, 0, 128), 0, result, 0, 128);
+                    System.arraycopy(card.readPlain(Ntag424Dna.NDEF_FILE, 128, 128), 0, result, 128, 128);
+                    return result;
+                });
+            }
+        }, expectedUrl, requestedCardInstanceId, System.currentTimeMillis() / 1000L);
+        DiagnosticLogger.info("WRITE_STAGE", "wallet launch and private identity verified; recovery preserved");
     }
 
     private static <T> T withCard(Tag tag, CardOperation<T> operation) throws Exception {
@@ -510,7 +539,7 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
         statusIcon.setText(R.string.success_mark);
         statusIcon.setTextColor(getColor(R.color.success));
         statusTitle.setText(R.string.inspect_success_title);
-        statusMessage.setText(message);
+        statusMessage.setText(withRemoveCardHint(message));
         showCardId(uid);
         urlInput.setEnabled(true);
         actionButton.setEnabled(true);
@@ -525,12 +554,16 @@ public final class MainActivity extends Activity implements NfcAdapter.ReaderCal
         statusIcon.setText(R.string.error_mark);
         statusIcon.setTextColor(getColor(R.color.error));
         statusTitle.setText(R.string.failed_title);
-        statusMessage.setText(message);
+        statusMessage.setText(uid == null || uid.isEmpty() ? message : withRemoveCardHint(message));
         showCardId(uid);
         urlInput.setEnabled(true);
         actionButton.setEnabled(nfcAdapter != null);
         inspectButton.setEnabled(nfcAdapter != null);
         actionButton.setText(R.string.retry);
+    }
+
+    private String withRemoveCardHint(String message) {
+        return message + "\n\n" + getString(R.string.remove_card_before_exit);
     }
 
     private void showCardId(String uid) {

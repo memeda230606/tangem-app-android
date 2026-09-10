@@ -542,6 +542,7 @@ internal class ChildFactory @Inject constructor(
                     context = context,
                     params = CreateMobileWalletComponent.Params(
                         source = route.source,
+                        isNfcRecovery = route.isNfcRecovery,
                     ),
                     componentFactory = createMobileWalletComponentFactory,
                 )
@@ -558,7 +559,9 @@ internal class ChildFactory @Inject constructor(
             is AppRoute.AddExistingWallet -> {
                 createComponentChild(
                     context = context,
-                    params = Unit,
+                    params = AddExistingWalletComponent.Params(
+                        isNfcRecovery = route.isNfcRecovery,
+                    ),
                     componentFactory = addExistingWalletComponentFactory,
                 )
             }

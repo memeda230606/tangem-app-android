@@ -27,6 +27,7 @@ internal class AddExistingWalletChildFactory @Inject constructor(
                 context = childContext,
                 params = AddExistingWalletImportComponent.Params(
                     callbacks = model.addExistingWalletImportModelCallbacks,
+                    isNfcRecovery = route.isNfcRecovery,
                 ),
             )
             is AddExistingWalletRoute.BackupCompleted -> ManualBackupCompletedComponent(

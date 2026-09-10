@@ -28,8 +28,8 @@ android {
         applicationId = "com.niubtmd.nfcwriter"
         minSdk = 24
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.4.1"
+        versionCode = 8
+        versionName = "1.5.0"
         buildConfigField(
             "String",
             "SECURE_CARD_ADMIN_ROOT",

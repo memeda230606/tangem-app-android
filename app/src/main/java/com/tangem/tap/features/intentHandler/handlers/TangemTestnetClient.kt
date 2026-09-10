@@ -2,10 +2,12 @@ package com.tangem.tap.features.intentHandler.handlers
 
 import android.util.Base64
 import com.niubtmd.securenfc.RecoveryPackageCrypto
+import com.tangem.utils.logging.TangemLogger
 import com.tangem.wallet.BuildConfig
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.io.IOException
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.UUID
@@ -44,7 +46,7 @@ internal class TangemTestnetClient(
             .put("timestamp", timestamp)
             .put("proof", proof)
 
-        val response = post("/verifications", body) ?: return null
+        val response = post("/verifications", body, isVerification = true) ?: return null
         val card = response.getJSONObject("card")
         val binding = card.optJSONObject("binding")
         return identity.copy(
@@ -116,7 +118,7 @@ internal class TangemTestnetClient(
         )
     }
 
-    private fun post(path: String, body: JSONObject): JSONObject? {
+    private fun post(path: String, body: JSONObject, isVerification: Boolean = false): JSONObject? {
         val connection = URL("$baseUrl$path").openConnection() as HttpURLConnection
         return try {
             connection.requestMethod = "POST"
@@ -126,7 +128,14 @@ internal class TangemTestnetClient(
             connection.setRequestProperty("Content-Type", "application/json")
             connection.setRequestProperty("Accept", "application/json")
             connection.outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(body.toString()) }
-            if (connection.responseCode !in 200..299) return null
+            val responseCode = connection.responseCode
+            if (responseCode !in 200..299) {
+                TangemLogger.e("Tangem TESTNET request failed: path=$path, status=$responseCode")
+                if (isVerification && isRetryableVerificationStatus(responseCode)) {
+                    throw IOException("Card verification service temporarily unavailable")
+                }
+                return null
+            }
             val text = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
             JSONObject(text)
         } finally {
@@ -141,6 +150,9 @@ internal class TangemTestnetClient(
     }
 
     companion object {
+        internal fun isRetryableVerificationStatus(status: Int): Boolean =
+            status in 500..599 || status in setOf(408, 425, 429)
+
         private const val DEFAULT_BASE_URL = "https://hm.niubtmd.com/api/tangem/testnet"
         private const val PROTOCOL_VERSION = "TANGEM_L0_TESTNET_V1"
         private const val NONCE_BYTES = 24

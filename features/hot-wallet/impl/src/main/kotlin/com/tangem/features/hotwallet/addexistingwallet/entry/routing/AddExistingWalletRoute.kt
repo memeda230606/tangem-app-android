@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 internal sealed class AddExistingWalletRoute : Route {
 
     @Serializable
-    object Import : AddExistingWalletRoute()
+    data class Import(val isNfcRecovery: Boolean = false) : AddExistingWalletRoute()
 
     @Serializable
     data class BackupCompleted(val userWalletId: UserWalletId) : AddExistingWalletRoute()
